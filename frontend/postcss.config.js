@@ -1,1 +1,6 @@
-// initial base
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};

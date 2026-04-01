@@ -1,1 +1,496 @@
-// Define your data models here
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            BigInt    @id @default(autoincrement())
+  name          String    @db.VarChar(150)
+  email         String?   @unique @db.VarChar(255)
+  username      String?   @unique @db.VarChar(100)
+  password_hash String    @db.Text
+  phone         String?   @db.VarChar(30)
+  role          String    @db.VarChar(30)
+  is_active     Boolean   @default(true)
+  created_at    DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  householdsCreated           Household[]
+  economicConditionsUpdated   EconomicCondition[]
+  housingConditionsUpdated    HousingCondition[]
+  householdAssetsUpdated      HouseholdAsset[]
+  householdVulnerabilitiesUpdated HouseholdVulnerability[]
+  documentsUploaded           Document[]
+  documentVerifications       DocumentVerification[]
+  aidApplicationsSubmitted    AidApplication[]
+  applicationStatusHistories  ApplicationStatusHistory[]
+  duplicateChecks             DuplicateCheck[]
+  surveys                     Survey[]
+  scoringResults              ScoringResult[]
+  beneficiaryDecisions        BeneficiaryDecision[]
+  aidDistributions            AidDistribution[]
+  distributionProofs          DistributionProof[]
+  distributionStatusHistories DistributionStatusHistory[]
+  complaintsSubmitted         Complaint[] @relation("ComplaintSubmitter")
+  complaintsResolved          Complaint[] @relation("ComplaintResolver")
+  auditLogs                   AuditLog[]
+
+  @@map("users")
+}
+
+model Region {
+  id           BigInt    @id @default(autoincrement())
+  province     String    @db.VarChar(100)
+  city_regency String    @db.VarChar(100)
+  district     String    @db.VarChar(100)
+  village      String    @db.VarChar(100)
+  rt           String?   @db.VarChar(10)
+  rw           String?   @db.VarChar(10)
+  postal_code  String?   @db.VarChar(10)
+  created_at   DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at   DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  households Household[]
+
+  @@map("regions")
+}
+
+model AidType {
+  id          BigInt    @id @default(autoincrement())
+  code        String    @unique @db.VarChar(50)
+  name        String    @db.VarChar(150)
+  description String?   @db.Text
+  unit        String?   @db.VarChar(50)
+  is_active   Boolean   @default(true)
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  applications          AidApplication[]
+  beneficiaryDecisions  BeneficiaryDecision[]
+  distributions         AidDistribution[]
+
+  @@map("aid_types")
+}
+
+model Household {
+  id                    BigInt    @id @default(autoincrement())
+  nomor_kk              String    @unique @db.VarChar(32)
+  nama_kepala_keluarga  String    @db.VarChar(150)
+  nik_kepala_keluarga   String?   @db.VarChar(32)
+  alamat                String    @db.Text
+  region_id             BigInt
+  phone                 String?   @db.VarChar(30)
+  created_by_user_id    BigInt
+  registered_by_role    String    @db.VarChar(30)
+  registration_source   String    @db.VarChar(30)
+  status_data           String    @default("draft") @db.VarChar(30)
+  duplicate_flag        Boolean   @default(false)
+  duplicate_note        String?   @db.Text
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  region            Region                  @relation(fields: [region_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdByUser     User                    @relation(fields: [created_by_user_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  familyMembers     FamilyMember[]
+  economicCondition EconomicCondition?
+  housingCondition  HousingCondition?
+  householdAsset    HouseholdAsset?
+  vulnerability     HouseholdVulnerability?
+  documents         Document[]
+  aidApplications   AidApplication[]
+  complaints        Complaint[]
+
+  @@map("households")
+}
+
+model FamilyMember {
+  id                    BigInt    @id @default(autoincrement())
+  household_id          BigInt
+  nik                   String?   @unique @db.VarChar(32)
+  name                  String    @db.VarChar(150)
+  relationship_to_head  String    @db.VarChar(100)
+  birth_date            DateTime? @db.Date
+  age                   Int?
+  gender                String?   @db.VarChar(20)
+  education_level       String?   @db.VarChar(100)
+  occupation            String?   @db.VarChar(100)
+  is_married            Boolean?
+  is_lansia             Boolean   @default(false)
+  is_disability         Boolean   @default(false)
+  is_pregnant           Boolean   @default(false)
+  is_student            Boolean   @default(false)
+  has_chronic_illness   Boolean   @default(false)
+  notes                 String?   @db.Text
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  household Household @relation(fields: [household_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("family_members")
+}
+
+model EconomicCondition {
+  id                        BigInt    @id @default(autoincrement())
+  household_id              BigInt    @unique
+  monthly_income_total      Decimal?  @db.Decimal(14, 2)
+  income_source             String?   @db.VarChar(150)
+  head_job_status           String?   @db.VarChar(100)
+  monthly_basic_expense     Decimal?  @db.Decimal(14, 2)
+  dependents_count          Int?
+  has_other_income_source   Boolean   @default(false)
+  debt_estimation           Decimal?  @db.Decimal(14, 2)
+  notes                     String?   @db.Text
+  updated_by_user_id        BigInt?
+  created_at                DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  household           Household @relation(fields: [household_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  updatedByUser       User?     @relation(fields: [updated_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("economic_conditions")
+}
+
+model HousingCondition {
+  id                    BigInt    @id @default(autoincrement())
+  household_id          BigInt    @unique
+  home_ownership_status String?   @db.VarChar(30)
+  house_condition       String?   @db.VarChar(30)
+  floor_type            String?   @db.VarChar(100)
+  roof_type             String?   @db.VarChar(100)
+  wall_type             String?   @db.VarChar(100)
+  clean_water_access    Boolean?
+  electricity_access    Boolean?
+  sanitation_type       String?   @db.VarChar(100)
+  bedroom_count         Int?
+  notes                 String?   @db.Text
+  updated_by_user_id    BigInt?
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  household           Household @relation(fields: [household_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  updatedByUser       User?     @relation(fields: [updated_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("housing_conditions")
+}
+
+model HouseholdAsset {
+  id                    BigInt    @id @default(autoincrement())
+  household_id          BigInt    @unique
+  owns_house            Boolean?
+  has_bicycle           Boolean   @default(false)
+  has_motorcycle        Boolean   @default(false)
+  has_car               Boolean   @default(false)
+  has_other_land        Boolean   @default(false)
+  productive_assets     String?   @db.Text
+  savings_range         String?   @db.VarChar(100)
+  other_assets          String?   @db.Text
+  updated_by_user_id    BigInt?
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  household           Household @relation(fields: [household_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  updatedByUser       User?     @relation(fields: [updated_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("household_assets")
+}
+
+model HouseholdVulnerability {
+  id                        BigInt    @id @default(autoincrement())
+  household_id              BigInt    @unique
+  is_disaster_victim        Boolean   @default(false)
+  lost_job_recently         Boolean   @default(false)
+  has_severe_ill_member     Boolean   @default(false)
+  has_disabled_member       Boolean   @default(false)
+  has_elderly_member        Boolean   @default(false)
+  has_pregnant_member       Boolean   @default(false)
+  has_school_children       Boolean   @default(false)
+  ever_received_aid_before  Boolean?
+  special_condition_notes   String?   @db.Text
+  updated_by_user_id        BigInt?
+  created_at                DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  household           Household @relation(fields: [household_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  updatedByUser       User?     @relation(fields: [updated_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("household_vulnerabilities")
+}
+
+model Document {
+  id                  BigInt    @id @default(autoincrement())
+  household_id        BigInt
+  document_type       String    @db.VarChar(50)
+  file_url            String    @db.Text
+  original_filename   String?   @db.VarChar(255)
+  mime_type           String?   @db.VarChar(100)
+  uploaded_by_user_id BigInt?
+  uploaded_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  household         Household             @relation(fields: [household_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  uploadedByUser    User?                 @relation(fields: [uploaded_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  verifications     DocumentVerification[]
+
+  @@map("documents")
+}
+
+model DocumentVerification {
+  id                  BigInt    @id @default(autoincrement())
+  document_id         BigInt
+  status              String    @db.VarChar(30)
+  verified_by_user_id BigInt?
+  verification_note   String?   @db.Text
+  verified_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  document          Document  @relation(fields: [document_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  verifiedByUser    User?     @relation(fields: [verified_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("document_verifications")
+}
+
+model AidApplication {
+  id                    BigInt    @id @default(autoincrement())
+  household_id          BigInt
+  aid_type_id           BigInt
+  application_no        String    @unique @db.VarChar(50)
+  submitted_by_user_id  BigInt?
+  submission_date       DateTime? @db.Date
+  status                String    @db.VarChar(30)
+  current_step_note     String?   @db.Text
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  household             Household                 @relation(fields: [household_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  aidType               AidType                   @relation(fields: [aid_type_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  submittedByUser       User?                     @relation(fields: [submitted_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  statusHistories       ApplicationStatusHistory[]
+  duplicateChecks       DuplicateCheck[]
+  surveys               Survey[]
+  scoringResults        ScoringResult[]
+  beneficiaryDecision   BeneficiaryDecision?
+  complaints            Complaint[]
+
+  @@map("aid_applications")
+}
+
+model ApplicationStatusHistory {
+  id                  BigInt    @id @default(autoincrement())
+  application_id      BigInt
+  old_status          String?   @db.VarChar(30)
+  new_status          String    @db.VarChar(30)
+  changed_by_user_id  BigInt?
+  reason              String?   @db.Text
+  changed_at          DateTime  @default(now()) @db.Timestamptz(6)
+
+  application       AidApplication  @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  changedByUser     User?           @relation(fields: [changed_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("application_status_histories")
+}
+
+model DuplicateCheck {
+  id                  BigInt    @id @default(autoincrement())
+  application_id      BigInt
+  check_type          String    @db.VarChar(30)
+  result              String    @db.VarChar(30)
+  matched_reference   String?   @db.VarChar(255)
+  notes               String?   @db.Text
+  checked_by_user_id  BigInt?
+  checked_at          DateTime  @default(now()) @db.Timestamptz(6)
+
+  application       AidApplication  @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  checkedByUser     User?           @relation(fields: [checked_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("duplicate_checks")
+}
+
+model Survey {
+  id                        BigInt    @id @default(autoincrement())
+  application_id            BigInt
+  surveyor_user_id          BigInt
+  survey_date               DateTime  @db.Date
+  location_lat              Decimal?  @db.Decimal(10, 7)
+  location_lng              Decimal?  @db.Decimal(10, 7)
+  summary                   String?   @db.Text
+  matches_submitted_data    Boolean?
+  recommendation            String?   @db.VarChar(30)
+  status                    String    @db.VarChar(20)
+  created_at                DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  application       AidApplication  @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  surveyor          User            @relation(fields: [surveyor_user_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  checklists        SurveyChecklist[]
+  photos            SurveyPhoto[]
+
+  @@map("surveys")
+}
+
+model SurveyChecklist {
+  id            BigInt    @id @default(autoincrement())
+  survey_id     BigInt
+  item_code     String    @db.VarChar(50)
+  item_label    String    @db.VarChar(150)
+  value_text    String?   @db.Text
+  value_number  Decimal?  @db.Decimal(14, 2)
+  value_boolean Boolean?
+  notes         String?   @db.Text
+
+  survey        Survey    @relation(fields: [survey_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("survey_checklists")
+}
+
+model SurveyPhoto {
+  id          BigInt    @id @default(autoincrement())
+  survey_id   BigInt
+  file_url    String    @db.Text
+  caption     String?   @db.Text
+  uploaded_at DateTime  @default(now()) @db.Timestamptz(6)
+
+  survey      Survey    @relation(fields: [survey_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("survey_photos")
+}
+
+model ScoringResult {
+  id                  BigInt    @id @default(autoincrement())
+  application_id      BigInt
+  income_score        Decimal?  @db.Decimal(5, 2)
+  dependents_score    Decimal?  @db.Decimal(5, 2)
+  housing_score       Decimal?  @db.Decimal(5, 2)
+  asset_score         Decimal?  @db.Decimal(5, 2)
+  vulnerability_score Decimal?  @db.Decimal(5, 2)
+  history_aid_score   Decimal?  @db.Decimal(5, 2)
+  total_score         Decimal?  @db.Decimal(5, 2)
+  priority_level      String?   @db.VarChar(30)
+  scoring_version     String?   @db.VarChar(50)
+  scored_by_user_id   BigInt?
+  score_note          String?   @db.Text
+  scored_at           DateTime  @default(now()) @db.Timestamptz(6)
+
+  application       AidApplication  @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  scoredByUser      User?           @relation(fields: [scored_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("scoring_results")
+}
+
+model BeneficiaryDecision {
+  id                      BigInt    @id @default(autoincrement())
+  application_id          BigInt    @unique
+  decision_status         String    @db.VarChar(20)
+  approved_aid_type_id    BigInt?
+  approved_amount         Decimal?  @db.Decimal(14, 2)
+  approved_note           String?   @db.Text
+  decided_by_user_id      BigInt?
+  decided_at              DateTime  @default(now()) @db.Timestamptz(6)
+
+  application       AidApplication  @relation(fields: [application_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  approvedAidType   AidType?        @relation(fields: [approved_aid_type_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  decidedByUser     User?           @relation(fields: [decided_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  distributions     AidDistribution[]
+
+  @@map("beneficiary_decisions")
+}
+
+model AidDistribution {
+  id                      BigInt    @id @default(autoincrement())
+  beneficiary_decision_id BigInt
+  aid_type_id             BigInt
+  distribution_code       String    @unique @db.VarChar(50)
+  planned_date            DateTime? @db.Date
+  distributed_date        DateTime? @db.Timestamptz(6)
+  recipient_name          String    @db.VarChar(150)
+  recipient_relation      String?   @db.VarChar(100)
+  delivery_location       String?   @db.Text
+  distributed_by_user_id  BigInt?
+  quantity                Decimal?  @db.Decimal(14, 2)
+  unit                    String?   @db.VarChar(50)
+  status                  String    @db.VarChar(20)
+  notes                   String?   @db.Text
+  created_at              DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at              DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  decision                BeneficiaryDecision @relation(fields: [beneficiary_decision_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  aidType                 AidType             @relation(fields: [aid_type_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  distributedByUser       User?               @relation(fields: [distributed_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  proofs                  DistributionProof[]
+  statusHistories         DistributionStatusHistory[]
+  complaints              Complaint[]
+
+  @@map("aid_distributions")
+}
+
+model DistributionProof {
+  id                  BigInt    @id @default(autoincrement())
+  distribution_id     BigInt
+  proof_type          String    @db.VarChar(20)
+  file_url            String    @db.Text
+  caption             String?   @db.Text
+  uploaded_by_user_id BigInt?
+  uploaded_at         DateTime  @default(now()) @db.Timestamptz(6)
+
+  distribution      AidDistribution @relation(fields: [distribution_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  uploadedByUser    User?           @relation(fields: [uploaded_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("distribution_proofs")
+}
+
+model DistributionStatusHistory {
+  id                  BigInt    @id @default(autoincrement())
+  distribution_id     BigInt
+  old_status          String?   @db.VarChar(20)
+  new_status          String    @db.VarChar(20)
+  changed_by_user_id  BigInt?
+  reason              String?   @db.Text
+  changed_at          DateTime  @default(now()) @db.Timestamptz(6)
+
+  distribution      AidDistribution @relation(fields: [distribution_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  changedByUser     User?           @relation(fields: [changed_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("distribution_status_histories")
+}
+
+model Complaint {
+  id                    BigInt    @id @default(autoincrement())
+  household_id          BigInt
+  application_id        BigInt?
+  distribution_id       BigInt?
+  submitted_by_user_id  BigInt?
+  complaint_type        String    @db.VarChar(30)
+  description           String    @db.Text
+  status                String    @db.VarChar(20)
+  resolution_note       String?   @db.Text
+  resolved_by_user_id   BigInt?
+  resolved_at           DateTime? @db.Timestamptz(6)
+  created_at            DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at            DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  household         Household         @relation(fields: [household_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  application       AidApplication?   @relation(fields: [application_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  distribution      AidDistribution?  @relation(fields: [distribution_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  submittedByUser   User?             @relation("ComplaintSubmitter", fields: [submitted_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  resolvedByUser    User?             @relation("ComplaintResolver", fields: [resolved_by_user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("complaints")
+}
+
+model AuditLog {
+  id          BigInt    @id @default(autoincrement())
+  user_id     BigInt?
+  action      String    @db.VarChar(20)
+  entity_type String    @db.VarChar(50)
+  entity_id   BigInt
+  old_value   Json?     @db.JsonB
+  new_value   Json?     @db.JsonB
+  reason      String?   @db.Text
+  ip_address  String?   @db.VarChar(64)
+  created_at  DateTime  @default(now()) @db.Timestamptz(6)
+
+  user        User?     @relation(fields: [user_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@map("audit_logs")
+}
