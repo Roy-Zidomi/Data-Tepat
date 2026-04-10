@@ -6,7 +6,7 @@ const createUserSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters').max(100),
   password: z.string().min(6, 'Password must be at least 6 characters'),
   phone: z.string().max(30).optional().nullable(),
-  role: z.enum(['admin', 'relawan', 'petugas', 'warga', 'donatur']),
+  role: z.enum(['admin', 'relawan', 'petugas', 'warga']),
   is_active: z.boolean().optional(),
 });
 
@@ -16,7 +16,7 @@ const updateUserSchema = z.object({
   username: z.string().min(3).max(100).optional(),
   password: z.string().min(6).optional(), // Only provided if changing
   phone: z.string().max(30).optional().nullable(),
-  role: z.enum(['admin', 'relawan', 'petugas', 'warga', 'donatur']).optional(),
+  role: z.enum(['admin', 'relawan', 'petugas', 'warga']).optional(),
   is_active: z.boolean().optional(),
 });
 

@@ -6,8 +6,12 @@ import Alert from '../../components/ui/Alert';
 import dashboardService from '../../services/dashboardService';
 import { formatNumber, formatDateTime } from '../../utils/formatters';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
+import useAuthStore from '../../store/authStore';
+import WargaDashboard from './WargaDashboard';
+import RelawanDashboard from './RelawanDashboard';
 
 const Dashboard = () => {
+  const user = useAuthStore(s => s.user);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,7 +50,15 @@ const Dashboard = () => {
       }
     };
     fetchStats();
-  }, []);
+  }, [user]);
+
+  if (user?.role === 'warga') {
+    return <WargaDashboard />;
+  }
+
+  if (user?.role === 'relawan') {
+    return <RelawanDashboard />;
+  }
 
   if (loading) return <PageLoader />;
 

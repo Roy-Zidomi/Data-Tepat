@@ -3,11 +3,11 @@
  */
 
 export const ROLES = {
-  admin: { label: 'Administrator', color: 'badge-danger' },
-  petugas: { label: 'Petugas', color: 'badge-info' },
+  admin_main: { label: 'Admin Utama', color: 'badge-danger' },
+  admin_staff: { label: 'Admin Staff', color: 'badge-warning' },
+  pengawas: { label: 'Pengawas', color: 'badge-info' },
   relawan: { label: 'Relawan', color: 'badge-success' },
   warga: { label: 'Warga', color: 'badge-neutral' },
-  donatur: { label: 'Donatur', color: 'badge-warning' },
 };
 
 export const HOUSEHOLD_STATUS = {

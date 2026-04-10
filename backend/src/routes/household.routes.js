@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const householdController = require('../controllers/household.controller');
+const familyMemberController = require('../controllers/familyMember.controller');
 const { validate } = require('../middlewares/validate.middleware');
 const { authenticate, authorize } = require('../middlewares/auth.middleware');
 const { 
@@ -26,6 +27,12 @@ router.get(
   '/:id', 
   validate(householdParamsSchema, 'params'), 
   householdController.getById
+);
+
+router.post(
+  '/:id/members',
+  validate(householdParamsSchema, 'params'),
+  familyMemberController.addMembers
 );
 
 router.put(

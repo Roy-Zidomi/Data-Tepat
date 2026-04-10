@@ -5,55 +5,121 @@ const bcrypt = require('bcrypt');
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminPassword = await bcrypt.hash('admin123', 10);
-  
-  // Upsert Region (as placeholder for household)
-  const region = await prisma.region.upsert({
-    where: { id: 1 },
-    update: {},
-    create: {
+  console.log('Starting seed...');
+
+  // 1. Seed Aid Types
+  const aidTypes = [
+    { code: 'PKH', name: 'Program Keluarga Harapan (PKH)', description: 'Bantuan tunai bersyarat untuk keluarga rentan', unit: 'Rp' },
+    { code: 'BPNT', name: 'Bantuan Pangan Non Tunai (BPNT)', description: 'Bantuan sembako senilai Rp 200.000 per bulan', unit: 'Paket' },
+    { code: 'BLT-BBM', name: 'Bantuan Langsung Tunai BBM', description: 'Kompensasi subsidi BBM', unit: 'Rp' },
+    { code: 'RTLH', name: 'Rehabilitasi Rumah Tidak Layak Huni', description: 'Bantuan perbaikan rumah', unit: 'Unit' },
+  ];
+
+  for (const aid of aidTypes) {
+    await prisma.aidType.upsert({
+      where: { code: aid.code },
+      update: {},
+      create: aid,
+    });
+  }
+  console.log('✅ Aid Types seeded');
+
+  // 2. Seed Regions
+  const region1 = await prisma.region.create({
+    data: {
       province: 'Jawa Barat',
-      city_regency: 'Bandung',
-      district: 'Coblong',
-      village: 'Dago',
-      rt: '001',
-      rw: '005',
+      city_regency: 'Kota Bogor',
+      district: 'Bogor Tengah',
+      village: 'Sukamaju',
+      rt: '01',
+      rw: '05',
+      postal_code: '16121',
     }
   });
+  console.log('✅ Region seeded');
 
-  // Upsert Admin User
-  const admin = await prisma.user.upsert({
-    where: { username: 'admin' },
-    update: {},
-    create: {
-      name: 'Super Admin',
-      username: 'admin',
-      email: 'admin@bantutepat.go.id',
-      password_hash: adminPassword,
-      role: 'admin',
-      phone: '081234567890',
+  // 3. Seed Users
+  const password_hash = await bcrypt.hash('password123', 10);
+
+  const users = [
+    {
+      email: 'admin@bantutepat.com',
+      username: 'admin_utama',
+      name: 'Admin Sistem',
+      phone: '08111111111',
+      role: 'admin_main',
       is_active: true,
+      activation_status: 'active',
+      password_hash
     },
-  });
-
-  // Upsert Warga User
-  const wargaPassword = await bcrypt.hash('warga123', 10);
-  const warga = await prisma.user.upsert({
-    where: { username: 'warga' },
-    update: {},
-    create: {
-      name: 'Bapak Warga',
-      username: 'warga',
-      email: 'warga@example.com',
-      password_hash: wargaPassword,
+    {
+      email: 'staff@bantutepat.com',
+      username: 'admin_staff',
+      name: 'Siti Staff',
+      phone: '08222222222',
+      role: 'admin_staff',
+      is_active: true,
+      activation_status: 'active',
+      password_hash
+    },
+    {
+      email: 'pengawas@bantutepat.com',
+      username: 'pengawas_independen',
+      name: 'Heri Pengawas',
+      phone: '08555555555',
+      role: 'pengawas',
+      is_active: true,
+      activation_status: 'active',
+      password_hash
+    },
+    {
+      email: 'relawan@bantutepat.com',
+      username: 'relawan_lapangan',
+      name: 'Toni Relawan',
+      phone: '08333333333',
+      role: 'relawan',
+      is_active: true,
+      activation_status: 'active',
+      password_hash
+    },
+    {
+      email: 'warga@bantutepat.com',
+      username: 'warga_teladan',
+      name: 'Ahmad Warga',
+      phone: '08444444444',
       role: 'warga',
-      phone: '081234567891',
       is_active: true,
-    },
-  });
+      activation_status: 'active',
+      password_hash
+    }
+  ];
 
-  console.log('Seed executed: Setup Admin, Warga, and initial Region.');
-  console.log({ admin: admin.username, warga: warga.username, defaultPassword: 'admin123 / warga123' });
+  const createdUsers = {};
+  for (const u of users) {
+    const created = await prisma.user.upsert({
+      where: { email: u.email },
+      update: {
+        role: u.role,
+        is_active: u.is_active,
+        activation_status: u.activation_status,
+        password_hash: u.password_hash
+      },
+      create: u,
+    });
+    createdUsers[u.role] = created;
+  }
+  console.log('✅ Users seeded');
+
+  // ... (rest of the code for household) ...
+  // (Assuming I should keep the rest of main function as is or just focus on the users section)
+  // Let's replace only the users array and the console summary.
+
+  console.log('Seed completed successfully! You can login with:');
+  console.log('Admin Utama: admin@bantutepat.com / password123');
+  console.log('Admin Staff: staff@bantutepat.com / password123');
+  console.log('Pengawas: pengawas@bantutepat.com / password123');
+  console.log('Relawan: relawan@bantutepat.com / password123');
+  console.log('Warga: warga@bantutepat.com / password123');
 }
 
 main()

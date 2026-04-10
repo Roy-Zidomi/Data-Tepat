@@ -11,20 +11,20 @@ import useAuthStore from '../../store/authStore';
  * Sidebar - Collapsible navigation sidebar for the dashboard layout.
  */
 const navItems = [
-  // Dashboards (Role specific names like Monitoring or Status will be handled in the Dashboard component view, routing is same)
-  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'petugas', 'warga'] },
+  { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga'] },
   
   // Modul Admin - Master Data & Administrasi
-  { path: '/users', label: 'Users', icon: Users, roles: ['admin'] },
-  { path: '/regions', label: 'Regions', icon: MapPin, roles: ['admin'] },
-  { path: '/aid-types', label: 'Aid Types', icon: Package, roles: ['admin'] },
-  { path: '/applications', label: 'Applications', icon: FileText, roles: ['admin', 'petugas', 'warga'] },
-  { path: '/decisions', label: 'Decisions', icon: CheckSquare, roles: ['admin'] },
-  { path: '/distributions', label: 'Distributions', icon: Truck, roles: ['admin', 'petugas'] },
-  { path: '/audit-logs', label: 'Audit Logs', icon: Shield, roles: ['admin'] },
+  { path: '/admin/create-warga', label: 'Akun Warga', icon: Users, roles: ['admin_main', 'admin_staff'] },
+  { path: '/users', label: 'Users', icon: Users, roles: ['admin_main', 'admin_staff'] },
+  { path: '/regions', label: 'Regions', icon: MapPin, roles: ['admin_main', 'admin_staff'] },
+  { path: '/aid-types', label: 'Aid Types', icon: Package, roles: ['admin_main', 'admin_staff'] },
+  { path: '/applications', label: 'Applications', icon: FileText, roles: ['admin_main', 'admin_staff', 'pengawas', 'warga'] },
+  { path: '/decisions', label: 'Decisions', icon: CheckSquare, roles: ['admin_main'] },
+  { path: '/distributions', label: 'Distributions', icon: Truck, roles: ['admin_main', 'admin_staff', 'relawan'] },
+  { path: '/audit-logs', label: 'Audit Logs', icon: Shield, roles: ['admin_main', 'admin_staff', 'pengawas'] },
   
   // Modul Relawan, Petugas & Warga - Data Lapangan
-  { path: '/households', label: 'Households', icon: Home, roles: ['relawan', 'petugas', 'warga'] },
+  { path: '/households', label: 'Households', icon: Home, roles: ['relawan', 'admin_staff', 'warga'] },
   { path: '/family-members', label: 'Family Members', icon: Users, roles: ['relawan', 'warga'] },
   { path: '/documents', label: 'Documents', icon: FileIcon, roles: ['relawan', 'warga'] },
   
@@ -34,7 +34,7 @@ const navItems = [
   { path: '/survey-photos', label: 'Survey Photos', icon: FileIcon, roles: ['relawan'] },
   
   // Modul Interaksi (Warga)
-  { path: '/complaints', label: 'Complaints', icon: MessageSquare, roles: ['warga'] },
+  { path: '/complaints', label: 'Complaints', icon: MessageSquare, roles: ['warga', 'admin_main', 'admin_staff'] },
 ];
 
 const Sidebar = () => {

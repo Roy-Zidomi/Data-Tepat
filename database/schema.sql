@@ -19,10 +19,27 @@ CREATE TABLE users (
     phone VARCHAR(30),
     role VARCHAR(30) NOT NULL,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    activation_status VARCHAR(30) NOT NULL DEFAULT 'active',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     CONSTRAINT chk_users_role
-        CHECK (role IN ('admin', 'relawan', 'petugas', 'warga', 'donatur'))
+        CHECK (role IN ('admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga')),
+    CONSTRAINT chk_users_activation_status
+        CHECK (activation_status IN ('unregistered', 'pending_otp', 'active'))
+);
+
+CREATE TABLE otp_codes (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    phone VARCHAR(30) NOT NULL,
+    otp_code VARCHAR(10) NOT NULL,
+    action_type VARCHAR(20) NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    is_used BOOLEAN NOT NULL DEFAULT FALSE,
+    request_count INT NOT NULL DEFAULT 1,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_otp_codes_type
+        CHECK (action_type IN ('activation', 'login', 'recovery'))
 );
 
 CREATE TABLE regions (
