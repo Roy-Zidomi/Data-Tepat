@@ -19,6 +19,7 @@ import AuditLogList from '../pages/Admin/AuditLogList';
 import ComplaintCreate from '../pages/Complaints/ComplaintCreate';
 import SurveyList from '../pages/Surveys/SurveyList';
 import SurveyAction from '../pages/Surveys/SurveyAction';
+import SurveyChecklistList from '../pages/Surveys/SurveyChecklistList';
 import ApplicationList from '../pages/Applications/ApplicationList';
 import ApplicationDetail from '../pages/Applications/ApplicationDetail';
 import DistributionList from '../pages/Distributions/DistributionList';
@@ -220,7 +221,7 @@ const AppRouter = () => {
             <Route path=":id" element={<SurveyAction />} />
           </Route>
           <Route path="/survey-checklists" element={<ProtectedRoute allowedRoles={['relawan']} />}>
-            <Route index element={<Placeholder title="Checklist Survei" />} />
+            <Route index element={<SurveyChecklistList />} />
           </Route>
           <Route path="/survey-photos" element={<ProtectedRoute allowedRoles={['relawan']} />}>
             <Route index element={<Placeholder title="Foto Survei" />} />
