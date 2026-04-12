@@ -131,8 +131,8 @@ class HouseholdService {
   }
 
   async delete(id, user) {
-    if (!['admin', 'petugas'].includes(user.role)) {
-       throw { statusCode: 403, message: 'Only admin or petugas can delete households' };
+    if (user.role !== 'admin_main') {
+       throw { statusCode: 403, message: 'Only admin_main can delete households' };
     }
     
     const deleted = await prisma.household.delete({

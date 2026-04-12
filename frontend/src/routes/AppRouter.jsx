@@ -22,6 +22,8 @@ import ApplicationDetail from '../pages/Applications/ApplicationDetail';
 import DistributionList from '../pages/Distributions/DistributionList';
 import ComplaintReview from '../pages/Complaints/ComplaintReview';
 import PublicDashboard from '../pages/Public/PublicDashboard';
+import RegionList from '../pages/Regions/RegionList';
+import AidTypeList from '../pages/AidTypes/AidTypeList';
 import DonationForm from '../pages/Public/DonationForm';
 
 // Placeholder components for other routes
@@ -58,14 +60,14 @@ const AppRouter = () => {
           </Route>
           
           {/* Khusus Admin */}
-          <Route path="/users" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
+          <Route path="/users" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
             <Route index element={<Placeholder title="Users Management" />} />
           </Route>
           <Route path="/regions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
-            <Route index element={<Placeholder title="Regions Management" />} />
+            <Route index element={<RegionList />} />
           </Route>
           <Route path="/aid-types" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
-            <Route index element={<Placeholder title="Aid Types Management" />} />
+            <Route index element={<AidTypeList />} />
           </Route>
           <Route path="/decisions" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
              <Route index element={<Placeholder title="Decisions" />} />
@@ -73,7 +75,7 @@ const AppRouter = () => {
           <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
             <Route index element={<AuditLogList />} />
           </Route>
-          <Route path="/admin/create-warga" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
+          <Route path="/admin/create-warga" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
             <Route index element={<WargaAccountCreate />} />
           </Route>
 
@@ -89,8 +91,8 @@ const AppRouter = () => {
              <Route index element={<DistributionList />} />
           </Route>
           
-          {/* Relawan, Petugas, Warga */}
-          <Route path="/households" element={<ProtectedRoute allowedRoles={['relawan', 'admin_staff', 'warga']} />}>
+          {/* Relawan, Admin, Warga */}
+          <Route path="/households" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
             <Route index element={<HouseholdList />} />
             <Route path=":id" element={<Placeholder title="Household Detail" />} />
             <Route path=":id/documents" element={<HouseholdDocuments />} />

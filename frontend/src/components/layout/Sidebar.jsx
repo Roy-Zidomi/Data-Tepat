@@ -14,8 +14,8 @@ const navItems = [
   { path: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga'] },
   
   // Modul Admin - Master Data & Administrasi
-  { path: '/admin/create-warga', label: 'Akun Warga', icon: Users, roles: ['admin_main', 'admin_staff'] },
-  { path: '/users', label: 'Users', icon: Users, roles: ['admin_main', 'admin_staff'] },
+  { path: '/admin/create-warga', label: 'Akun Warga', icon: Users, roles: ['admin_main'] },
+  { path: '/users', label: 'Users', icon: Users, roles: ['admin_main'] },
   { path: '/regions', label: 'Regions', icon: MapPin, roles: ['admin_main', 'admin_staff'] },
   { path: '/aid-types', label: 'Aid Types', icon: Package, roles: ['admin_main', 'admin_staff'] },
   { path: '/applications', label: 'Applications', icon: FileText, roles: ['admin_main', 'admin_staff', 'pengawas', 'warga'] },
@@ -24,7 +24,7 @@ const navItems = [
   { path: '/audit-logs', label: 'Audit Logs', icon: Shield, roles: ['admin_main', 'admin_staff', 'pengawas'] },
   
   // Modul Relawan, Petugas & Warga - Data Lapangan
-  { path: '/households', label: 'Households', icon: Home, roles: ['relawan', 'admin_staff', 'warga'] },
+  { path: '/households', label: 'Households', icon: Home, roles: ['admin_main', 'admin_staff', 'relawan', 'warga'] },
   { path: '/family-members', label: 'Family Members', icon: Users, roles: ['relawan', 'warga'] },
   { path: '/documents', label: 'Documents', icon: FileIcon, roles: ['relawan', 'warga'] },
   
@@ -33,7 +33,7 @@ const navItems = [
   { path: '/survey-checklists', label: 'Survey Checklists', icon: ClipboardList, roles: ['relawan'] },
   { path: '/survey-photos', label: 'Survey Photos', icon: FileIcon, roles: ['relawan'] },
   
-  // Modul Interaksi (Warga)
+  // Modul Interaksi (Warga & Admin)
   { path: '/complaints', label: 'Complaints', icon: MessageSquare, roles: ['warga', 'admin_main', 'admin_staff'] },
 ];
 

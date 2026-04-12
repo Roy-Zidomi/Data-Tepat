@@ -45,7 +45,7 @@ router.put(
 router.delete(
   '/:id', 
   validate(householdParamsSchema, 'params'), 
-  authorize('admin', 'petugas'), // Only admin and petugas
+  authorize('admin_main'), // Only admin_main can delete households
   householdController.delete
 );
 

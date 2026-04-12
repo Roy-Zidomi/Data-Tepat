@@ -57,6 +57,35 @@ class AidApplicationController {
       next(error);
     }
   }
+
+  async getAll(req, res, next) {
+    try {
+      const { data, meta } = await aidApplicationService.getAll(req.query);
+
+      const appStr = JSON.parse(JSON.stringify(data, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      ));
+
+      return successResponse(res, { records: appStr, meta }, 'All applications retrieved');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateStatus(req, res, next) {
+    try {
+      const { status, reason } = req.body;
+      const updated = await aidApplicationService.updateStatus(req.params.id, status, reason, req.user);
+
+      const appStr = JSON.parse(JSON.stringify(updated, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      ));
+
+      return successResponse(res, appStr, 'Application status updated');
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AidApplicationController();
