@@ -26,14 +26,23 @@ Data-Tepat/
 
 ## Tech Stack
 
-- Frontend: React + Vite
-- Backend: Node.js
-- Data layer: Prisma
+- Frontend: React + Vite, Tailwind CSS, Zustand
+- Backend: Node.js, Express
+- Data layer: Prisma, PostgreSQL
 - Configuration: `.env` terpisah untuk frontend dan backend
+- Upload: Multer (Penyimpanan Lokal)
+
+## Fitur Terimplementasi
+
+- **Autentikasi & Otorisasi:** Sistem login JWT berbasis Role (Admin, Surveyor, dll).
+- **Master Data Warga:** Registrasi penduduk, rumah tangga, kondisi ekonomi, rumah, dan aset.
+- **Pengajuan Bantuan:** Pembuatan pengajuan per tipe bantuan terintegrasi dengan dokumen verifikasi.
+- **Distribusi Bantuan:** Pelacakan proses penyaluran dan penyimpanan bukti distribusi.
+- **Komplain & Audit:** Sistem pengelolaan keluhan warga dan pencatatan audit log secara otomatis.
 
 ## Status Project
 
-Repository ini masih berada pada tahap **initial base**. Struktur utama project, pemisahan frontend-backend, dan file konfigurasi dasar sudah tersedia, tetapi implementasi fitur inti masih perlu dilanjutkan.
+Sistem saat ini berada dalam **fase pengembangan aktif**. Struktur utama project telah mencakup fitur inti API (pengajuan, distribusi, warga, komplain) beserta skema database yang komprehensif pada level backend. Sementara itu, UI di bagian frontend telah dibangun dengan state management dan komponen yang spesifik.
 
 ## Getting Started
 
@@ -50,6 +59,7 @@ cd Data-Tepat
 cp backend/.env.example backend/.env
 cp frontend/.env.example frontend/.env
 ```
+*(Pastikan Anda menyesuaikan credentials PostgreSQL pada parameter `DATABASE_URL` di `backend/.env`)*
 
 3. Install dependency
 
@@ -61,7 +71,15 @@ cd ../frontend
 npm install
 ```
 
-4. Jalankan project
+4. Setup Database
+
+```bash
+cd backend
+npx prisma generate
+npx prisma db push
+```
+
+5. Jalankan project
 
 ```bash
 cd backend
@@ -78,11 +96,19 @@ Backend:
 - `DATABASE_URL`
 - `PORT`
 - `JWT_SECRET`
+- `JWT_EXPIRES_IN`
+- `UPLOAD_DIR`
+- `MAX_FILE_SIZE`
 
 Frontend:
 
 - `VITE_API_URL`
 - `VITE_APP_NAME`
+
+## Catatan Penting
+
+- Penyimpanan file (seperti KTP atau bukti dokumentasi) saat ini masih mengandalkan mekanisme local storage (`uploads/`), belum diintegrasikan ke layanan Cloud Object Storage.
+- Skema database sudah mencakup penanganan tabel OTP, namun sistem pengiriman tiket (SMS/WA) belum sepenuhnya aktif secara end-to-end tanpa integrasi eksternal.
 
 ## License
 
