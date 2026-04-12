@@ -20,6 +20,7 @@ import ComplaintCreate from '../pages/Complaints/ComplaintCreate';
 import SurveyList from '../pages/Surveys/SurveyList';
 import SurveyAction from '../pages/Surveys/SurveyAction';
 import SurveyChecklistList from '../pages/Surveys/SurveyChecklistList';
+import SurveyPhotoGallery from '../pages/Surveys/SurveyPhotoGallery';
 import ApplicationList from '../pages/Applications/ApplicationList';
 import ApplicationDetail from '../pages/Applications/ApplicationDetail';
 import DistributionList from '../pages/Distributions/DistributionList';
@@ -224,7 +225,7 @@ const AppRouter = () => {
             <Route index element={<SurveyChecklistList />} />
           </Route>
           <Route path="/survey-photos" element={<ProtectedRoute allowedRoles={['relawan']} />}>
-            <Route index element={<Placeholder title="Foto Survei" />} />
+            <Route index element={<SurveyPhotoGallery />} />
           </Route>
 
           {/* MODUL WARGA */}
