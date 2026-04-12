@@ -11,13 +11,13 @@ const { createApplicationSchema } = require('../validators/aidApplication.valida
 router.use(authenticate);
 
 // List my applications (any authenticated user)
-router.get('/my', aidApplicationController.getMyApplications);
+router.get('/my', requirePermission('APPLICATION_LIST_OWN'), aidApplicationController.getMyApplications);
 
 // List all applications (admin view — admin_main, admin_staff, pengawas)
 router.get('/all', requirePermission('APPLICATION_LIST'), aidApplicationController.getAll);
 
 // Get application by ID
-router.get('/:id', aidApplicationController.getApplicationById);
+router.get('/:id', requirePermission('APPLICATION_DETAIL'), aidApplicationController.getApplicationById);
 
 // Create application draft
 router.post('/', requirePermission('APPLICATION_CREATE'), validate(createApplicationSchema), aidApplicationController.createApplication);

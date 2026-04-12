@@ -167,9 +167,14 @@ class AidApplicationService {
     return { data, meta: buildPaginationMeta(total, page, limit) };
   }
 
-  async getApplicationById(id) {
-    const application = await prisma.aidApplication.findUnique({
-      where: { id: BigInt(id) },
+  async getApplicationById(id, user) {
+    const where = { id: BigInt(id) };
+    if (user.role === 'warga') {
+      where.submitted_by_user_id = BigInt(user.id);
+    }
+
+    const application = await prisma.aidApplication.findFirst({
+      where,
       include: {
         statusHistories: { orderBy: { changed_at: 'desc' } },
         aidType: true,
@@ -190,7 +195,7 @@ class AidApplicationService {
       }
     });
 
-    if (!application) throw { statusCode: 404, message: 'Application not found' };
+    if (!application) throw { statusCode: 404, message: 'Application not found or unauthorized' };
     return application;
   }
 

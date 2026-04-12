@@ -4,7 +4,8 @@ const router = express.Router();
 const householdController = require('../controllers/household.controller');
 const familyMemberController = require('../controllers/familyMember.controller');
 const { validate } = require('../middlewares/validate.middleware');
-const { authenticate, authorize } = require('../middlewares/auth.middleware');
+const { authenticate } = require('../middlewares/auth.middleware');
+const { requirePermission } = require('../middlewares/rbac.middleware');
 const { 
   createHouseholdSchema, 
   updateHouseholdSchema, 
@@ -15,37 +16,41 @@ const {
 router.use(authenticate);
 
 // List and Create
-router.get('/', householdController.getAll);
+router.get('/', requirePermission('HOUSEHOLD_LIST'), householdController.getAll);
 router.post(
-  '/', 
+  '/',
+  requirePermission('HOUSEHOLD_CREATE'),
   validate(createHouseholdSchema, 'body'), 
   householdController.create
 );
 
 // Detail, Update, Delete
 router.get(
-  '/:id', 
+  '/:id',
+  requirePermission('HOUSEHOLD_LIST'),
   validate(householdParamsSchema, 'params'), 
   householdController.getById
 );
 
 router.post(
   '/:id/members',
+  requirePermission('HOUSEHOLD_UPDATE'),
   validate(householdParamsSchema, 'params'),
   familyMemberController.addMembers
 );
 
 router.put(
-  '/:id', 
+  '/:id',
+  requirePermission('HOUSEHOLD_UPDATE'),
   validate(householdParamsSchema, 'params'), 
   validate(updateHouseholdSchema, 'body'), 
   householdController.update
 );
 
 router.delete(
-  '/:id', 
+  '/:id',
+  requirePermission('HOUSEHOLD_DELETE'),
   validate(householdParamsSchema, 'params'), 
-  authorize('admin_main'), // Only admin_main can delete households
   householdController.delete
 );
 

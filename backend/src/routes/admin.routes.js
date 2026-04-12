@@ -165,7 +165,7 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
  * Dashboard statistics for admin overview
  * Access: admin_main, admin_staff
  */
-router.get('/dashboard-stats', requirePermission('DASHBOARD_ADMIN'), async (req, res, next) => {
+router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (req, res, next) => {
   try {
     const [
       totalHouseholds,

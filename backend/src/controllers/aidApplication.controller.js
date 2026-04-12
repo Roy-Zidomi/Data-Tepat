@@ -46,7 +46,7 @@ class AidApplicationController {
 
   async getApplicationById(req, res, next) {
     try {
-      const application = await aidApplicationService.getApplicationById(req.params.id);
+      const application = await aidApplicationService.getApplicationById(req.params.id, req.user);
 
       const appStr = JSON.parse(JSON.stringify(application, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value
