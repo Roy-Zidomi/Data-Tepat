@@ -6,27 +6,67 @@ import useAuthStore from '../store/authStore';
 // Lazy load pages for performance
 import Login from '../pages/Login/Login';
 import Activation from '../pages/Login/Activation';
-import Dashboard from '../pages/Dashboard/Dashboard';
+import Dashboard from '../pages/dashboard/Dashboard';
 import WargaAccountCreate from '../pages/Admin/WargaAccountCreate';
 
 import HouseholdList from '../pages/Households/HouseholdList';
+import HouseholdDetail from '../pages/Households/HouseholdDetail';
 import HouseholdWizard from '../pages/Households/HouseholdWizard';
 import HouseholdDocuments from '../pages/Households/HouseholdDocuments';
+import FamilyMemberList from '../pages/Households/FamilyMemberList';
 import ApplicationCreate from '../pages/Households/ApplicationCreate';
 import AuditLogList from '../pages/Admin/AuditLogList';
 import ComplaintCreate from '../pages/Complaints/ComplaintCreate';
 import SurveyList from '../pages/Surveys/SurveyList';
 import SurveyAction from '../pages/Surveys/SurveyAction';
+import SurveyChecklistList from '../pages/Surveys/SurveyChecklistList';
+import SurveyPhotoGallery from '../pages/Surveys/SurveyPhotoGallery';
 import ApplicationList from '../pages/Applications/ApplicationList';
 import ApplicationDetail from '../pages/Applications/ApplicationDetail';
 import DistributionList from '../pages/Distributions/DistributionList';
 import ComplaintReview from '../pages/Complaints/ComplaintReview';
 import PublicDashboard from '../pages/Public/PublicDashboard';
+import RegionList from '../pages/Regions/RegionList';
+import AidTypeList from '../pages/AidTypes/AidTypeList';
 import DonationForm from '../pages/Public/DonationForm';
 
-// Placeholder components for other routes
-const Placeholder = ({ title }) => (
-  <div className="p-8"><h1 className="text-2xl font-bold">{title} Page Incoming...</h1></div>
+// Household Data Pages (Fase 2)
+import EconomicConditionList from '../pages/HouseholdData/EconomicConditionList';
+import HousingConditionList from '../pages/HouseholdData/HousingConditionList';
+import HouseholdAssetList from '../pages/HouseholdData/HouseholdAssetList';
+import VulnerabilityList from '../pages/HouseholdData/VulnerabilityList';
+
+// Permohonan Bantuan Pages (Fase 3)
+import DocumentVerificationList from '../pages/Applications/DocumentVerificationList';
+import ScoringResultList from '../pages/Applications/ScoringResultList';
+import SurveyResultList from '../pages/Applications/SurveyResultList';
+import DecisionList from '../pages/Applications/DecisionList';
+
+// Distribusi Bantuan Pages (Fase 4)
+import DistributionTracking from '../pages/Distributions/DistributionTracking';
+import DistributionProofs from '../pages/Distributions/DistributionProofs';
+import DistributionHistory from '../pages/Distributions/DistributionHistory';
+
+// Audit & Monitoring Pages (Fase 5)
+import UserActivityList from '../pages/Admin/UserActivityList';
+
+// Admin / Manajemen Pengguna Pages (Fase 6)
+import UserList from '../pages/Admin/UserList';
+
+// Placeholder for pages that will be built in later phases
+const Placeholder = ({ title, description }) => (
+  <div className="space-y-4 animate-fade-in">
+    <div>
+      <h1 className="text-2xl font-bold text-surface-900 dark:text-white">{title}</h1>
+      <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
+        {description || 'Halaman ini sedang dalam tahap pengembangan.'}
+      </p>
+    </div>
+    <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-6 text-center">
+      <p className="text-amber-700 dark:text-amber-400 font-medium">🚧 Coming Soon — Fase berikutnya</p>
+      <p className="text-sm text-amber-600 dark:text-amber-500 mt-1">Fitur ini akan dibangun setelah core system stabil.</p>
+    </div>
+  </div>
 );
 
 const AppRouter = () => {
@@ -52,78 +92,147 @@ const AppRouter = () => {
         <Route element={<DashboardLayout />}>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           
-          {/* Dashboards */}
+          {/* ═══════════════════════════════════════════ */}
+          {/* 1. DASHBOARD                               */}
+          {/* ═══════════════════════════════════════════ */}
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga']} />}>
             <Route index element={<Dashboard />} />
           </Route>
-          
-          {/* Khusus Admin */}
-          <Route path="/users" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
-            <Route index element={<Placeholder title="Users Management" />} />
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* 2. DATA WARGA                              */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/households" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga']} />}>
+            <Route index element={<HouseholdList />} />
+            <Route path=":id" element={<HouseholdDetail />} />
+            <Route path=":id/documents" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+              <Route index element={<HouseholdDocuments />} />
+            </Route>
+            <Route path=":id/edit" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+              <Route index element={<Placeholder title="Edit Rumah Tangga" />} />
+            </Route>
+            <Route path="create" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+              <Route index element={<HouseholdWizard />} />
+            </Route>
           </Route>
-          <Route path="/regions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
-            <Route index element={<Placeholder title="Regions Management" />} />
+          <Route path="/family-members" element={<ProtectedRoute allowedRoles={['admin_main', 'relawan', 'warga']} />}>
+            <Route index element={<FamilyMemberList />} />
           </Route>
-          <Route path="/aid-types" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
-            <Route index element={<Placeholder title="Aid Types Management" />} />
+          <Route path="/economic-conditions" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<EconomicConditionList />} />
+          </Route>
+          <Route path="/housing-conditions" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<HousingConditionList />} />
+          </Route>
+          <Route path="/household-assets" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<HouseholdAssetList />} />
+          </Route>
+          <Route path="/vulnerabilities" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<VulnerabilityList />} />
+          </Route>
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* 3. PERMOHONAN BANTUAN                      */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/applications" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'warga']} />}>
+            <Route index element={<ApplicationList />} />
+            <Route path="new" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'warga']} />}>
+              <Route index element={<ApplicationCreate />} />
+            </Route>
+            <Route path=":id" element={<ApplicationDetail />} />
+          </Route>
+          <Route path="/document-verification" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<DocumentVerificationList />} />
+          </Route>
+          <Route path="/survey-results" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<SurveyResultList />} />
+          </Route>
+          <Route path="/scoring-results" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<ScoringResultList />} />
           </Route>
           <Route path="/decisions" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
-             <Route index element={<Placeholder title="Decisions" />} />
+            <Route index element={<DecisionList />} />
           </Route>
-          <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
-            <Route index element={<AuditLogList />} />
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* 4. DISTRIBUSI BANTUAN                      */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/distributions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan']} />}>
+            <Route index element={<DistributionList />} />
           </Route>
-          <Route path="/admin/create-warga" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
+          <Route path="/distribution-tracking" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<DistributionTracking />} />
+          </Route>
+          <Route path="/distribution-proofs" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
+            <Route index element={<DistributionProofs />} />
+          </Route>
+          <Route path="/distribution-history" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
+            <Route index element={<DistributionHistory />} />
+          </Route>
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* 5. MANAJEMEN PENGGUNA (admin_main only)    */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/users" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<UserList />} />
+          </Route>
+          <Route path="/admin/create-warga" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
             <Route index element={<WargaAccountCreate />} />
           </Route>
 
-          {/* Admin, Petugas, Warga */}
-          <Route path="/applications" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'warga']} />}>
-            <Route index element={<ApplicationList />} />
-            <Route path="new" element={<ApplicationCreate />} />
-            <Route path=":id" element={<ApplicationDetail />} />
+          {/* ═══════════════════════════════════════════ */}
+          {/* 6. WILAYAH                                 */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/regions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
+            <Route index element={<RegionList />} />
           </Route>
 
-          {/* Admin, Petugas */}
-          <Route path="/distributions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan']} />}>
-             <Route index element={<DistributionList />} />
-          </Route>
-          
-          {/* Relawan, Petugas, Warga */}
-          <Route path="/households" element={<ProtectedRoute allowedRoles={['relawan', 'admin_staff', 'warga']} />}>
-            <Route index element={<HouseholdList />} />
-            <Route path=":id" element={<Placeholder title="Household Detail" />} />
-            <Route path=":id/documents" element={<HouseholdDocuments />} />
-            <Route path=":id/edit" element={<Placeholder title="Household Edit" />} />
-            <Route path="create" element={<HouseholdWizard />} />
+          {/* ═══════════════════════════════════════════ */}
+          {/* 7. JENIS BANTUAN                           */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/aid-types" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
+            <Route index element={<AidTypeList />} />
           </Route>
 
-          {/* Relawan, Warga */}
-          <Route path="/family-members" element={<ProtectedRoute allowedRoles={['relawan', 'warga']} />}>
-            <Route index element={<Placeholder title="Family Members" />} />
+          {/* ═══════════════════════════════════════════ */}
+          {/* 8. AUDIT & MONITORING                      */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
+            <Route index element={<AuditLogList />} />
           </Route>
-          <Route path="/documents" element={<ProtectedRoute allowedRoles={['relawan', 'warga']} />}>
-            <Route index element={<Placeholder title="Documents" />} />
+          <Route path="/user-activity" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+            <Route index element={<UserActivityList />} />
           </Route>
-          
-          {/* Khusus Relawan */}
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* 9. PENGADUAN                               */}
+          {/* ═══════════════════════════════════════════ */}
+          <Route path="/complaints" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'warga']} />}>
+            <Route index element={<ComplaintReview />} />
+            <Route path="create" element={<ProtectedRoute allowedRoles={['warga']} />}>
+              <Route index element={<ComplaintCreate />} />
+            </Route>
+          </Route>
+
+          {/* ═══════════════════════════════════════════ */}
+          {/* MODUL RELAWAN                              */}
+          {/* ═══════════════════════════════════════════ */}
           <Route path="/surveys" element={<ProtectedRoute allowedRoles={['relawan']} />}>
             <Route index element={<SurveyList />} />
             <Route path=":id" element={<SurveyAction />} />
           </Route>
           <Route path="/survey-checklists" element={<ProtectedRoute allowedRoles={['relawan']} />}>
-            <Route index element={<Placeholder title="Survey Checklists" />} />
+            <Route index element={<SurveyChecklistList />} />
           </Route>
           <Route path="/survey-photos" element={<ProtectedRoute allowedRoles={['relawan']} />}>
-            <Route index element={<Placeholder title="Survey Photos" />} />
+            <Route index element={<SurveyPhotoGallery />} />
           </Route>
-          
-          {/* Admin, Petugas, Warga */}
-          <Route path="/complaints" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'warga']} />}>
-             <Route index element={<ComplaintReview />} />
-             <Route path="create" element={<ComplaintCreate />} />
+
+          {/* MODUL WARGA */}
+          <Route path="/documents" element={<ProtectedRoute allowedRoles={['relawan', 'warga']} />}>
+            <Route index element={<Placeholder title="Dokumen Saya" />} />
           </Route>
-          
+
         </Route>
       </Route>
 
