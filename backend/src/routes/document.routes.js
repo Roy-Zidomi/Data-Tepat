@@ -23,7 +23,7 @@ router.get('/household/:householdId', documentController.getDocumentsByHousehold
 // Verification is restricted to Admin & Petugas & Relawan
 router.patch(
   '/:id/verify',
-  authorize('admin', 'petugas', 'relawan'),
+  authorize('admin_main', 'admin_staff'),
   validate(verifyDocumentSchema),
   documentController.verifyDocument
 );

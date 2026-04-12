@@ -2,21 +2,13 @@ const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const prisma = require('../config/database');
-const { authenticate, authorize } = require('../middlewares/auth.middleware');
+const { authenticate } = require('../middlewares/auth.middleware');
+const { requirePermission, requireAnyPermission } = require('../middlewares/rbac.middleware');
 const { successResponse } = require('../utils/response');
 const { logAudit } = require('../utils/auditLogger');
 
-/**
- * Helper: Generate random alphanumeric password
- */
-function generateRandomPassword(length = 12) {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
-  let password = '';
-  for (let i = 0; i < length; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
-}
+// All admin routes require authentication
+router.use(authenticate);
 
 /**
  * Helper: Serialize BigInt in objects
@@ -27,14 +19,13 @@ function serializeBigInt(obj) {
   ));
 }
 
-router.use(authorize('admin_main', 'admin_staff', 'pengawas'));
-
 /**
- * GET /api/admin/warga-eligible
+ * GET /api/v1/admin/warga-eligible
  * Daftar rumah tangga yang pengajuannya sudah Disetujui 
  * namun belum memiliki akun warga terhubung.
+ * Access: admin_main only
  */
-router.get('/warga-eligible', async (req, res, next) => {
+router.get('/warga-eligible', requirePermission('WARGA_ACCOUNT_CREATE'), async (req, res, next) => {
   try {
     // Find approved decisions
     const approved = await prisma.beneficiaryDecision.findMany({
@@ -79,11 +70,12 @@ router.get('/warga-eligible', async (req, res, next) => {
 });
 
 /**
- * POST /api/admin/create-warga
+ * POST /api/v1/admin/create-warga
  * Admin membuatkan akun warga untuk rumah tangga yang sudah disetujui.
  * Body: { household_id, email, phone?, name }
+ * Access: admin_main only
  */
-router.post('/create-warga', async (req, res, next) => {
+router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (req, res, next) => {
   try {
     const { household_id, email, name, phone } = req.body;
 
@@ -108,8 +100,6 @@ router.post('/create-warga', async (req, res, next) => {
     }
 
     // Generate username from NIK or name
-
-    // Username: lowercase & sanitized name or NIK prefix
     const baseUsername = (household.nik_kepala_keluarga || name)
       .toLowerCase()
       .replace(/\s+/g, '_')
@@ -149,7 +139,8 @@ router.post('/create-warga', async (req, res, next) => {
       action: 'create',
       entityType: 'User',
       entityId: newUser.id,
-      reason: `Admin created warga account for household ${household_id}`
+      reason: `Admin created warga account for household ${household_id}`,
+      ipAddress: req.ip,
     });
 
     const result = serializeBigInt({
@@ -170,18 +161,98 @@ router.post('/create-warga', async (req, res, next) => {
 });
 
 /**
- * GET /api/admin/audit-logs
- * Pengawas dan Admin dapat melihat audit trail dari pengambilan keputusan
+ * GET /api/v1/admin/dashboard-stats
+ * Dashboard statistics for admin overview
+ * Access: admin_main, admin_staff
  */
-router.get('/audit-logs', async (req, res, next) => {
+router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (req, res, next) => {
   try {
-    const logs = await prisma.auditLog.findMany({
-      orderBy: { created_at: 'desc' },
-      take: 100,
-      include: {
-        user: { select: { name: true, role: true } }
-      }
+    const [
+      totalHouseholds,
+      totalApplications,
+      pendingApplications,
+      approvedDecisions,
+      rejectedDecisions,
+      totalDistributions,
+      openComplaints,
+      totalUsers,
+    ] = await Promise.all([
+      prisma.household.count(),
+      prisma.aidApplication.count(),
+      prisma.aidApplication.count({ where: { status: { in: ['submitted', 'initial_validation', 'document_verification', 'field_survey', 'scoring', 'admin_review'] } } }),
+      prisma.beneficiaryDecision.count({ where: { decision_status: 'approved' } }),
+      prisma.beneficiaryDecision.count({ where: { decision_status: 'rejected' } }),
+      prisma.aidDistribution.count(),
+      prisma.complaint.count({ where: { status: { in: ['open', 'in_review'] } } }),
+      prisma.user.count(),
+    ]);
+
+    const applicationsByStatus = await prisma.aidApplication.groupBy({
+      by: ['status'],
+      _count: { status: true },
     });
+
+    return successResponse(res, {
+      totalHouseholds,
+      totalApplications,
+      pendingApplications,
+      approvedDecisions,
+      rejectedDecisions,
+      totalDistributions,
+      openComplaints,
+      totalUsers,
+      applicationsByStatus: applicationsByStatus.map(s => ({
+        status: s.status,
+        count: s._count.status,
+      })),
+    }, 'Dashboard statistics retrieved');
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * GET /api/v1/admin/audit-logs
+ * Access: admin_main & pengawas → full access, admin_staff → limited (own actions only)
+ */
+router.get('/audit-logs', requireAnyPermission('AUDIT_LOG_FULL', 'AUDIT_LOG_LIMITED'), async (req, res, next) => {
+  try {
+    const { entity_type, action, user_id, date_from, date_to, page = 1, limit = 50 } = req.query;
+
+    const where = {};
+
+    // admin_staff: can only see their own audit entries
+    if (req.user.role === 'admin_staff') {
+      where.user_id = BigInt(req.user.id);
+    }
+
+    // Filters
+    if (entity_type) where.entity_type = entity_type;
+    if (action) where.action = action;
+    if (user_id && req.user.role !== 'admin_staff') {
+      where.user_id = BigInt(user_id);
+    }
+    if (date_from || date_to) {
+      where.created_at = {};
+      if (date_from) where.created_at.gte = new Date(date_from);
+      if (date_to) where.created_at.lte = new Date(date_to);
+    }
+
+    const pageTotal = parseInt(limit);
+    const skip = (parseInt(page) - 1) * pageTotal;
+
+    const [total, logs] = await Promise.all([
+      prisma.auditLog.count({ where }),
+      prisma.auditLog.findMany({
+        where,
+        orderBy: { created_at: 'desc' },
+        take: pageTotal,
+        skip,
+        include: {
+          user: { select: { name: true, role: true } }
+        }
+      }),
+    ]);
 
     const result = logs.map(l => ({
       ...l,
@@ -190,10 +261,19 @@ router.get('/audit-logs', async (req, res, next) => {
       entity_id: l.entity_id.toString()
     }));
 
-    return successResponse(res, result, 'Audit logs retrieved');
+    return successResponse(res, {
+      records: result,
+      meta: {
+        total,
+        page: parseInt(page),
+        limit: pageTotal,
+        totalPages: Math.ceil(total / pageTotal),
+      },
+    }, 'Audit logs retrieved');
   } catch (error) {
     next(error);
   }
 });
 
 module.exports = router;
+

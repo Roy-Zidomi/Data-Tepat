@@ -8,6 +8,13 @@ const documentRoutes = require('./document.routes');
 const aidApplicationRoutes = require('./aidApplication.routes');
 const complaintRoutes = require('./complaint.routes');
 const adminRoutes = require('./admin.routes');
+const userRoutes = require('./user.routes');
+const regionRoutes = require('./region.routes');
+const aidTypeRoutes = require('./aidType.routes');
+const decisionRoutes = require('./decision.routes');
+const distributionRoutes = require('./distribution.routes');
+const householdDataRoutes = require('./householdData.routes');
+const adminViewsRoutes = require('./adminViews.routes');
 
 router.get('/health', (req, res) => {
   res.status(200).json({ success: true, message: 'Server is healthy' });
@@ -29,5 +36,13 @@ router.use('/documents', documentRoutes);
 router.use('/aid-applications', aidApplicationRoutes);
 router.use('/complaints', complaintRoutes);
 router.use('/admin', adminRoutes);
+router.use('/users', userRoutes);
+router.use('/regions', regionRoutes);
+router.use('/aid-types-admin', aidTypeRoutes);
+router.use('/decisions', decisionRoutes);
+router.use('/distributions', distributionRoutes);
+router.use('/household-data', householdDataRoutes);
+router.use('/admin-views', adminViewsRoutes);
 
 module.exports = router;
+

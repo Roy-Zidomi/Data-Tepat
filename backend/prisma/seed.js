@@ -22,7 +22,7 @@ async function main() {
       create: aid,
     });
   }
-  console.log('✅ Aid Types seeded');
+  console.log('Aid Types seeded');
 
   // 2. Seed Regions
   const region1 = await prisma.region.create({
@@ -36,7 +36,7 @@ async function main() {
       postal_code: '16121',
     }
   });
-  console.log('✅ Region seeded');
+  console.log('Region seeded');
 
   // 3. Seed Users
   const password_hash = await bcrypt.hash('password123', 10);
@@ -108,7 +108,7 @@ async function main() {
     });
     createdUsers[u.role] = created;
   }
-  console.log('✅ Users seeded');
+  console.log('Users seeded');
 
   // ... (rest of the code for household) ...
   // (Assuming I should keep the rest of main function as is or just focus on the users section)
