@@ -26,21 +26,35 @@ router.get('/family-members', requirePermission('HOUSEHOLD_LIST'), async (req, r
     const where = {};
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { nik: { contains: search, mode: 'insensitive' } },
-        { household: { nomor_kk: { contains: search, mode: 'insensitive' } } }
+        { nomor_kk: { contains: search, mode: 'insensitive' } },
+        { nama_kepala_keluarga: { contains: search, mode: 'insensitive' } },
+        {
+          familyMembers: {
+            some: {
+              OR: [
+                { name: { contains: search, mode: 'insensitive' } },
+                { nik: { contains: search, mode: 'insensitive' } },
+              ],
+            },
+          },
+        },
       ];
     }
 
     const [total, records] = await Promise.all([
-      prisma.familyMember.count({ where }),
-      prisma.familyMember.findMany({
+      prisma.household.count({ where }),
+      prisma.household.findMany({
         where,
         skip,
         take: parseInt(limit),
-        orderBy: { name: 'asc' },
+        orderBy: { nama_kepala_keluarga: 'asc' },
         include: {
-          household: { select: { id: true, nomor_kk: true, nama_kepala_keluarga: true } },
+          familyMembers: {
+            orderBy: [{ relationship_to_head: 'asc' }, { name: 'asc' }],
+          },
+          _count: {
+            select: { familyMembers: true },
+          },
         },
       }),
     ]);
