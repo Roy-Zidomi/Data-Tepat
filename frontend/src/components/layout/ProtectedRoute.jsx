@@ -6,10 +6,10 @@ import { PageLoader } from '../ui/Spinner';
  * ProtectedRoute - Wrapper for routes that require authentication and specific roles.
  */
 const ProtectedRoute = ({ allowedRoles = [] }) => {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, isCheckingAuth, user } = useAuthStore();
   const location = useLocation();
 
-  if (isAuthenticated === null) {
+  if (isCheckingAuth) {
     return <PageLoader />;
   }
 

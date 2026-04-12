@@ -30,9 +30,9 @@ const navStructure = [
     type: 'group',
     label: 'Data Warga',
     icon: Home,
-    roles: ['admin_main', 'admin_staff', 'relawan', 'warga'],
+    roles: ['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga'],
     children: [
-      { path: '/households', label: 'Rumah Tangga', icon: Home, roles: ['admin_main', 'admin_staff', 'relawan', 'warga'] },
+      { path: '/households', label: 'Rumah Tangga', icon: Home, roles: ['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga'] },
       { path: '/family-members', label: 'Anggota Keluarga', icon: Users, roles: ['admin_main', 'relawan', 'warga'] },
       { path: '/economic-conditions', label: 'Kondisi Ekonomi', icon: DollarSign, roles: ['admin_main'] },
       { path: '/housing-conditions', label: 'Kondisi Tempat Tinggal', icon: Building2, roles: ['admin_main'] },
@@ -61,12 +61,12 @@ const navStructure = [
     type: 'group',
     label: 'Distribusi Bantuan',
     icon: Truck,
-    roles: ['admin_main', 'admin_staff', 'relawan'],
+    roles: ['admin_main', 'admin_staff', 'pengawas', 'relawan'],
     children: [
-      { path: '/distributions', label: 'Daftar Distribusi', icon: Truck, roles: ['admin_main', 'admin_staff', 'relawan'] },
+      { path: '/distributions', label: 'Daftar Distribusi', icon: Truck, roles: ['admin_main', 'admin_staff', 'pengawas', 'relawan'] },
       { path: '/distribution-tracking', label: 'Status Distribusi', icon: Eye, roles: ['admin_main'] },
-      { path: '/distribution-proofs', label: 'Bukti Distribusi', icon: Camera, roles: ['admin_main'] },
-      { path: '/distribution-history', label: 'Riwayat Distribusi', icon: History, roles: ['admin_main'] },
+      { path: '/distribution-proofs', label: 'Bukti Distribusi', icon: Camera, roles: ['admin_main', 'admin_staff', 'pengawas'] },
+      { path: '/distribution-history', label: 'Riwayat Distribusi', icon: History, roles: ['admin_main', 'admin_staff', 'pengawas'] },
     ],
   },
 
@@ -118,7 +118,7 @@ const navStructure = [
     path: '/complaints',
     label: 'Pengaduan',
     icon: MessageSquare,
-    roles: ['admin_main', 'admin_staff', 'warga'],
+    roles: ['admin_main', 'admin_staff', 'pengawas', 'warga'],
   },
 
   // ── Modul Khusus Relawan ──

@@ -6,10 +6,11 @@ import useAuthStore from '../store/authStore';
 // Lazy load pages for performance
 import Login from '../pages/Login/Login';
 import Activation from '../pages/Login/Activation';
-import Dashboard from '../pages/Dashboard/Dashboard';
+import Dashboard from '../pages/dashboard/Dashboard';
 import WargaAccountCreate from '../pages/Admin/WargaAccountCreate';
 
 import HouseholdList from '../pages/Households/HouseholdList';
+import HouseholdDetail from '../pages/Households/HouseholdDetail';
 import HouseholdWizard from '../pages/Households/HouseholdWizard';
 import HouseholdDocuments from '../pages/Households/HouseholdDocuments';
 import FamilyMemberList from '../pages/Households/FamilyMemberList';
@@ -99,12 +100,18 @@ const AppRouter = () => {
           {/* ═══════════════════════════════════════════ */}
           {/* 2. DATA WARGA                              */}
           {/* ═══════════════════════════════════════════ */}
-          <Route path="/households" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+          <Route path="/households" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga']} />}>
             <Route index element={<HouseholdList />} />
-            <Route path=":id" element={<Placeholder title="Detail Rumah Tangga" description="Detail lengkap data rumah tangga dan keluarga." />} />
-            <Route path=":id/documents" element={<HouseholdDocuments />} />
-            <Route path=":id/edit" element={<Placeholder title="Edit Rumah Tangga" />} />
-            <Route path="create" element={<HouseholdWizard />} />
+            <Route path=":id" element={<HouseholdDetail />} />
+            <Route path=":id/documents" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+              <Route index element={<HouseholdDocuments />} />
+            </Route>
+            <Route path=":id/edit" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+              <Route index element={<Placeholder title="Edit Rumah Tangga" />} />
+            </Route>
+            <Route path="create" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+              <Route index element={<HouseholdWizard />} />
+            </Route>
           </Route>
           <Route path="/family-members" element={<ProtectedRoute allowedRoles={['admin_main', 'relawan', 'warga']} />}>
             <Route index element={<FamilyMemberList />} />
@@ -127,7 +134,9 @@ const AppRouter = () => {
           {/* ═══════════════════════════════════════════ */}
           <Route path="/applications" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'warga']} />}>
             <Route index element={<ApplicationList />} />
-            <Route path="new" element={<ApplicationCreate />} />
+            <Route path="new" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'warga']} />}>
+              <Route index element={<ApplicationCreate />} />
+            </Route>
             <Route path=":id" element={<ApplicationDetail />} />
           </Route>
           <Route path="/document-verification" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
@@ -146,16 +155,16 @@ const AppRouter = () => {
           {/* ═══════════════════════════════════════════ */}
           {/* 4. DISTRIBUSI BANTUAN                      */}
           {/* ═══════════════════════════════════════════ */}
-          <Route path="/distributions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan']} />}>
+          <Route path="/distributions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan']} />}>
             <Route index element={<DistributionList />} />
           </Route>
           <Route path="/distribution-tracking" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
             <Route index element={<DistributionTracking />} />
           </Route>
-          <Route path="/distribution-proofs" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+          <Route path="/distribution-proofs" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
             <Route index element={<DistributionProofs />} />
           </Route>
-          <Route path="/distribution-history" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
+          <Route path="/distribution-history" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
             <Route index element={<DistributionHistory />} />
           </Route>
 
@@ -196,9 +205,11 @@ const AppRouter = () => {
           {/* ═══════════════════════════════════════════ */}
           {/* 9. PENGADUAN                               */}
           {/* ═══════════════════════════════════════════ */}
-          <Route path="/complaints" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'warga']} />}>
+          <Route path="/complaints" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'warga']} />}>
             <Route index element={<ComplaintReview />} />
-            <Route path="create" element={<ComplaintCreate />} />
+            <Route path="create" element={<ProtectedRoute allowedRoles={['warga']} />}>
+              <Route index element={<ComplaintCreate />} />
+            </Route>
           </Route>
 
           {/* ═══════════════════════════════════════════ */}
