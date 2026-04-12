@@ -1,23 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, MessageSquare, Send } from 'lucide-react';
-import useAuthStore from '../../store/authStore';
 import api from '../../services/api';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
 import Card from '../../components/ui/Card';
 import toast from 'react-hot-toast';
 
 const ComplaintCreate = () => {
   const [households, setHouseholds] = useState([]);
-  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     household_id: '',
     application_id: '',
-    complaint_type: 'data_error',
+    complaint_type: 'general',
     description: ''
   });
 
@@ -51,7 +48,7 @@ const ComplaintCreate = () => {
     try {
       setSubmitting(true);
       await api.post('/complaints', {
-        household_id: formData.household_id || null, // null if no HH selected
+        household_id: formData.household_id,
         complaint_type: formData.complaint_type,
         description: formData.description
       });
@@ -102,10 +99,9 @@ const ComplaintCreate = () => {
                 onChange={handleChange}
                 className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white"
               >
-                <option value="data_error">Kesalahan Data / NIK</option>
-                <option value="distribution_issue">Kendala Penyaluran Bantuan</option>
-                <option value="fraud">Indikasi Kecurangan / Penyelewengan</option>
-                <option value="other">Lain-lain</option>
+                <option value="general">Masalah Umum / Data</option>
+                <option value="application">Masalah Permohonan Bantuan</option>
+                <option value="distribution">Masalah Distribusi Bantuan</option>
               </select>
             </div>
 

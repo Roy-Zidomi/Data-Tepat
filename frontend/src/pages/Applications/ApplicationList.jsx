@@ -1,108 +1,200 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Eye, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Search, Filter, Eye, Activity } from 'lucide-react';
+import toast from 'react-hot-toast';
+import applicationService from '../../services/applicationService';
+import useAuthStore from '../../store/authStore';
 import Card from '../../components/ui/Card';
+import DataTable from '../../components/ui/DataTable';
 import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
+import Alert from '../../components/ui/Alert';
 import { StatusBadge } from '../../components/ui/Badge';
-import { APPLICATION_STATUS } from '../../utils/constants';
+import { APPLICATION_STATUS, DECISION_STATUS } from '../../utils/constants';
+import { formatDate } from '../../utils/formatters';
 
 const ApplicationList = () => {
   const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState(null);
   const [search, setSearch] = useState('');
-  
-  // Dummy data
-  const [applications, setApplications] = useState([
+  const [error, setError] = useState('');
+
+  const isOwnView = user?.role === 'warga';
+  const canCreate = ['admin_main', 'admin_staff', 'warga'].includes(user?.role);
+
+  const fetchApplications = async (page = 1, searchTerm = search) => {
+    try {
+      setLoading(true);
+      setError('');
+
+      if (isOwnView) {
+        const response = await applicationService.getMine();
+        const records = response.data.data || [];
+        const normalizedSearch = searchTerm.trim().toLowerCase();
+        const filteredRecords = normalizedSearch
+          ? records.filter((record) =>
+              [
+                record.application_no,
+                record.household?.nama_kepala_keluarga,
+                record.household?.nomor_kk,
+                record.aidType?.name,
+              ]
+                .filter(Boolean)
+                .some((value) => value.toLowerCase().includes(normalizedSearch))
+            )
+          : records;
+
+        setData(filteredRecords);
+        setMeta(null);
+        return;
+      }
+
+      const response = await applicationService.getAll({
+        page,
+        limit: 10,
+        search: searchTerm,
+      });
+
+      const payload = response.data.data || {};
+      setData(payload.records || []);
+      setMeta(payload.meta || null);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal memuat daftar permohonan bantuan.');
+      toast.error('Gagal memuat daftar permohonan bantuan.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.role) {
+      fetchApplications();
+    }
+  }, [user?.role]);
+
+  const columns = [
     {
-      id: 1,
-      application_no: 'APP-2026-001',
-      status: 'submitted',
-      household: { nama_kepala_keluarga: 'Budi Santoso', nomor_kk: '3201010101010101' },
-      aidType: { name: 'Bantuan Pangan Non Tunai' },
-      submission_date: '2026-04-01T10:00:00Z',
-      scoringResults: [{ priority_level: 'High', score: 85.5 }]
+      key: 'application_no',
+      label: 'No. Permohonan',
+      render: (value) => (
+        <span className="font-semibold text-primary-600 dark:text-primary-400">
+          {value}
+        </span>
+      ),
     },
     {
-      id: 2,
-      application_no: 'APP-2026-002',
-      status: 'under_review',
-      household: { nama_kepala_keluarga: 'Ahmad Yani', nomor_kk: '3201010101010102' },
-      aidType: { name: 'PKH' },
-      submission_date: '2026-04-02T11:30:00Z',
-      scoringResults: [{ priority_level: 'Medium', score: 62.0 }]
-    }
-  ]);
+      key: 'household',
+      label: 'Rumah Tangga',
+      sortable: false,
+      render: (_, row) => (
+        <div>
+          <p className="font-medium text-surface-900 dark:text-surface-100">
+            {row.household?.nama_kepala_keluarga || '-'}
+          </p>
+          <p className="text-xs text-surface-500">{row.household?.nomor_kk || '-'}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'aidType',
+      label: 'Program',
+      sortable: false,
+      render: (value) => value?.name || '-',
+    },
+    {
+      key: 'scoringResults',
+      label: 'Skor',
+      sortable: false,
+      render: (value) => {
+        const latestScore = value?.[0];
+        return latestScore ? `${latestScore.total_score ?? latestScore.score} (${latestScore.priority_level || '-'})` : '-';
+      },
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (value) => <StatusBadge statusMap={APPLICATION_STATUS} value={value} />,
+    },
+    {
+      key: 'beneficiaryDecision',
+      label: 'Keputusan',
+      sortable: false,
+      render: (value) => (
+        value?.decision_status
+          ? <StatusBadge statusMap={DECISION_STATUS} value={value.decision_status} />
+          : <span className="text-xs text-surface-500">Belum ada</span>
+      ),
+    },
+    {
+      key: 'submission_date',
+      label: 'Tanggal',
+      render: (value, row) => formatDate(value || row.created_at),
+    },
+    {
+      key: 'actions',
+      label: '',
+      sortable: false,
+      render: (_, row) => (
+        <div className="flex justify-end">
+          <Button size="xs" variant="ghost" icon={Eye} onClick={() => navigate(`/applications/${row.id}`)}>
+            Detail
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Review Pengajuan Bantuan</h1>
-          <p className="text-sm text-surface-500 mt-1">
-            Daftar antrean aplikasi warga yang membutuhkan supervisi dan penentuan kelayakan.
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
+            {isOwnView ? 'Permohonan Bantuan Saya' : 'Permohonan Bantuan'}
+          </h1>
+          <p className="mt-1 text-sm text-surface-500">
+            {user?.role === 'pengawas'
+              ? 'Pantau seluruh permohonan bantuan secara read-only untuk memastikan proses berjalan adil dan akuntabel.'
+              : isOwnView
+                ? 'Lihat status permohonan bantuan yang Anda ajukan.'
+                : 'Daftar permohonan bantuan untuk verifikasi, review, dan pemantauan.'}
           </p>
         </div>
+        {canCreate && (
+          <Button icon={Plus} onClick={() => navigate('/applications/new')}>
+            Buat Permohonan
+          </Button>
+        )}
       </div>
 
-      <Card className="p-4 bg-surface-50 dark:bg-surface-800/50 flex flex-col sm:flex-row gap-4">
-         <div className="flex-1">
-           <Input 
-             icon={Search} 
-             placeholder="Cari No Pengajuan atau Nama KK..." 
-             value={search} 
-             onChange={(e) => setSearch(e.target.value)} 
-           />
-         </div>
-         <Button variant="outline" icon={Filter}>Filter Status</Button>
-      </Card>
+      {user?.role === 'pengawas' && (
+        <Alert type="info" title="Akses Pengawas">
+          Daftar ini hanya untuk pemantauan. Semua aksi operasional tetap dilakukan oleh admin berwenang.
+        </Alert>
+      )}
 
-      <Card className="overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-surface-200 dark:divide-surface-700">
-            <thead className="bg-surface-50 dark:bg-surface-800">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider">No. Registrasi</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider">Kepala Keluarga</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider">Program</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider">Rekomendasi AI</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-surface-500 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-surface-500 uppercase tracking-wider">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-surface-200 dark:bg-surface-900 dark:divide-surface-800">
-               {applications.map(app => (
-                 <tr key={app.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors">
-                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium dark:text-white">{app.application_no}</td>
-                   <td className="px-6 py-4 whitespace-nowrap">
-                     <div className="text-sm font-medium dark:text-white">{app.household.nama_kepala_keluarga}</div>
-                     <div className="text-xs text-surface-500">{app.household.nomor_kk}</div>
-                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-sm text-surface-600 dark:text-surface-400">{app.aidType.name}</td>
-                   <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <Activity className={`w-4 h-4 ${app.scoringResults[0]?.priority_level === 'High' ? 'text-red-500' : 'text-amber-500'}`} />
-                        <span className="text-sm font-bold dark:text-white">{app.scoringResults[0]?.score}</span>
-                      </div>
-                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap">
-                     <StatusBadge statusMap={APPLICATION_STATUS} value={app.status} />
-                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                     <Button size="sm" variant="ghost" onClick={() => navigate(`/applications/${app.id}`)}>
-                       <Eye className="w-4 h-4 mr-2" /> Detail
-                     </Button>
-                   </td>
-                 </tr>
-               ))}
-               {applications.length === 0 && (
-                 <tr>
-                   <td colSpan="6" className="px-6 py-10 text-center text-surface-500">
-                     Tidak ada data pengajuan yang ditemukan.
-                   </td>
-                 </tr>
-               )}
-            </tbody>
-          </table>
+      {error && (
+        <Alert type="error" title="Error">
+          {error}
+        </Alert>
+      )}
+
+      <Card noPadding className="overflow-hidden">
+        <div className="p-4 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
+          <DataTable
+            columns={columns}
+            data={data}
+            loading={loading}
+            meta={meta}
+            onPageChange={(page) => fetchApplications(page, search)}
+            onSearch={(searchTerm) => {
+              setSearch(searchTerm);
+              fetchApplications(1, searchTerm);
+            }}
+            searchPlaceholder="Cari nomor permohonan, nama KK, atau program..."
+            emptyMessage="Belum ada permohonan bantuan yang ditemukan."
+          />
         </div>
       </Card>
     </div>

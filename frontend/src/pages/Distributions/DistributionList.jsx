@@ -1,103 +1,136 @@
-import { useState } from 'react';
-import { Truck, Search, CheckCircle, Package, Camera } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import useAuthStore from '../../store/authStore';
+import distributionService from '../../services/distributionService';
 import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import toast from 'react-hot-toast';
+import DataTable from '../../components/ui/DataTable';
+import Alert from '../../components/ui/Alert';
+import { StatusBadge } from '../../components/ui/Badge';
+import { DISTRIBUTION_STATUS } from '../../utils/constants';
+import { formatDate } from '../../utils/formatters';
 
 const DistributionList = () => {
+  const user = useAuthStore((state) => state.user);
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState(null);
   const [search, setSearch] = useState('');
-  const [updating, setUpdating] = useState(null);
+  const [error, setError] = useState('');
 
-  // Mock data distributions
-  const [distributions, setDistributions] = useState([
+  const fetchDistributions = async (page = 1, searchTerm = search) => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await distributionService.getAll({
+        page,
+        limit: 10,
+        search: searchTerm,
+      });
+      const payload = response.data.data || {};
+      setData(payload.records || []);
+      setMeta(payload.meta || null);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Gagal memuat data distribusi bantuan.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDistributions();
+  }, []);
+
+  const columns = [
     {
-       id: 1,
-       application_no: 'APP-2026-001',
-       household: 'Budi Santoso',
-       aid_name: 'Bantuan Pangan Non Tunai',
-       status: 'pending',
-       date_scheduled: '2026-04-10'
+      key: 'distribution_code',
+      label: 'Kode Distribusi',
+      render: (value) => (
+        <span className="font-semibold text-primary-600 dark:text-primary-400">
+          {value}
+        </span>
+      ),
     },
     {
-       id: 2,
-       application_no: 'APP-2026-015',
-       household: 'Siti Aminah',
-       aid_name: 'BLT UMKM',
-       status: 'distributed',
-       date_scheduled: '2026-04-03'
-    }
-  ]);
-
-  const handleUpdateStatus = (id) => {
-    setUpdating(id);
-    setTimeout(() => {
-      setDistributions(prev => prev.map(d => d.id === id ? { ...d, status: 'distributed' } : d));
-      toast.success('Status distribusi berhasil diperbarui menjadi Tersalurkan!');
-      setUpdating(null);
-    }, 1000);
-  };
+      key: 'recipient_name',
+      label: 'Penerima',
+      render: (value, row) => (
+        <div>
+          <p className="font-medium text-surface-900 dark:text-surface-100">{value || '-'}</p>
+          <p className="text-xs text-surface-500">
+            {row.decision?.application?.household?.nama_kepala_keluarga || '-'}
+          </p>
+        </div>
+      ),
+    },
+    {
+      key: 'aidType',
+      label: 'Program',
+      sortable: false,
+      render: (value) => value?.name || '-',
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (value) => <StatusBadge statusMap={DISTRIBUTION_STATUS} value={value} />,
+    },
+    {
+      key: 'decision',
+      label: 'Permohonan',
+      sortable: false,
+      render: (value) => value?.application?.application_no || '-',
+    },
+    {
+      key: '_count',
+      label: 'Bukti',
+      sortable: false,
+      render: (value) => value?.proofs || 0,
+    },
+    {
+      key: 'planned_date',
+      label: 'Tanggal Rencana',
+      render: (value) => formatDate(value),
+    },
+  ];
 
   return (
     <div className="space-y-6 animate-fade-in pb-10">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Penyaluran Penugasan</h1>
-          <p className="text-sm text-surface-500 mt-1">
-            Manajemen logistik dan pelacakan BAST (Berita Acara Serah Terima) ke Warga.
-          </p>
+      <div>
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Distribusi Bantuan</h1>
+        <p className="mt-1 text-sm text-surface-500">
+          {user?.role === 'pengawas'
+            ? 'Pantau status distribusi, penerima, dan bukti penyaluran secara read-only.'
+            : 'Ringkasan distribusi bantuan untuk pelacakan dan pemantauan.'}
+        </p>
+      </div>
+
+      {user?.role === 'pengawas' && (
+        <Alert type="info" title="Akses Pengawas">
+          Pengawas hanya dapat memantau penyaluran. Perubahan status dan upload bukti tetap dilakukan petugas operasional.
+        </Alert>
+      )}
+
+      {error && (
+        <Alert type="error" title="Error">
+          {error}
+        </Alert>
+      )}
+
+      <Card noPadding className="overflow-hidden">
+        <div className="p-4 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">
+          <DataTable
+            columns={columns}
+            data={data}
+            loading={loading}
+            meta={meta}
+            onPageChange={(page) => fetchDistributions(page, search)}
+            onSearch={(searchTerm) => {
+              setSearch(searchTerm);
+              fetchDistributions(1, searchTerm);
+            }}
+            searchPlaceholder="Cari kode distribusi atau nama penerima..."
+            emptyMessage="Belum ada data distribusi yang ditemukan."
+          />
         </div>
-      </div>
-
-      <Card className="p-4 bg-surface-50 dark:bg-surface-800/50">
-         <div className="max-w-md">
-           <Input 
-             icon={Search} 
-             placeholder="Cari No Pengajuan atau Nama Warga..." 
-             value={search} 
-             onChange={(e) => setSearch(e.target.value)} 
-           />
-         </div>
       </Card>
-
-      <div className="grid grid-cols-1 gap-4">
-        {distributions.map(dist => (
-          <Card key={dist.id} className={`p-0 overflow-hidden border-l-4 ${dist.status === 'distributed' ? 'border-l-green-500' : 'border-l-amber-500'}`}>
-             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 gap-4">
-               <div>
-                  <div className="flex items-center gap-2 mb-1">
-                     <span className="text-xs font-medium text-surface-500 bg-surface-100 dark:bg-surface-800 px-2 py-0.5 rounded">
-                       {dist.application_no}
-                     </span>
-                     <span className={`text-xs px-2 py-0.5 rounded uppercase font-bold tracking-wider ${dist.status === 'distributed' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                       {dist.status}
-                     </span>
-                  </div>
-                  <h3 className="text-lg font-bold dark:text-white mt-1">{dist.household}</h3>
-                  <div className="flex items-center gap-1.5 text-sm text-surface-600 dark:text-surface-400 mt-2">
-                     <Package className="w-4 h-4 text-surface-400" />
-                     {dist.aid_name} &bull; Jadwal {dist.date_scheduled}
-                  </div>
-               </div>
-               
-               <div className="flex items-center gap-3 border-t sm:border-t-0 pt-4 sm:pt-0">
-                 {dist.status === 'pending' ? (
-                   <>
-                     <Button variant="outline" size="sm" icon={Camera}>Foto Bukti BAST</Button>
-                     <Button size="sm" onClick={() => handleUpdateStatus(dist.id)} loading={updating === dist.id} shadow>
-                       Tandai Selesai Dikirim
-                     </Button>
-                   </>
-                 ) : (
-                   <span className="text-sm font-medium text-green-600 dark:text-green-400 flex items-center gap-1.5">
-                     <CheckCircle className="w-5 h-5" /> Distribusi Selesai
-                   </span>
-                 )}
-               </div>
-             </div>
-          </Card>
-        ))}
-      </div>
     </div>
   );
 };
