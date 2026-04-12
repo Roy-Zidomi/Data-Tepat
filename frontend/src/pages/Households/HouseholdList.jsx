@@ -19,6 +19,7 @@ const HouseholdList = () => {
   
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
+  const canManageHouseholds = user?.role && user.role !== 'pengawas';
 
   const fetchHouseholds = async (page = 1, searchQuery = search) => {
     try {
@@ -107,7 +108,7 @@ const HouseholdList = () => {
           >
             Detail
           </Button>
-          {['admin', 'petugas'].includes(user?.role) && (
+          {canManageHouseholds && (
             <Button
               size="xs"
               variant="ghost"
@@ -130,12 +131,14 @@ const HouseholdList = () => {
             Kelola data rumah tangga dan kepala keluarga
           </p>
         </div>
-        <Button
-          icon={Plus}
-          onClick={() => navigate('/households/create')}
-        >
-          Tambah Data
-        </Button>
+        {canManageHouseholds && (
+          <Button
+            icon={Plus}
+            onClick={() => navigate('/households/create')}
+          >
+            Tambah Data
+          </Button>
+        )}
       </div>
 
       <Card noPadding className="overflow-hidden">
