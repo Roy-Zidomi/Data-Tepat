@@ -9,10 +9,10 @@ const { upload } = require('../middlewares/upload.middleware');
 router.use(authenticate);
 
 // List distributions
-router.get('/', requirePermission('DISTRIBUTION_LIST'), distributionController.listAll);
+router.get('/', requirePermission('DISTRIBUTION_LIST_BASIC'), distributionController.listAll);
 
 // Get distribution detail
-router.get('/:id', requirePermission('DISTRIBUTION_LIST'), distributionController.getById);
+router.get('/:id', requirePermission('DISTRIBUTION_LIST_BASIC'), distributionController.getById);
 
 // Create distribution
 router.post('/', requirePermission('DISTRIBUTION_CREATE'), distributionController.create);
