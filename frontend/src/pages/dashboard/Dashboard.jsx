@@ -9,6 +9,7 @@ import { capitalizeWords, formatNumber } from '../../utils/formatters';
 import useAuthStore from '../../store/authStore';
 import WargaDashboard from './WargaDashboard';
 import RelawanDashboard from './RelawanDashboard';
+import StaffDashboard from './StaffDashboard';
 
 const StatCard = ({ colorClass, icon: Icon, title, value }) => (
   <Card className="flex items-center gap-4 hover:shadow-card-hover transition-all">
@@ -58,6 +59,10 @@ const Dashboard = () => {
 
   if (user?.role === 'relawan') {
     return <RelawanDashboard />;
+  }
+
+  if (user?.role === 'admin_staff') {
+    return <StaffDashboard />;
   }
 
   if (loading) return <PageLoader />;

@@ -84,7 +84,7 @@ const PERMISSIONS = {
 
   // ── Audit Logs ──
   AUDIT_LOG_FULL:      [ROLES.ADMIN_MAIN, ROLES.PENGAWAS],
-  AUDIT_LOG_LIMITED:   [ROLES.ADMIN_STAFF],
+  AUDIT_LOG_LIMITED:   [], // Revisi: admin_staff tidak punya akses audit logs
 
   // ── Dashboard ──
   DASHBOARD_OVERVIEW:  [ROLES.ADMIN_MAIN, ROLES.ADMIN_STAFF, ROLES.PENGAWAS],

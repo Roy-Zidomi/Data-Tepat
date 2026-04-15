@@ -382,4 +382,85 @@ router.get('/user-activity', requirePermission('AUDIT_LOG_FULL'), async (req, re
   } catch (error) { next(error); }
 });
 
+// ═══════════════════════════════════════════════
+// DATA VALIDATION — Duplicate Detection (Revisi #3 & #8)
+// ═══════════════════════════════════════════════
+
+/**
+ * GET /api/v1/admin-views/duplicate-check
+ * Detect duplicate NIK and Nomor KK entries
+ * Access: admin_main, admin_staff (view & flag only)
+ */
+router.get('/duplicate-check', requirePermission('HOUSEHOLD_LIST'), async (req, res, next) => {
+  try {
+    // Find duplicate NIKs across family members
+    const duplicateNiks = await prisma.$queryRaw`
+      SELECT nik, COUNT(*) as count, array_agg(id::text) as member_ids
+      FROM family_members 
+      WHERE nik IS NOT NULL AND nik != ''
+      GROUP BY nik 
+      HAVING COUNT(*) > 1
+      ORDER BY count DESC
+      LIMIT 50
+    `;
+
+    // Find duplicate Nomor KK across households
+    const duplicateKks = await prisma.$queryRaw`
+      SELECT nomor_kk, COUNT(*) as count, array_agg(id::text) as household_ids
+      FROM households
+      WHERE nomor_kk IS NOT NULL AND nomor_kk != ''
+      GROUP BY nomor_kk
+      HAVING COUNT(*) > 1
+      ORDER BY count DESC
+      LIMIT 50
+    `;
+
+    // Get details for duplicate NIKs
+    const nikDetails = [];
+    for (const dup of duplicateNiks) {
+      const members = await prisma.familyMember.findMany({
+        where: { nik: dup.nik },
+        include: { household: { select: { id: true, nomor_kk: true, nama_kepala_keluarga: true } } }
+      });
+      nikDetails.push({
+        nik: dup.nik,
+        count: Number(dup.count),
+        members: members.map(m => ({
+          id: m.id.toString(),
+          name: m.name,
+          household_id: m.household?.id?.toString(),
+          household_head: m.household?.nama_kepala_keluarga,
+          nomor_kk: m.household?.nomor_kk,
+        })),
+      });
+    }
+
+    // Get details for duplicate KKs
+    const kkDetails = [];
+    for (const dup of duplicateKks) {
+      const households = await prisma.household.findMany({
+        where: { nomor_kk: dup.nomor_kk },
+        select: { id: true, nomor_kk: true, nama_kepala_keluarga: true, alamat: true, created_at: true }
+      });
+      kkDetails.push({
+        nomor_kk: dup.nomor_kk,
+        count: Number(dup.count),
+        households: households.map(h => ({
+          id: h.id.toString(),
+          nama_kepala_keluarga: h.nama_kepala_keluarga,
+          alamat: h.alamat,
+          created_at: h.created_at,
+        })),
+      });
+    }
+
+    return successResponse(res, {
+      duplicateNiks: nikDetails,
+      duplicateKks: kkDetails,
+      totalDuplicateNiks: nikDetails.length,
+      totalDuplicateKks: kkDetails.length,
+    }, 'Duplicate check completed');
+  } catch (error) { next(error); }
+});
+
 module.exports = router;
