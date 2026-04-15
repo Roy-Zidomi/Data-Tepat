@@ -6,6 +6,7 @@ import Input from '../../components/ui/Input';
 import Alert from '../../components/ui/Alert';
 import { PageLoader } from '../../components/ui/Spinner';
 import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const statusLabels = {
   recorded: 'Tercatat',
@@ -26,6 +27,7 @@ const statusColors = {
 };
 
 const DistributionHistory = () => {
+  const user = useAuthStore((state) => state.user);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,8 +59,18 @@ const DistributionHistory = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Riwayat Distribusi</h1>
-        <p className="text-sm text-surface-500 mt-1">Timeline lengkap riwayat perubahan status distribusi</p>
+        <p className="text-sm text-surface-500 mt-1">
+          {user?.role === 'pengawas'
+            ? 'Lacak perubahan status distribusi dan siapa yang melakukannya untuk kebutuhan audit.'
+            : 'Timeline lengkap riwayat perubahan status distribusi'}
+        </p>
       </div>
+
+      {user?.role === 'pengawas' && (
+        <Alert type="info" title="Akses Pengawas">
+          Timeline ini read-only dan membantu mencocokkan distribusi dengan audit log serta bukti lapangan.
+        </Alert>
+      )}
 
       <Card className="p-4 bg-surface-50 dark:bg-surface-800/50">
         <form onSubmit={(e) => { e.preventDefault(); fetchData(); }} className="flex gap-3 max-w-md">
