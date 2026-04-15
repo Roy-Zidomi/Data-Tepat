@@ -204,16 +204,20 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
       }
     });
 
-    let adminMainExtras = {};
+    const applicationsByStatus = await prisma.aidApplication.groupBy({
+      by: ['status'],
+      _count: { status: true },
+    });
+
+    const dashboardExtras = {
+      applicationsByStatus: applicationsByStatus.map((statusGroup) => ({
+        status: statusGroup.status,
+        count: statusGroup._count.status,
+      })),
+    };
+
     if (role === 'admin_main') {
-      const [totalUsers, applicationsByStatus] = await Promise.all([
-        prisma.user.count(),
-        prisma.aidApplication.groupBy({ by: ['status'], _count: { status: true } }),
-      ]);
-      adminMainExtras = {
-        totalUsers,
-        applicationsByStatus: applicationsByStatus.map(s => ({ status: s.status, count: s._count.status })),
-      };
+      dashboardExtras.totalUsers = await prisma.user.count();
     }
 
     return successResponse(res, serializeBigInt({
@@ -221,6 +225,7 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
       totalHouseholds,
       totalApplications,
       processingApplications,
+      pendingApplications: processingApplications,
       approvedDecisions,
       rejectedDecisions,
       totalDistributions,
@@ -234,7 +239,7 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
         household_head: d.decision?.application?.household?.nama_kepala_keluarga,
         created_at: d.created_at,
       })),
-      ...adminMainExtras,
+      ...dashboardExtras,
     }), 'Dashboard statistics retrieved');
   } catch (error) {
     next(error);

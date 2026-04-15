@@ -309,7 +309,7 @@ router.get('/distribution-history', requirePermission('DISTRIBUTION_LIST'), asyn
 // USER ACTIVITY LOG — Per-user activity monitoring
 // ═══════════════════════════════════════════════
 
-router.get('/user-activity', requirePermission('AUDIT_LOG_FULL'), async (req, res, next) => {
+router.get('/user-activity', requirePermission('USER_ACTIVITY_VIEW'), async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search, role } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -391,7 +391,7 @@ router.get('/user-activity', requirePermission('AUDIT_LOG_FULL'), async (req, re
  * Detect duplicate NIK and Nomor KK entries
  * Access: admin_main, admin_staff (view & flag only)
  */
-router.get('/duplicate-check', requirePermission('HOUSEHOLD_LIST'), async (req, res, next) => {
+router.get('/duplicate-check', requirePermission('DATA_VALIDATION_VIEW'), async (req, res, next) => {
   try {
     // Find duplicate NIKs across family members
     const duplicateNiks = await prisma.$queryRaw`
