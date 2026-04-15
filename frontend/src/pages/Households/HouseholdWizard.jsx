@@ -26,7 +26,7 @@ const HouseholdWizard = () => {
     nama_kepala_keluarga: '',
     nik_kepala_keluarga: '',
     alamat: '',
-    region_id: '1', // Default or loaded dynamically
+    region_id: 1, // Default or loaded dynamically
     phone: user?.phone || ''
   });
 
@@ -72,7 +72,12 @@ const HouseholdWizard = () => {
   const submitHousehold = async () => {
     try {
       setLoading(true);
-      const res = await api.post('/households', household);
+      const payload = {
+        ...household,
+        region_id: Number(household.region_id),
+        registration_source: user?.role === 'warga' ? 'self' : 'assisted',
+      };
+      const res = await api.post('/households', payload);
       setCreatedHouseholdId(res.data.data.id);
       toast.success('Data Kepala Keluarga Berhasil Disimpan');
       setCurrentStep(2);
