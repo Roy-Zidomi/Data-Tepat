@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Search, Shield, User, Plus, Edit2, Lock, Unlock, Mail, Phone, Hash } from 'lucide-react';
+import { Users, Search, Shield, User, Plus, Edit2, Lock, Unlock, Mail, Phone, Hash, Copy, CheckCircle, AlertTriangle, Eye, EyeOff } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -25,6 +25,106 @@ const roleColors = {
   warga: 'bg-surface-200 text-surface-700 dark:bg-surface-700 dark:text-surface-300',
 };
 
+/**
+ * TempPasswordModal - Displayed once after admin creates a new account.
+ * Shows temporary password with copy button and security warning.
+ */
+const TempPasswordModal = ({ info, onClose }) => {
+  const [copied, setCopied] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(info.tempPassword);
+      setCopied(true);
+      toast.success('Password berhasil disalin');
+      setTimeout(() => setCopied(false), 3000);
+    } catch {
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = info.tempPassword;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopied(true);
+      toast.success('Password berhasil disalin');
+      setTimeout(() => setCopied(false), 3000);
+    }
+  };
+
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Akun Berhasil Dibuat" size="md">
+      <div className="space-y-5">
+        {/* Success icon */}
+        <div className="flex justify-center">
+          <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center">
+            <CheckCircle className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+          </div>
+        </div>
+
+        {/* User info */}
+        <div className="text-center">
+          <h3 className="text-lg font-bold text-surface-900 dark:text-white">{info.name}</h3>
+          <p className="text-sm text-surface-500 mt-0.5">
+            <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold uppercase tracking-wider ${roleColors[info.role] || roleColors.warga}`}>
+              {info.role?.replace('_', ' ')}
+            </span>
+          </p>
+          {info.username && (
+            <p className="text-xs text-surface-500 mt-2">
+              Username: <span className="font-mono font-medium text-surface-700 dark:text-surface-300">{info.username}</span>
+            </p>
+          )}
+        </div>
+
+        {/* Password display */}
+        <div className="bg-surface-50 dark:bg-surface-800/80 border border-surface-200 dark:border-surface-700 rounded-xl p-4">
+          <label className="block text-xs font-semibold text-surface-500 dark:text-surface-400 mb-2 uppercase tracking-wider">
+            Password Sementara
+          </label>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-lg font-mono font-bold text-surface-900 dark:text-white tracking-wider bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-600 rounded-lg px-3 py-2 select-all">
+              {showPassword ? info.tempPassword : '••••••••••'}
+            </code>
+            <button
+              onClick={() => setShowPassword(!showPassword)}
+              className="p-2 rounded-lg bg-surface-100 dark:bg-surface-700 text-surface-500 hover:text-surface-700 dark:hover:text-surface-300 transition-colors"
+              title={showPassword ? 'Sembunyikan' : 'Tampilkan'}
+            >
+              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={handleCopy}
+              className={`p-2 rounded-lg transition-colors ${
+                copied
+                  ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600'
+                  : 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 hover:bg-primary-200 dark:hover:bg-primary-900/50'
+              }`}
+              title="Salin password"
+            >
+              {copied ? <CheckCircle className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+            </button>
+          </div>
+        </div>
+
+        {/* Security warning */}
+        <div className="flex items-start gap-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-xl px-4 py-3">
+          <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-amber-700 dark:text-amber-400 leading-relaxed">
+            <strong>Password ini hanya ditampilkan sekali.</strong> Harap catat dan sampaikan ke pengguna secara aman. Pengguna akan diminta mengganti password saat login pertama kali.
+          </p>
+        </div>
+
+        {/* Close button */}
+        <div className="flex justify-end pt-2 border-t border-surface-200 dark:border-surface-700">
+          <Button variant="primary" onClick={onClose}>Tutup</Button>
+        </div>
+      </div>
+    </Modal>
+  );
+};
+
 const UserList = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +137,7 @@ const UserList = () => {
   // Modals
   const [isCreateModalOpen, setCreateModalOpen] = useState(false);
   const [editUser, setEditUser] = useState(null);
+  const [tempPasswordInfo, setTempPasswordInfo] = useState(null);
   
   // Forms loading state
   const [submitting, setSubmitting] = useState(false);
@@ -62,9 +163,25 @@ const UserList = () => {
     e.preventDefault();
     try {
       setSubmitting(true);
-      await api.post('/users', formData);
-      toast.success('Pengguna berhasil dibuat');
+      const res = await api.post('/users', formData);
+      const responseData = res.data?.data;
+      const tempPassword = responseData?.tempPassword;
+      const createdUser = responseData?.user || responseData;
+
       setCreateModalOpen(false);
+
+      // If temp password was returned (non-warga), show it
+      if (tempPassword) {
+        setTempPasswordInfo({
+          name: createdUser?.name || formData.name,
+          role: createdUser?.role || formData.role,
+          username: createdUser?.username || '',
+          tempPassword,
+        });
+      } else {
+        toast.success('Akun warga berhasil dibuat (aktivasi via OTP)');
+      }
+
       setFormData({ name: '', email: '', phone: '', role: 'relawan' });
       fetchData();
     } catch (err) {
@@ -246,6 +363,14 @@ const UserList = () => {
           </div>
         </form>
       </Modal>
+
+      {/* TEMP PASSWORD MODAL */}
+      {tempPasswordInfo && (
+        <TempPasswordModal
+          info={tempPasswordInfo}
+          onClose={() => setTempPasswordInfo(null)}
+        />
+      )}
 
     </div>
   );

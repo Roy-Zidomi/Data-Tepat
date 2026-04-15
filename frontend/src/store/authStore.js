@@ -54,6 +54,16 @@ const useAuthStore = create((set, get) => ({
     localStorage.setItem('bt_user', JSON.stringify(user));
     set({ user });
   },
+
+  /** Clear must_change_password flag after password change */
+  clearMustChangePassword: () => {
+    const current = get().user;
+    if (current) {
+      const updated = { ...current, must_change_password: false };
+      localStorage.setItem('bt_user', JSON.stringify(updated));
+      set({ user: updated });
+    }
+  },
 }));
 
 export default useAuthStore;

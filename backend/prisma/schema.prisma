@@ -15,10 +15,13 @@ model User {
   password_hash     String    @db.Text
   phone             String?   @db.VarChar(30)
   role              String    @db.VarChar(30)
-  is_active         Boolean   @default(true)
-  activation_status String    @default("active") @db.VarChar(30)
-  created_at        DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at        DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  is_active              Boolean   @default(true)
+  activation_status      String    @default("active") @db.VarChar(30)
+  must_change_password   Boolean   @default(false)
+  password_reset_token   String?   @db.Text
+  password_reset_expires DateTime? @db.Timestamptz(6)
+  created_at             DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
   otpCodes                    OtpCode[]
   householdsCreated           Household[]

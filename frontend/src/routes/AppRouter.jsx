@@ -7,6 +7,8 @@ import useAuthStore from '../store/authStore';
 import Login from '../pages/Login/Login';
 import Activation from '../pages/Login/Activation';
 import Dashboard from '../pages/dashboard/Dashboard';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
 import WargaAccountCreate from '../pages/Admin/WargaAccountCreate';
 
 import HouseholdList from '../pages/Households/HouseholdList';
@@ -86,6 +88,8 @@ const AppRouter = () => {
       {/* Public Routes (No Auth Required) */}
       <Route path="/public-dashboard" element={<PublicDashboard />} />
       <Route path="/donasi" element={<DonationForm />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       {/* Protected Routes inside DashboardLayout */}
       <Route element={<ProtectedRoute />}>

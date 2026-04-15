@@ -1,7 +1,7 @@
 import api from './api';
 
 /**
- * Auth service - handles login, profile, and password change API calls.
+ * Auth service - handles login, profile, password change, and password reset API calls.
  */
 const authService = {
   login: (emailOrUsername, password, role) =>
@@ -13,6 +13,12 @@ const authService = {
 
   changePassword: (currentPassword, newPassword) =>
     api.post('/auth/change-password', { currentPassword, newPassword }),
+
+  forgotPassword: (email) =>
+    api.post('/auth/forgot-password', { email }),
+
+  resetPassword: (token, newPassword) =>
+    api.post('/auth/reset-password', { token, newPassword }),
 };
 
 export default authService;

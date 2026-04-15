@@ -38,11 +38,15 @@ class UserController {
         JSON.stringify(user, (_, v) => (typeof v === 'bigint' ? v.toString() : v))
       );
 
+      const responseData = tempPassword
+        ? { user: result, tempPassword }
+        : { user: result };
+
       const message = tempPassword
-        ? `User berhasil dibuat. Password sementara: ${tempPassword}`
+        ? `User berhasil dibuat dengan password sementara.`
         : 'User berhasil dibuat. OTP telah dikirim ke nomor telepon terdaftar.';
 
-      return successResponse(res, result, message, 201);
+      return successResponse(res, responseData, message, 201);
     } catch (error) {
       next(error);
     }

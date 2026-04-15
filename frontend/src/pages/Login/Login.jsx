@@ -164,7 +164,7 @@ const Login = () => {
             <a href="/activation" style={{ fontSize: '13px', color: '#4A90D9', fontWeight: '500', textDecoration: 'none' }}>
               Aktivasi Akun (OTP)
             </a>
-            <a href="#" style={{ fontSize: '13px', color: '#888', fontWeight: '500', textDecoration: 'none' }}>
+            <a href="/forgot-password" style={{ fontSize: '13px', color: '#888', fontWeight: '500', textDecoration: 'none' }}>
               Lupa password?
             </a>
           </div>

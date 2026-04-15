@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
 const { logAudit } = require('../utils/auditLogger');
@@ -90,7 +91,8 @@ class AuthService {
       email: user.email,
       username: user.username,
       role: user.role,
-      phone: user.phone
+      phone: user.phone,
+      must_change_password: user.must_change_password
     };
 
     // Audit log
@@ -120,7 +122,7 @@ class AuthService {
 
     await prisma.user.update({
       where: { id: BigInt(userId) },
-      data: { password_hash: hashedNewPassword }
+      data: { password_hash: hashedNewPassword, must_change_password: false }
     });
     
     await logAudit({
@@ -176,6 +178,95 @@ class AuthService {
     const otpService = require('./otp.service');
     await otpService.generateOTP(user.id, phone, 'activation');
     return true;
+  }
+
+  /**
+   * Forgot password — generate token, hash it, store in DB, return plaintext token.
+   * In production, the plaintext token would be sent via email.
+   */
+  async forgotPassword(email) {
+    // Always return generic message to prevent email enumeration
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: email, mode: 'insensitive' } }
+    });
+
+    if (!user || !user.is_active) {
+      // Don't reveal whether email exists
+      return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
+    }
+
+    // Generate random token
+    const plainToken = crypto.randomBytes(32).toString('hex');
+    // Hash with SHA-256 before storing
+    const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
+
+    // Set token and expiry (15 minutes)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password_reset_token: hashedToken,
+        password_reset_expires: new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+      }
+    });
+
+    // Build reset URL (frontend route)
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${plainToken}`;
+
+    // In production: send email with resetUrl
+    // For development: log to console
+    console.log(`[Password Reset] Token for ${email}: ${resetUrl}`);
+
+    await logAudit({
+      userId: user.id,
+      action: 'update',
+      entityType: 'User',
+      entityId: user.id,
+      reason: 'Password reset requested'
+    });
+
+    return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
+  }
+
+  /**
+   * Reset password using token from email link.
+   * Verifies SHA-256 hash of token, checks expiry, updates password.
+   */
+  async resetPassword(token, newPassword) {
+    // Hash the incoming plaintext token to compare with stored hash
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await prisma.user.findFirst({
+      where: {
+        password_reset_token: hashedToken,
+        password_reset_expires: { gt: new Date() }
+      }
+    });
+
+    if (!user) {
+      throw { statusCode: 400, message: 'Token tidak valid atau sudah kedaluwarsa.' };
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password_hash: hashedPassword,
+        password_reset_token: null,
+        password_reset_expires: null,
+        must_change_password: false
+      }
+    });
+
+    await logAudit({
+      userId: user.id,
+      action: 'update',
+      entityType: 'User',
+      entityId: user.id,
+      reason: 'Password reset via email token'
+    });
+
+    return { message: 'Password berhasil direset. Silakan login dengan password baru.' };
   }
 }
 module.exports = new AuthService();

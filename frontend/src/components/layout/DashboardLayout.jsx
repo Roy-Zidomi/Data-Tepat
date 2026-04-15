@@ -1,6 +1,7 @@
  import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Header from './Header';
+import PasswordChangeReminder from '../common/PasswordChangeReminder';
 
 /**
  * DashboardLayout - Main layout shell wrapping all authenticated pages.
@@ -13,6 +14,7 @@ const DashboardLayout = () => {
         <Header />
         <main className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
           <div className="max-w-7xl mx-auto">
+            <PasswordChangeReminder />
             <Outlet />
           </div>
         </main>
