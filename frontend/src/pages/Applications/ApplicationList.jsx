@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button';
 import Alert from '../../components/ui/Alert';
 import { StatusBadge } from '../../components/ui/Badge';
 import { APPLICATION_STATUS, DECISION_STATUS } from '../../utils/constants';
-import { formatDate } from '../../utils/formatters';
+import { formatDate, maskIdentifier } from '../../utils/formatters';
 
 const ApplicationList = () => {
   const navigate = useNavigate();
@@ -22,6 +22,7 @@ const ApplicationList = () => {
   const [error, setError] = useState('');
 
   const isOwnView = user?.role === 'warga';
+  const isPengawas = user?.role === 'pengawas';
   const canCreate = ['admin_main', 'admin_staff', 'warga'].includes(user?.role);
 
   const fetchApplications = async (page = 1, searchTerm = search) => {
@@ -93,7 +94,9 @@ const ApplicationList = () => {
           <p className="font-medium text-surface-900 dark:text-surface-100">
             {row.household?.nama_kepala_keluarga || '-'}
           </p>
-          <p className="text-xs text-surface-500">{row.household?.nomor_kk || '-'}</p>
+          <p className="text-xs text-surface-500">
+            {isPengawas ? maskIdentifier(row.household?.nomor_kk) : row.household?.nomor_kk || '-'}
+          </p>
         </div>
       ),
     },

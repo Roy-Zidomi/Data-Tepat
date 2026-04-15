@@ -9,7 +9,15 @@ import Alert from '../../components/ui/Alert';
 import { PageLoader } from '../../components/ui/Spinner';
 import { StatusBadge } from '../../components/ui/Badge';
 import { APPLICATION_STATUS, DECISION_STATUS, PRIORITY_LEVEL } from '../../utils/constants';
-import { capitalizeWords, formatCurrency, formatDate, formatDateTime, maskNIK } from '../../utils/formatters';
+import {
+  capitalizeWords,
+  formatCurrency,
+  formatDate,
+  formatDateTime,
+  maskIdentifier,
+  maskNIK,
+  maskPhone,
+} from '../../utils/formatters';
 
 const DetailRow = ({ label, value }) => (
   <div>
@@ -52,6 +60,9 @@ const ApplicationDetail = () => {
   const decision = application.beneficiaryDecision;
   const surveys = application.surveys || [];
   const statusHistories = application.statusHistories || [];
+  const isPengawas = user?.role === 'pengawas';
+  const householdNumber = isPengawas ? maskIdentifier(household.nomor_kk) : household.nomor_kk;
+  const householdPhone = isPengawas ? maskPhone(household.phone) : household.phone;
 
   return (
     <div className="space-y-6 animate-fade-in pb-10">
@@ -72,7 +83,7 @@ const ApplicationDetail = () => {
             {household.nama_kepala_keluarga || '-'} • {application.aidType?.name || '-'} • Diajukan {formatDate(application.submission_date || application.created_at)}
           </p>
         </div>
-        {user?.role === 'pengawas' && (
+        {isPengawas && (
           <Alert type="info" title="Mode Pengawasan" className="max-w-md">
             Detail ini hanya untuk peninjauan status, skor, dan jejak proses permohonan.
           </Alert>
@@ -87,9 +98,9 @@ const ApplicationDetail = () => {
             </Card.Header>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <DetailRow label="Nama Kepala Keluarga" value={household.nama_kepala_keluarga} />
-              <DetailRow label="Nomor KK" value={household.nomor_kk} />
+              <DetailRow label="Nomor KK" value={householdNumber} />
               <DetailRow label="NIK Kepala Keluarga" value={maskNIK(household.nik_kepala_keluarga)} />
-              <DetailRow label="Nomor Telepon" value={household.phone} />
+              <DetailRow label="Nomor Telepon" value={householdPhone} />
               <div className="md:col-span-2">
                 <p className="text-xs uppercase tracking-wide text-surface-500">Alamat</p>
                 <div className="mt-1 flex items-start gap-2 text-sm font-medium text-surface-900 dark:text-surface-100">
@@ -116,7 +127,9 @@ const ApplicationDetail = () => {
                         <p className="font-medium text-surface-900 dark:text-surface-100">
                           {capitalizeWords(document.document_type)}
                         </p>
-                        <p className="text-xs text-surface-500">{document.original_filename || document.file_url}</p>
+                        <p className="text-xs text-surface-500">
+                          {document.original_filename || (isPengawas ? 'File tersimpan' : document.file_url)}
+                        </p>
                       </div>
                     </div>
                     <span className="rounded-full bg-surface-100 px-2 py-1 text-xs font-medium text-surface-600 dark:bg-surface-700 dark:text-surface-300">

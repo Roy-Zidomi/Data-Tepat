@@ -9,7 +9,14 @@ import Alert from '../../components/ui/Alert';
 import { PageLoader } from '../../components/ui/Spinner';
 import { StatusBadge } from '../../components/ui/Badge';
 import { APPLICATION_STATUS, HOUSEHOLD_STATUS } from '../../utils/constants';
-import { capitalizeWords, formatCurrency, formatDate, maskNIK } from '../../utils/formatters';
+import {
+  capitalizeWords,
+  formatCurrency,
+  formatDate,
+  maskIdentifier,
+  maskNIK,
+  maskPhone,
+} from '../../utils/formatters';
 
 const InfoRow = ({ label, value }) => (
   <div>
@@ -45,12 +52,17 @@ const HouseholdDetail = () => {
 
   if (loading) return <PageLoader />;
   if (error) return <Alert type="error" title="Error">{error}</Alert>;
-  if (!household) return <Alert type="warning" title="Data tidak ditemukan">Rumah tangga tidak tersedia.</Alert>;
+  if (!household) {
+    return <Alert type="warning" title="Data tidak ditemukan">Rumah tangga tidak tersedia.</Alert>;
+  }
 
   const latestApplications = household.aidApplications || [];
   const documents = household.documents || [];
   const familyMembers = household.familyMembers || [];
+  const isPengawas = user?.role === 'pengawas';
   const canUploadDocuments = ['admin_main', 'admin_staff', 'relawan', 'warga'].includes(user?.role);
+  const householdNumber = isPengawas ? maskIdentifier(household.nomor_kk) : household.nomor_kk;
+  const householdPhone = isPengawas ? maskPhone(household.phone) : household.phone;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -67,10 +79,10 @@ const HouseholdDetail = () => {
             <StatusBadge statusMap={HOUSEHOLD_STATUS} value={household.status_data} />
           </div>
           <p className="mt-2 text-sm text-surface-500">
-            KK {household.nomor_kk} • Dibuat {formatDate(household.created_at)}
+            KK {householdNumber} | Dibuat {formatDate(household.created_at)}
           </p>
         </div>
-        {user?.role === 'pengawas' && (
+        {isPengawas && (
           <Alert type="info" title="Mode Pengawasan" className="max-w-md">
             Halaman ini read-only untuk pemantauan integritas data warga.
           </Alert>
@@ -85,8 +97,8 @@ const HouseholdDetail = () => {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <InfoRow label="Nama Kepala Keluarga" value={household.nama_kepala_keluarga} />
             <InfoRow label="NIK Kepala Keluarga" value={maskNIK(household.nik_kepala_keluarga)} />
-            <InfoRow label="Nomor KK" value={household.nomor_kk} />
-            <InfoRow label="Telepon" value={household.phone || '-'} />
+            <InfoRow label="Nomor KK" value={householdNumber} />
+            <InfoRow label="Telepon" value={householdPhone || '-'} />
             <InfoRow label="Sumber Registrasi" value={capitalizeWords(household.registration_source)} />
             <InfoRow label="Didaftarkan Oleh" value={capitalizeWords(household.registered_by_role)} />
             <div className="md:col-span-2">
@@ -95,7 +107,9 @@ const HouseholdDetail = () => {
                 <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-surface-400" />
                 <span>
                   {household.alamat || '-'}
-                  {household.region ? `, ${household.region.village}, ${household.region.district}, ${household.region.city_regency}` : ''}
+                  {household.region
+                    ? `, ${household.region.village}, ${household.region.district}, ${household.region.city_regency}`
+                    : ''}
                 </span>
               </div>
             </div>
@@ -169,7 +183,7 @@ const HouseholdDetail = () => {
                 <div>
                   <p className="font-medium text-surface-900 dark:text-surface-100">{member.name}</p>
                   <p className="text-sm text-surface-500">
-                    {capitalizeWords(member.relationship_to_head)} • {capitalizeWords(member.occupation)}
+                    {capitalizeWords(member.relationship_to_head)} | {capitalizeWords(member.occupation)}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs text-surface-500">
@@ -203,7 +217,9 @@ const HouseholdDetail = () => {
                       <p className="font-medium text-surface-900 dark:text-surface-100">
                         {capitalizeWords(document.document_type)}
                       </p>
-                      <p className="text-xs text-surface-500">{document.original_filename || document.file_url}</p>
+                      <p className="text-xs text-surface-500">
+                        {document.original_filename || (isPengawas ? 'File tersimpan' : document.file_url)}
+                      </p>
                     </div>
                   </div>
                   <span className="rounded-full bg-surface-100 px-2 py-1 text-xs font-medium text-surface-600 dark:bg-surface-700 dark:text-surface-300">
