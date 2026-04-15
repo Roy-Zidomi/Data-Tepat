@@ -64,6 +64,22 @@ export const maskNIK = (nik) => {
   return nik.substring(0, 4) + '****' + nik.substring(nik.length - 4);
 };
 
+/** Mask KK/other long numeric identifiers while keeping the suffix visible */
+export const maskIdentifier = (value, visibleSuffix = 4) => {
+  if (!value) return '-';
+  const normalized = String(value);
+  if (normalized.length <= visibleSuffix) return '*'.repeat(normalized.length);
+  return `${'*'.repeat(Math.max(normalized.length - visibleSuffix, 4))}${normalized.slice(-visibleSuffix)}`;
+};
+
+/** Mask phone numbers while keeping the prefix and suffix visible */
+export const maskPhone = (phone) => {
+  if (!phone) return '-';
+  const normalized = String(phone);
+  if (normalized.length <= 6) return '***';
+  return `${normalized.slice(0, 3)}****${normalized.slice(-3)}`;
+};
+
 /** Capitalize first letter of each word */
 export const capitalizeWords = (str) => {
   if (!str) return '';
