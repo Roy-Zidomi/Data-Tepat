@@ -43,6 +43,7 @@ router.use('/decisions', decisionRoutes);
 router.use('/distributions', distributionRoutes);
 router.use('/household-data', householdDataRoutes);
 router.use('/admin-views', adminViewsRoutes);
+router.use('/surveys', require('./survey.routes'));
 
 module.exports = router;
 
