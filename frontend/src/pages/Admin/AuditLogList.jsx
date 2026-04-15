@@ -3,7 +3,7 @@ import Card from '../../components/ui/Card';
 import DataTable from '../../components/ui/DataTable';
 import { PageLoader } from '../../components/ui/Spinner';
 import Alert from '../../components/ui/Alert';
-import api from '../../services/api';
+import auditService from '../../services/auditService';
 import { formatDateTime } from '../../utils/formatters';
 import useAuthStore from '../../store/authStore';
 
@@ -21,7 +21,7 @@ const AuditLogList = () => {
     try {
       setLoading(true);
       setError(null);
-      const { data } = await api.get('/admin/audit-logs');
+      const { data } = await auditService.getAll();
       // Handle both flat array (old format) and paginated (new format)
       if (data.data?.records) {
         setLogs(data.data.records);
@@ -89,8 +89,8 @@ const AuditLogList = () => {
       <div>
         <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Audit Logs</h1>
         <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
-          {user?.role === 'admin_staff'
-            ? 'Riwayat aktivitas Anda dalam sistem BantuTepat'
+          {user?.role === 'pengawas'
+            ? 'Jejak aktivitas kritikal untuk memastikan proses bantuan sosial tetap transparan dan akuntabel.'
             : 'Laporan transparansi aktivitas kritikal dalam sistem BantuTepat'}
         </p>
       </div>
