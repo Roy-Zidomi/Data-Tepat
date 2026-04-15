@@ -201,7 +201,7 @@ const AppRouter = () => {
           {/* ═══════════════════════════════════════════ */}
           {/* 8. AUDIT & MONITORING                      */}
           {/* ═══════════════════════════════════════════ */}
-          <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
+          <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin_main', 'pengawas']} />}>
             <Route index element={<AuditLogList />} />
           </Route>
           <Route path="/user-activity" element={<ProtectedRoute allowedRoles={['admin_main']} />}>

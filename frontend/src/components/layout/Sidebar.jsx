@@ -105,9 +105,9 @@ const navStructure = [
     type: 'group',
     label: 'Audit & Monitoring',
     icon: Shield,
-    roles: ['admin_main', 'admin_staff', 'pengawas'],
+    roles: ['admin_main', 'pengawas'],
     children: [
-      { path: '/audit-logs', label: 'Audit Logs', icon: Shield, roles: ['admin_main', 'admin_staff', 'pengawas'] },
+      { path: '/audit-logs', label: 'Audit Logs', icon: Shield, roles: ['admin_main', 'pengawas'] },
       { path: '/user-activity', label: 'Aktivitas Pengguna', icon: Activity, roles: ['admin_main'] },
     ],
   },
