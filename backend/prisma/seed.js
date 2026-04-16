@@ -110,10 +110,6 @@ async function main() {
   }
   console.log('Users seeded');
 
-  // ... (rest of the code for household) ...
-  // (Assuming I should keep the rest of main function as is or just focus on the users section)
-  // Let's replace only the users array and the console summary.
-
   console.log('Seed completed successfully! You can login with:');
   console.log('Admin Utama: admin@bantutepat.com / password123');
   console.log('Admin Staff: staff@bantutepat.com / password123');
