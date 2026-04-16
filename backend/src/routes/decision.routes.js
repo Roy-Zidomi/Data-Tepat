@@ -16,4 +16,10 @@ router.get('/:id', requirePermission('DECISION_LIST'), decisionController.getByI
 // Create decision (approve/reject/waitlist) — admin_main, admin_staff
 router.post('/', requirePermission('DECISION_CREATE'), decisionController.createDecision);
 
+// Revise decision — admin_main, admin_staff
+router.patch('/:id/revise', requirePermission('DECISION_UPDATE'), decisionController.reviseDecision);
+
+// Report approved decision to admin utama — admin_main, admin_staff
+router.patch('/:id/report-main', requirePermission('DECISION_UPDATE'), decisionController.reportToMain);
+
 module.exports = router;

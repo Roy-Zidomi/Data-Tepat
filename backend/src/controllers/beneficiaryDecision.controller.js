@@ -25,6 +25,22 @@ class BeneficiaryDecisionController {
       return successResponse(res, result, 'Decision created successfully', 201);
     } catch (error) { next(error); }
   }
+
+  async reviseDecision(req, res, next) {
+    try {
+      const decision = await beneficiaryDecisionService.reviseDecision(req.params.id, req.body, req.user);
+      const result = JSON.parse(JSON.stringify(decision, (_, v) => typeof v === 'bigint' ? v.toString() : v));
+      return successResponse(res, result, 'Decision revised successfully');
+    } catch (error) { next(error); }
+  }
+
+  async reportToMain(req, res, next) {
+    try {
+      const resultData = await beneficiaryDecisionService.reportToMain(req.params.id, req.user);
+      const result = JSON.parse(JSON.stringify(resultData, (_, v) => typeof v === 'bigint' ? v.toString() : v));
+      return successResponse(res, result, 'Decision reported to admin utama');
+    } catch (error) { next(error); }
+  }
 }
 
 module.exports = new BeneficiaryDecisionController();
