@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import complaintService from '../../services/complaintService';
 import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Alert from '../../components/ui/Alert';
 import { StatusBadge } from '../../components/ui/Badge';
@@ -94,9 +95,14 @@ const ComplaintReview = () => {
               ? 'Pantau pengaduan warga dan pastikan setiap laporan diproses secara akuntabel.'
               : isOwnView
                 ? 'Lihat status pengaduan yang sudah Anda kirim.'
-                : 'Analisis, tindak lanjuti, dan pantau pengaduan yang masuk ke sistem.'}
+            : 'Analisis, tindak lanjuti, dan pantau pengaduan yang masuk ke sistem.'}
           </p>
         </div>
+        {isOwnView && (
+          <Button onClick={() => navigate('/complaints/create')}>
+            Laporkan Pengaduan
+          </Button>
+        )}
       </div>
 
       {user?.role === 'pengawas' && (

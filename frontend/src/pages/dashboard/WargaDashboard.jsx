@@ -13,10 +13,10 @@ const wargaAccessCards = [
     colorClass: 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400',
   },
   {
-    title: 'Pengaduan',
-    description: 'Pantau status pengaduan yang sudah tercatat di sistem.',
+    title: 'Pengaduan Saya',
+    description: 'Pantau status pengaduan dan kirim laporan baru bila ada masalah.',
     path: '/complaints',
-    actionLabel: 'Lihat Pengaduan',
+    actionLabel: 'Lihat / Laporkan',
     icon: MessageSquare,
     colorClass: 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400',
   },
@@ -30,7 +30,7 @@ const WargaDashboard = () => {
       <div>
         <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Dashboard Warga</h1>
         <p className="text-sm text-surface-500 mt-1">
-          Akun warga saat ini bersifat baca saja. Anda hanya dapat melihat anggota keluarga dan pengaduan milik Anda.
+          Akun warga dapat melihat anggota keluarga serta mengelola laporan pengaduan miliknya sendiri.
         </p>
       </div>
 
@@ -57,7 +57,7 @@ const WargaDashboard = () => {
       <Card className="border-dashed">
         <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Catatan Akses</h2>
         <p className="text-sm text-surface-500 mt-2">
-          Fitur tambah data, ajukan bantuan, edit rumah tangga, unggah dokumen, dan buat pengaduan dinonaktifkan untuk akun warga.
+          Fitur tambah data, ajukan bantuan, edit rumah tangga, dan unggah dokumen dinonaktifkan untuk akun warga.
           Jika ada perubahan data, prosesnya dilakukan melalui admin atau petugas terkait.
         </p>
       </Card>
