@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Clock, Home, MessageSquare, Plus, Search } from 'lucide-react';
+import { Clock, Home, MessageSquare, Search } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useAuthStore from '../../store/authStore';
 import complaintService from '../../services/complaintService';
 import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Alert from '../../components/ui/Alert';
 import { StatusBadge } from '../../components/ui/Badge';
@@ -98,11 +97,6 @@ const ComplaintReview = () => {
                 : 'Analisis, tindak lanjuti, dan pantau pengaduan yang masuk ke sistem.'}
           </p>
         </div>
-        {isOwnView && (
-          <Button icon={Plus} onClick={() => navigate('/complaints/create')}>
-            Buat Pengaduan
-          </Button>
-        )}
       </div>
 
       {user?.role === 'pengawas' && (

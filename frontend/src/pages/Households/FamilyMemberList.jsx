@@ -20,6 +20,8 @@ import EmptyState from '../../components/ui/EmptyState';
 import Modal from '../../components/ui/Modal';
 import { PageLoader } from '../../components/ui/Spinner';
 import api from '../../services/api';
+import householdService from '../../services/householdService';
+import useAuthStore from '../../store/authStore';
 import { capitalizeWords, formatDate, maskNIK } from '../../utils/formatters';
 
 const relationWeight = (relationship) => {
@@ -42,15 +44,34 @@ const FamilyMemberList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedHousehold, setSelectedHousehold] = useState(null);
+  const user = useAuthStore((state) => state.user);
   
   // Filters
   const [search, setSearch] = useState('');
+  const isWarga = user?.role === 'warga';
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => {
+    if (user?.role) {
+      fetchData();
+    }
+  }, [user?.role]);
 
   const fetchData = async () => {
     try {
       setLoading(true); setError(null);
+      if (isWarga) {
+        const householdRes = await householdService.getAll({ limit: 20 });
+        const households = householdRes.data.data?.records || [];
+        const detailedHouseholds = await Promise.all(
+          households.map(async (household) => {
+            const detailRes = await householdService.getById(household.id);
+            return detailRes.data.data;
+          })
+        );
+        setData(detailedHouseholds);
+        return;
+      }
+
       const res = await api.get('/admin-views/family-members', {
         params: { search, limit: 50 }
       });
@@ -71,18 +92,24 @@ const FamilyMemberList = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Anggota Keluarga</h1>
-          <p className="text-sm text-surface-500 mt-1">Daftar rumah tangga dengan fokus pada kepala keluarga dan ringkasan anggota di dalamnya.</p>
+          <p className="text-sm text-surface-500 mt-1">
+            {isWarga
+              ? 'Daftar anggota keluarga yang tercatat di rumah tangga Anda.'
+              : 'Daftar rumah tangga dengan fokus pada kepala keluarga dan ringkasan anggota di dalamnya.'}
+          </p>
         </div>
       </div>
 
-      <Card className="p-4 bg-surface-50 dark:bg-surface-800/50">
-        <form onSubmit={(e) => { e.preventDefault(); fetchData(); }} className="flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <Input icon={Search} placeholder="Cari kepala keluarga, anggota, atau No KK..." value={search} onChange={e => setSearch(e.target.value)} />
-          </div>
-          <Button type="submit" variant="secondary">Cari</Button>
-        </form>
-      </Card>
+      {!isWarga && (
+        <Card className="p-4 bg-surface-50 dark:bg-surface-800/50">
+          <form onSubmit={(e) => { e.preventDefault(); fetchData(); }} className="flex flex-wrap gap-3 items-end">
+            <div className="flex-1 min-w-[200px]">
+              <Input icon={Search} placeholder="Cari kepala keluarga, anggota, atau No KK..." value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <Button type="submit" variant="secondary">Cari</Button>
+          </form>
+        </Card>
+      )}
 
       {error ? <Alert type="error" title="Error">{error}</Alert> : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -178,7 +205,7 @@ const FamilyMemberList = () => {
                 <EmptyState
                   icon={Users}
                   title="Data keluarga tidak ditemukan"
-                  description="Coba ubah kata kunci pencarian untuk melihat rumah tangga lain."
+                  description={isWarga ? 'Belum ada anggota keluarga yang tercatat di rumah tangga Anda.' : 'Coba ubah kata kunci pencarian untuk melihat rumah tangga lain.'}
                 />
               </Card>
             </div>
