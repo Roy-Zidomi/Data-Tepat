@@ -207,6 +207,12 @@ const Sidebar = () => {
           children: item.children.filter((child) => child.roles.includes(user?.role)),
         };
       }
+      if (user?.role === 'warga' && item.path === '/complaints') {
+        return {
+          ...item,
+          label: 'Pengaduan Saya',
+        };
+      }
       return item;
     })
     .filter((item) => item.type !== 'group' || item.children.length > 0);

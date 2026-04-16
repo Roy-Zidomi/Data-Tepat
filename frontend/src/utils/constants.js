@@ -74,10 +74,9 @@ export const COMPLAINT_STATUS = {
 };
 
 export const COMPLAINT_TYPE = {
-  data_error: { label: 'Kesalahan Data' },
-  aid_not_received: { label: 'Bantuan Tidak Diterima' },
-  distribution_error: { label: 'Kesalahan Distribusi' },
-  other: { label: 'Lainnya' },
+  general: { label: 'Masalah Umum / Data' },
+  application: { label: 'Masalah Permohonan Bantuan' },
+  distribution: { label: 'Masalah Distribusi Bantuan' },
 };
 
 export const AUDIT_ACTIONS = {

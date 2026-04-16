@@ -15,6 +15,7 @@ import HouseholdDocuments from '../pages/Households/HouseholdDocuments';
 import FamilyMemberList from '../pages/Households/FamilyMemberList';
 import ApplicationCreate from '../pages/Households/ApplicationCreate';
 import AuditLogList from '../pages/Admin/AuditLogList';
+import ComplaintCreate from '../pages/Complaints/ComplaintCreate';
 import SurveyList from '../pages/Surveys/SurveyList';
 import SurveyAction from '../pages/Surveys/SurveyAction';
 import MySurveyResults from '../pages/Surveys/MySurveyResults';
@@ -172,6 +173,9 @@ const AppRouter = () => {
 
           <Route path="/complaints" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'warga']} />}>
             <Route index element={<ComplaintReview />} />
+            <Route path="create" element={<ProtectedRoute allowedRoles={['warga']} />}>
+              <Route index element={<ComplaintCreate />} />
+            </Route>
           </Route>
 
           <Route path="/surveys" element={<ProtectedRoute allowedRoles={['relawan']} />}>
