@@ -26,29 +26,36 @@ const OversightReportList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [search, setSearch] = useState('');
+  const isAdminMain = user?.role === 'admin_main';
+  const isPengawas = user?.role === 'pengawas';
 
   const fetchReports = async (searchTerm = '') => {
     try {
       setLoading(true);
       setError('');
-      const response = await complaintService.getMine();
-      const records = response.data.data || [];
-      const ownOversightReports = records.filter((record) =>
+      const response = isAdminMain
+        ? await complaintService.getAll({ limit: 100, search: searchTerm || undefined })
+        : await complaintService.getMine();
+      const records = isAdminMain
+        ? response.data.data?.records || []
+        : response.data.data || [];
+      const oversightReports = records.filter((record) =>
         record.description?.startsWith(OVERSIGHT_PREFIX)
       );
       const keyword = searchTerm.trim().toLowerCase();
       const filtered = keyword
-        ? ownOversightReports.filter((record) =>
+        ? oversightReports.filter((record) =>
             [
               record.description,
               record.application?.application_no,
               record.household?.nama_kepala_keluarga,
               record.complaint_type,
+              record.submittedByUser?.name,
             ]
               .filter(Boolean)
               .some((value) => value.toLowerCase().includes(keyword))
           )
-        : ownOversightReports;
+        : oversightReports;
       setReports(filtered);
     } catch (err) {
       setError(err.response?.data?.message || 'Gagal memuat laporan pengawasan.');
@@ -58,10 +65,10 @@ const OversightReportList = () => {
   };
 
   useEffect(() => {
-    if (user?.role === 'pengawas') {
+    if (isPengawas || isAdminMain) {
       fetchReports();
     }
-  }, [user?.role]);
+  }, [isAdminMain, isPengawas]);
 
   const handleSearchChange = (event) => {
     const nextValue = clampText(event.target.value, FORM_LIMITS.search);
@@ -73,18 +80,26 @@ const OversightReportList = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Laporan Pengawasan</h1>
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
+            {isAdminMain ? 'Hasil Laporan Pengawas' : 'Laporan Pengawasan'}
+          </h1>
           <p className="mt-1 text-sm text-surface-500">
-            Catat kejanggalan yang ditemukan saat memeriksa hasil kelayakan staff dan teruskan ke admin utama.
+            {isAdminMain
+              ? 'Tinjau laporan kejanggalan yang dikirim pengawas ke admin utama dan gunakan hasilnya untuk tindak lanjut.'
+              : 'Catat kejanggalan yang ditemukan saat memeriksa hasil kelayakan staff dan teruskan ke admin utama.'}
           </p>
         </div>
-        <Button icon={Send} onClick={() => navigate('/oversight-reports/create')}>
-          Buat Laporan
-        </Button>
+        {isPengawas && (
+          <Button icon={Send} onClick={() => navigate('/oversight-reports/create')}>
+            Buat Laporan
+          </Button>
+        )}
       </div>
 
       <Alert type="info" title="Alur Pengawasan">
-        Laporan yang Anda kirim akan masuk ke antrean admin utama melalui modul pengaduan internal, lengkap dengan jejak waktu dan akun pelapor.
+        {isAdminMain
+          ? 'Halaman ini menampilkan laporan pengawas yang masuk ke admin utama melalui modul pengaduan internal, lengkap dengan identitas pelapor.'
+          : 'Laporan yang Anda kirim akan masuk ke antrean admin utama melalui modul pengaduan internal, lengkap dengan jejak waktu dan akun pelapor.'}
       </Alert>
 
       <Card className="p-4 bg-surface-50 dark:bg-surface-800/50">
@@ -137,6 +152,11 @@ const OversightReportList = () => {
                     <p className="text-sm text-surface-500">
                       {report.household?.nama_kepala_keluarga || 'Kepala keluarga tidak tersedia'}
                     </p>
+                    {isAdminMain && report.submittedByUser?.name && (
+                      <p className="text-xs text-surface-500">
+                        Dilaporkan oleh {report.submittedByUser.name}
+                      </p>
+                    )}
                   </div>
 
                   <p className="text-sm leading-relaxed text-surface-700 dark:text-surface-300">

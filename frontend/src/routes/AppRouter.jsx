@@ -119,7 +119,7 @@ const AppRouter = () => {
             </Route>
             <Route path=":id" element={<ApplicationDetail />} />
           </Route>
-          <Route path="/eligibility-reports" element={<ProtectedRoute allowedRoles={['admin_main', 'pengawas']} />}>
+          <Route path="/eligibility-reports" element={<ProtectedRoute allowedRoles={['pengawas']} />}>
             <Route index element={<EligibilityReportList />} />
           </Route>
           <Route path="/document-verification" element={<ProtectedRoute allowedRoles={['admin_staff']} />}>
@@ -169,9 +169,11 @@ const AppRouter = () => {
           <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin_main', 'pengawas']} />}>
             <Route index element={<AuditLogList />} />
           </Route>
-          <Route path="/oversight-reports" element={<ProtectedRoute allowedRoles={['pengawas']} />}>
+          <Route path="/oversight-reports" element={<ProtectedRoute allowedRoles={['admin_main', 'pengawas']} />}>
             <Route index element={<OversightReportList />} />
-            <Route path="create" element={<OversightReportCreate />} />
+            <Route path="create" element={<ProtectedRoute allowedRoles={['pengawas']} />}>
+              <Route index element={<OversightReportCreate />} />
+            </Route>
           </Route>
           <Route path="/user-activity" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
             <Route index element={<UserActivityList />} />

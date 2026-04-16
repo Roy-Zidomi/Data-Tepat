@@ -65,7 +65,8 @@ const navStructure = [
     icon: FileText,
     roles: ['admin_main', 'admin_staff', 'pengawas', 'warga'],
     children: [
-      { path: '/eligibility-reports', label: 'Laporan Kelayakan Staff', icon: FileSearch, roles: ['admin_main', 'pengawas'] },
+      { path: '/eligibility-reports', label: 'Laporan Kelayakan Staff', icon: FileSearch, roles: ['pengawas'] },
+      { path: '/oversight-reports', label: 'Hasil Laporan Pengawas', icon: AlertTriangle, roles: ['admin_main'] },
       { path: '/document-verification', label: 'Verifikasi Dokumen', icon: FileSearch, roles: ['admin_staff'] },
       { path: '/survey-results', label: 'Hasil Survei Relawan', icon: ClipboardList, roles: ['admin_staff'] },
       { path: '/scoring-results', label: 'Hasil Skoring', icon: BarChart3, roles: ['admin_staff'] },
