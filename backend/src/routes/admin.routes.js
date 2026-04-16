@@ -169,30 +169,36 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
   try {
     const role = req.user.role;
 
-    const [
-      totalHouseholds,
-      totalApplications,
-      processingApplications,
-      approvedDecisions,
-      rejectedDecisions,
-      totalDistributions,
-      openComplaints,
-      pendingDocumentVerification,
-      pendingSurveyReview,
-    ] = await Promise.all([
-      prisma.household.count(),
-      prisma.aidApplication.count(),
-      prisma.aidApplication.count({ where: { status: { in: ['submitted', 'initial_validation', 'document_verification', 'field_survey', 'scoring', 'admin_review'] } } }),
-      prisma.beneficiaryDecision.count({ where: { decision_status: 'approved' } }),
-      prisma.beneficiaryDecision.count({ where: { decision_status: 'rejected' } }),
-      prisma.aidDistribution.count(),
-      prisma.complaint.count({ where: { status: { in: ['open', 'in_review'] } } }),
-      prisma.document.count({ where: { verifications: { none: {} } } }),
-      prisma.survey.count({ where: { status: 'completed' } }),
-    ]);
+    // Keep dashboard queries sequential so the endpoint stays stable even when
+    // production/runtime uses a very small pooled connection limit.
+    const totalHouseholds = await prisma.household.count();
+    const totalApplications = await prisma.aidApplication.count();
+    const processingApplications = await prisma.aidApplication.count({
+      where: {
+        status: {
+          in: ['submitted', 'initial_validation', 'document_verification', 'field_survey', 'scoring', 'admin_review'],
+        },
+      },
+    });
+    const approvedDecisions = await prisma.beneficiaryDecision.count({
+      where: { decision_status: 'approved' },
+    });
+    const rejectedDecisions = await prisma.beneficiaryDecision.count({
+      where: { decision_status: 'rejected' },
+    });
+    const totalDistributions = await prisma.aidDistribution.count();
+    const openComplaints = await prisma.complaint.count({
+      where: { status: { in: ['open', 'in_review'] } },
+    });
+    const pendingDocumentVerification = await prisma.document.count({
+      where: { verifications: { none: {} } },
+    });
+    const pendingSurveyReview = await prisma.survey.count({
+      where: { status: 'completed' },
+    });
 
     const incompleteHouseholds = await prisma.household.count({
-      where: { economicCondition: null }
+      where: { economicCondition: null },
     });
 
     const recentDistributions = await prisma.aidDistribution.findMany({
@@ -200,8 +206,8 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
       orderBy: { created_at: 'desc' },
       include: {
         aidType: { select: { name: true } },
-        decision: { select: { application: { select: { household: { select: { nama_kepala_keluarga: true } } } } } }
-      }
+        decision: { select: { application: { select: { household: { select: { nama_kepala_keluarga: true } } } } } },
+      },
     });
 
     const applicationsByStatus = await prisma.aidApplication.groupBy({
