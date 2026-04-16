@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import authService from '../../services/authService';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText } from '../../utils/formLimits';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,11 @@ const Login = () => {
   const from = location.state?.from?.pathname || '/dashboard';
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    const nextValue = name === 'password'
+      ? clampText(value, FORM_LIMITS.password)
+      : clampText(value, FORM_LIMITS.email);
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
   };
 
   const onSubmit = async (e) => {
@@ -75,6 +80,7 @@ const Login = () => {
               onChange={handleChange}
               placeholder="Masukkan username atau email"
               required
+              maxLength={FORM_LIMITS.email}
               style={{
                 width: '100%',
                 padding: '12px 16px',
@@ -104,6 +110,7 @@ const Login = () => {
               onChange={handleChange}
               placeholder="••••••••••"
               required
+              maxLength={FORM_LIMITS.password}
               style={{
                 width: '100%',
                 padding: '12px 16px',

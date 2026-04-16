@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, digitsOnly, phoneOnly } from '../../utils/formLimits';
 
 const Activation = () => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const Activation = () => {
     try {
       setLoading(true);
       await api.post('/auth/otp/resend', { phone });
-      toast.success('OTP berhasil dikirim ke WhatsApp Anda');
+      toast.success('OTP berhasil dikirim ke nomor Anda');
       setStep(2);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Gagal mengirim OTP');
@@ -59,9 +60,11 @@ const Activation = () => {
               <input
                 type="text"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => setPhone(phoneOnly(e.target.value, FORM_LIMITS.phone))}
                 placeholder="081234567890"
                 required
+                inputMode="tel"
+                maxLength={FORM_LIMITS.phone}
                 style={inputStyle}
               />
             </div>
@@ -77,11 +80,12 @@ const Activation = () => {
               <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#444', marginBottom: '8px' }}>Kode OTP (6 Digit)</label>
               <input
                 type="text"
-                maxLength="6"
+                maxLength={FORM_LIMITS.otp}
                 value={otpCode}
-                onChange={(e) => setOtpCode(e.target.value)}
+                onChange={(e) => setOtpCode(digitsOnly(e.target.value, FORM_LIMITS.otp))}
                 placeholder="123456"
                 required
+                inputMode="numeric"
                 style={{...inputStyle, letterSpacing: '4px', textAlign: 'center', fontSize: '18px', fontWeight: 'bold'}}
               />
             </div>
@@ -91,9 +95,10 @@ const Activation = () => {
               <input
                 type="password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={(e) => setNewPassword(clampText(e.target.value, FORM_LIMITS.password))}
                 placeholder="Min. 6 karakter"
                 required
+                maxLength={FORM_LIMITS.password}
                 style={inputStyle}
               />
             </div>

@@ -3,6 +3,7 @@ import { KeyRound, Eye, EyeOff, X, CheckCircle } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import authService from '../../services/authService';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText } from '../../utils/formLimits';
 
 /**
  * ChangePasswordModal - Standalone modal for changing password.
@@ -34,7 +35,7 @@ const ChangePasswordModal = ({ onClose }) => {
   };
 
   const handleChange = (field) => (e) => {
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
+    setFormData((prev) => ({ ...prev, [field]: clampText(e.target.value, FORM_LIMITS.password) }));
     if (errors[field]) setErrors((prev) => ({ ...prev, [field]: null }));
   };
 
@@ -101,6 +102,7 @@ const ChangePasswordModal = ({ onClose }) => {
                 onChange={handleChange('currentPassword')}
                 className={inputClass('currentPassword')}
                 placeholder="Masukkan password lama"
+                maxLength={FORM_LIMITS.password}
               />
               <button
                 type="button"
@@ -125,6 +127,7 @@ const ChangePasswordModal = ({ onClose }) => {
                 onChange={handleChange('newPassword')}
                 className={inputClass('newPassword')}
                 placeholder="Minimal 6 karakter"
+                maxLength={FORM_LIMITS.password}
               />
               <button
                 type="button"
@@ -149,6 +152,7 @@ const ChangePasswordModal = ({ onClose }) => {
                 onChange={handleChange('confirmPassword')}
                 className={inputClass('confirmPassword')}
                 placeholder="Ulangi password baru"
+                maxLength={FORM_LIMITS.password}
               />
               <button
                 type="button"

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { KeyRound, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
 import authService from '../../services/authService';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText } from '../../utils/formLimits';
 
 /**
  * ResetPassword - Public page for resetting password via token from email.
@@ -115,9 +116,10 @@ const ResetPassword = () => {
               <input
                 type={showNew ? 'text' : 'password'}
                 value={formData.newPassword}
-                onChange={(e) => { setFormData(p => ({ ...p, newPassword: e.target.value })); setErrors(p => ({ ...p, newPassword: null })); }}
+                onChange={(e) => { setFormData(p => ({ ...p, newPassword: clampText(e.target.value, FORM_LIMITS.password) })); setErrors(p => ({ ...p, newPassword: null })); }}
                 placeholder="Minimal 6 karakter"
                 required
+                maxLength={FORM_LIMITS.password}
                 style={inputStyle('newPassword')}
                 onFocus={e => e.target.style.borderColor = '#4A90D9'}
                 onBlur={e => e.target.style.borderColor = errors.newPassword ? '#ef4444' : '#e5e7eb'}
@@ -138,9 +140,10 @@ const ResetPassword = () => {
               <input
                 type={showConfirm ? 'text' : 'password'}
                 value={formData.confirmPassword}
-                onChange={(e) => { setFormData(p => ({ ...p, confirmPassword: e.target.value })); setErrors(p => ({ ...p, confirmPassword: null })); }}
+                onChange={(e) => { setFormData(p => ({ ...p, confirmPassword: clampText(e.target.value, FORM_LIMITS.password) })); setErrors(p => ({ ...p, confirmPassword: null })); }}
                 placeholder="Ulangi password baru"
                 required
+                maxLength={FORM_LIMITS.password}
                 style={inputStyle('confirmPassword')}
                 onFocus={e => e.target.style.borderColor = '#4A90D9'}
                 onBlur={e => e.target.style.borderColor = errors.confirmPassword ? '#ef4444' : '#e5e7eb'}

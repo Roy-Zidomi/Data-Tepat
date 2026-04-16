@@ -6,6 +6,7 @@ import authService from '../../services/authService';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, phoneOnly } from '../../utils/formLimits';
 
 const Register = () => {
   const [loading, setLoading] = useState(false);
@@ -25,7 +26,16 @@ const Register = () => {
   const from = location.state?.from?.pathname || '/dashboard';
 
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    let nextValue = value;
+
+    if (name === 'name') nextValue = clampText(value, FORM_LIMITS.name);
+    if (name === 'username') nextValue = clampText(value, FORM_LIMITS.username);
+    if (name === 'email') nextValue = clampText(value, FORM_LIMITS.email);
+    if (name === 'phone') nextValue = phoneOnly(value, FORM_LIMITS.phone);
+    if (name === 'password' || name === 'confirmPassword') nextValue = clampText(value, FORM_LIMITS.password);
+
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
   };
 
   const onSubmit = async (e) => {
@@ -94,6 +104,7 @@ const Register = () => {
                 icon={User}
                 value={formData.name}
                 onChange={handleChange}
+                maxLength={FORM_LIMITS.name}
               />
               <Input
                 label="Username"
@@ -104,6 +115,7 @@ const Register = () => {
                 icon={User}
                 value={formData.username}
                 onChange={handleChange}
+                maxLength={FORM_LIMITS.username}
               />
             </div>
 
@@ -117,6 +129,7 @@ const Register = () => {
                 icon={Mail}
                 value={formData.email}
                 onChange={handleChange}
+                maxLength={FORM_LIMITS.email}
               />
               <Input
                 label="Nomor Telepon"
@@ -126,6 +139,8 @@ const Register = () => {
                 icon={Phone}
                 value={formData.phone}
                 onChange={handleChange}
+                inputMode="tel"
+                maxLength={FORM_LIMITS.phone}
               />
             </div>
 
@@ -139,6 +154,7 @@ const Register = () => {
                 icon={Lock}
                 value={formData.password}
                 onChange={handleChange}
+                maxLength={FORM_LIMITS.password}
               />
               <Input
                 label="Konfirmasi Password"
@@ -149,6 +165,7 @@ const Register = () => {
                 icon={Lock}
                 value={formData.confirmPassword}
                 onChange={handleChange}
+                maxLength={FORM_LIMITS.password}
               />
             </div>
 

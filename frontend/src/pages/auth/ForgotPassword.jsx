@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
 import authService from '../../services/authService';
+import { FORM_LIMITS, clampText } from '../../utils/formLimits';
 
 /**
  * ForgotPassword - Public page where users enter their email to receive a password reset link.
@@ -62,9 +63,10 @@ const ForgotPassword = () => {
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => { setEmail(e.target.value); setError(''); }}
+                    onChange={(e) => { setEmail(clampText(e.target.value, FORM_LIMITS.email)); setError(''); }}
                     placeholder="nama@email.com"
                     required
+                    maxLength={FORM_LIMITS.email}
                     style={{
                       width: '100%',
                       padding: '12px 16px 12px 42px',
