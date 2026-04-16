@@ -36,6 +36,7 @@ class ComplaintService {
       where: { submitted_by_user_id: BigInt(userId) },
       orderBy: { created_at: 'desc' },
       include: {
+        household: { select: { nama_kepala_keluarga: true, nomor_kk: true } },
         application: {
           include: { aidType: true }
         }

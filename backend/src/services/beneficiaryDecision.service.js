@@ -27,6 +27,7 @@ class BeneficiaryDecisionService {
             include: {
               household: {
                 select: {
+                  id: true,
                   nomor_kk: true,
                   nama_kepala_keluarga: true,
                   alamat: true,
