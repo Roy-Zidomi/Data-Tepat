@@ -7,13 +7,13 @@ const { requirePermission } = require('../middlewares/rbac.middleware');
 
 router.use(authenticate);
 
-// List all decisions — admin_main, pengawas
+// List all decisions — admin_main, admin_staff, pengawas
 router.get('/', requirePermission('DECISION_LIST'), decisionController.listAll);
 
-// Get decision by ID — admin_main, pengawas
+// Get decision by ID — admin_main, admin_staff, pengawas
 router.get('/:id', requirePermission('DECISION_LIST'), decisionController.getById);
 
-// Create decision (approve/reject/waitlist) — admin_main only
+// Create decision (approve/reject/waitlist) — admin_main, admin_staff
 router.post('/', requirePermission('DECISION_CREATE'), decisionController.createDecision);
 
 module.exports = router;

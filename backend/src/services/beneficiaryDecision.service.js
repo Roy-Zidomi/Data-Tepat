@@ -81,7 +81,7 @@ class BeneficiaryDecisionService {
 
   /**
    * Create a beneficiary decision (approve / reject / waitlist)
-   * Only admin_main can call this
+   * Admin main and staff can call this
    */
   async createDecision(data, adminUser) {
     const { application_id, decision_status, approved_aid_type_id, approved_amount, approved_note } = data;
