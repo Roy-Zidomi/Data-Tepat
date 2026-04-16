@@ -23,6 +23,7 @@ import SurveyList from '../pages/Surveys/SurveyList';
 import SurveyAction from '../pages/Surveys/SurveyAction';
 import SurveyChecklistList from '../pages/Surveys/SurveyChecklistList';
 import SurveyPhotoGallery from '../pages/Surveys/SurveyPhotoGallery';
+import MyDocuments from '../pages/Documents/MyDocuments';
 import ApplicationList from '../pages/Applications/ApplicationList';
 import ApplicationDetail from '../pages/Applications/ApplicationDetail';
 import DistributionList from '../pages/Distributions/DistributionList';
@@ -106,20 +107,20 @@ const AppRouter = () => {
           {/* ═══════════════════════════════════════════ */}
           {/* 2. DATA WARGA                              */}
           {/* ═══════════════════════════════════════════ */}
-          <Route path="/households" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga']} />}>
+          <Route path="/households" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan']} />}>
             <Route index element={<HouseholdList />} />
             <Route path=":id" element={<HouseholdDetail />} />
-            <Route path=":id/documents" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+            <Route path=":id/documents" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan']} />}>
               <Route index element={<HouseholdDocuments />} />
             </Route>
-            <Route path=":id/edit" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+            <Route path=":id/edit" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan']} />}>
               <Route index element={<Placeholder title="Edit Rumah Tangga" />} />
             </Route>
-            <Route path="create" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan', 'warga']} />}>
+            <Route path="create" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan']} />}>
               <Route index element={<HouseholdWizard />} />
             </Route>
           </Route>
-          <Route path="/family-members" element={<ProtectedRoute allowedRoles={['admin_main', 'relawan', 'warga']} />}>
+          <Route path="/family-members" element={<ProtectedRoute allowedRoles={['admin_main', 'relawan']} />}>
             <Route index element={<FamilyMemberList />} />
           </Route>
           <Route path="/economic-conditions" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
@@ -138,9 +139,9 @@ const AppRouter = () => {
           {/* ═══════════════════════════════════════════ */}
           {/* 3. PERMOHONAN BANTUAN                      */}
           {/* ═══════════════════════════════════════════ */}
-          <Route path="/applications" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'warga']} />}>
+          <Route path="/applications" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas']} />}>
             <Route index element={<ApplicationList />} />
-            <Route path="new" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'warga']} />}>
+            <Route path="new" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff']} />}>
               <Route index element={<ApplicationCreate />} />
             </Route>
             <Route path=":id" element={<ApplicationDetail />} />
@@ -233,8 +234,8 @@ const AppRouter = () => {
           </Route>
 
           {/* MODUL WARGA */}
-          <Route path="/documents" element={<ProtectedRoute allowedRoles={['relawan', 'warga']} />}>
-            <Route index element={<Placeholder title="Dokumen Saya" />} />
+          <Route path="/documents" element={<ProtectedRoute allowedRoles={['warga']} />}>
+            <Route index element={<MyDocuments />} />
           </Route>
 
         </Route>
