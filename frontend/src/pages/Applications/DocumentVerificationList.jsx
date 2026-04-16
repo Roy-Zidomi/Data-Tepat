@@ -8,6 +8,7 @@ import Alert from '../../components/ui/Alert';
 import { PageLoader } from '../../components/ui/Spinner';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { resolveFileUrl } from '../../utils/fileUrl';
 
 const verifyStatusConfig = {
   approved: { label: 'Terverifikasi', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle },
@@ -159,7 +160,7 @@ const DocumentVerificationList = () => {
             {detailModal.file_url && (
               <div className="border border-surface-200 dark:border-surface-700 rounded-xl p-4 text-center">
                 <FileText className="w-10 h-10 mx-auto text-surface-400 mb-2" />
-                <a href={detailModal.file_url} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline text-sm font-medium">
+                <a href={resolveFileUrl(detailModal.file_url)} target="_blank" rel="noreferrer" className="text-primary-600 hover:underline text-sm font-medium">
                   Lihat / Unduh Dokumen
                 </a>
               </div>
