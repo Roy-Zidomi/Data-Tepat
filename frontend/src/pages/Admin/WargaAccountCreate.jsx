@@ -146,11 +146,37 @@ const CreateAccountModal = ({ household, onClose, onSuccess }) => {
                     <Copy className="w-4 h-4 text-surface-500" />
                   </button>
                 </div>
+
+                {/* Temporary Password */}
+                <div className="flex items-center justify-between px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="text-xs text-surface-500 uppercase tracking-wide">Password Sementara</p>
+                    <p className="font-mono font-bold text-surface-900 dark:text-white text-sm mt-0.5 break-all">
+                      {showPassword ? createdAccount.tempPassword : '••••••••••'}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword((prev) => !prev)}
+                      className="p-2 hover:bg-surface-200 dark:hover:bg-surface-700 rounded-lg transition-colors"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4 text-surface-500" /> : <Eye className="w-4 h-4 text-surface-500" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleCopy(createdAccount.tempPassword)}
+                      className="p-2 hover:bg-surface-200 dark:hover:bg-surface-700 rounded-lg transition-colors"
+                    >
+                      <Copy className="w-4 h-4 text-surface-500" />
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-3 text-center">
                 <p className="text-xs text-blue-800 dark:text-blue-200">
-                  Warga harus mengakses menu "Aktivasi Akun" di halaman login untuk memasukkan OTP dan mengatur kata sandinya.
+                  Warga login pertama kali memakai username dan password sementara ini, lalu wajib lanjut ke aktivasi OTP dan mengganti kata sandinya.
                 </p>
               </div>
 

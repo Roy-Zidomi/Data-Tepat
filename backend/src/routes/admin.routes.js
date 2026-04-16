@@ -19,6 +19,15 @@ function serializeBigInt(obj) {
   ));
 }
 
+function generateTempPassword(length = 10) {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
+  let password = '';
+  for (let i = 0; i < length; i += 1) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
+
 /**
  * GET /api/v1/admin/warga-eligible
  * Daftar rumah tangga yang pengajuannya sudah Disetujui 
@@ -105,6 +114,8 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
       .replace(/\s+/g, '_')
       .substring(0, 20);
     const username = `${baseUsername}_${Date.now().toString().slice(-4)}`;
+    const tempPassword = generateTempPassword(10);
+    const passwordHash = await bcrypt.hash(tempPassword, 10);
 
     // Create warga user
     const newUser = await prisma.user.create({
@@ -112,11 +123,12 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
         name,
         email: email || null,
         username,
-        password_hash: '', // will be set upon activation
+        password_hash: passwordHash,
         phone: phone || household.phone || null,
         role: 'warga',
-        is_active: false,
+        is_active: true,
         activation_status: 'pending_otp',
+        must_change_password: true,
       }
     });
 
@@ -147,14 +159,16 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
       user_id: newUser.id,
       name: newUser.name,
       username: newUser.username,
+      tempPassword,
       email: newUser.email,
       role: newUser.role,
       phone: userPhone,
+      must_change_password: true,
       activation_status: newUser.activation_status,
       household_id: household_id,
     });
 
-    return successResponse(res, result, 'Akun warga berhasil dibuat. OTP telah dikirim ke nomor WA terdaftar.', 201);
+    return successResponse(res, result, 'Akun warga berhasil dibuat. Password sementara dan OTP aktivasi sudah siap digunakan.', 201);
   } catch (error) {
     next(error);
   }
