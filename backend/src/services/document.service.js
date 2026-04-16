@@ -5,7 +5,7 @@ class DocumentService {
   /**
    * Upload a new document and register it to a household
    */
-  async uploadDocument(file, fileUrl, body, userId) {
+  async uploadDocument(file, fileUrl, body, user) {
     const { household_id, document_type } = body;
 
     // Check household ownership
@@ -17,9 +17,9 @@ class DocumentService {
       throw { statusCode: 404, message: 'Household not found' };
     }
 
-    // Warga can only upload to their own household. Admins/relawan can upload to any.
-    // For now, we assume standard authorization handles generic role checks.
-    // E.g., if role is warga, household.created_by_user_id must match userId.
+    if (user.role === 'warga' && household.created_by_user_id.toString() !== user.id.toString()) {
+      throw { statusCode: 403, message: 'Forbidden: You can only upload documents to your own household' };
+    }
 
     return prisma.$transaction(async (tx) => {
       // 1. Create document record
@@ -30,7 +30,7 @@ class DocumentService {
           file_url: fileUrl,
           original_filename: file.originalname,
           mime_type: file.mimetype,
-          uploaded_by_user_id: BigInt(userId)
+          uploaded_by_user_id: BigInt(user.id)
         }
       });
 
@@ -44,7 +44,7 @@ class DocumentService {
 
       // 3. Log audit
       await logAudit({
-        userId,
+        userId: user.id,
         action: 'create',
         entityType: 'Document',
         entityId: document.id,
@@ -55,7 +55,32 @@ class DocumentService {
     });
   }
 
-  async getDocumentsByHousehold(household_id) {
+  async getMyDocuments(user) {
+    return prisma.document.findMany({
+      where: { household: { created_by_user_id: BigInt(user.id) } },
+      include: {
+        verifications: {
+          orderBy: { verified_at: 'desc' },
+          take: 1
+        }
+      },
+      orderBy: { uploaded_at: 'desc' }
+    });
+  }
+
+  async getDocumentsByHousehold(household_id, user) {
+    const household = await prisma.household.findUnique({
+      where: { id: BigInt(household_id) }
+    });
+
+    if (!household) {
+      throw { statusCode: 404, message: 'Household not found' };
+    }
+
+    if (user.role === 'warga' && household.created_by_user_id.toString() !== user.id.toString()) {
+      throw { statusCode: 403, message: 'Forbidden: You can only view documents of your own household' };
+    }
+
     return prisma.document.findMany({
       where: { household_id: BigInt(household_id) },
       include: {

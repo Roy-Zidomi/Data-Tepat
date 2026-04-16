@@ -18,6 +18,7 @@ router.post(
   documentController.uploadDocument
 );
 
+router.get('/my', documentController.getMyDocuments);
 router.get('/household/:householdId', documentController.getDocumentsByHousehold);
 
 // Verification is restricted to Admin & Petugas & Relawan

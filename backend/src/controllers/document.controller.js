@@ -18,7 +18,7 @@ class DocumentController {
         file,
         fileUrl,
         { household_id, document_type },
-        req.user.id
+        req.user
       );
 
       // Serialize bigints
@@ -32,9 +32,23 @@ class DocumentController {
     }
   }
 
+  async getMyDocuments(req, res, next) {
+    try {
+      const documents = await documentService.getMyDocuments(req.user);
+      
+      const docStr = JSON.parse(JSON.stringify(documents, (key, value) =>
+        typeof value === 'bigint' ? value.toString() : value
+      ));
+
+      return successResponse(res, docStr, 'My documents retrieved');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getDocumentsByHousehold(req, res, next) {
     try {
-      const documents = await documentService.getDocumentsByHousehold(req.params.householdId);
+      const documents = await documentService.getDocumentsByHousehold(req.params.householdId, req.user);
       
       const docStr = JSON.parse(JSON.stringify(documents, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value
