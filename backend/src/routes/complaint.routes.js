@@ -10,10 +10,10 @@ const { submitComplaintSchema } = require('../validators/complaint.validator');
 // All complaint routes require authentication
 router.use(authenticate);
 
-// Submit complaint (warga)
+// Submit complaint (warga, pengawas internal report)
 router.post('/', requirePermission('COMPLAINT_CREATE'), validate(submitComplaintSchema), complaintController.submitComplaint);
 
-// List my complaints (warga)
+// List my complaints / internal reports (warga, pengawas)
 router.get('/my', requirePermission('COMPLAINT_LIST_OWN'), complaintController.getMyComplaints);
 
 // List all complaints (admin view — admin_main, admin_staff)
