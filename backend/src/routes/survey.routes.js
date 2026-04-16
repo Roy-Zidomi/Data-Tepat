@@ -19,6 +19,9 @@ const permitUpload = (req, res, next) => {
   next();
 };
 
+router.get('/my-results', requirePermission('SURVEY_LIST'), surveyController.getMyResults);
+router.post('/households/:householdId/submit', requirePermission('SURVEY_CREATE'), surveyController.submitFromHousehold);
+
 // Modul CRUD khusus sub-resource /surveys/:surveyId/photos
 router.get('/:surveyId/photos', permitUpload, surveyController.listPhotos);
 router.post('/:surveyId/photos', permitUpload, upload.array('photos', 5), surveyController.uploadPhotos);
