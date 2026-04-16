@@ -40,18 +40,33 @@ router.post(
 );
 
 router.put(
+  '/:id/members/:memberId',
+  requirePermission('HOUSEHOLD_UPDATE'),
+  validate(householdParamsSchema, 'params'),
+  familyMemberController.updateMember
+);
+
+router.delete(
+  '/:id/members/:memberId',
+  requirePermission('HOUSEHOLD_UPDATE'),
+  validate(householdParamsSchema, 'params'),
+  familyMemberController.deleteMember
+);
+
+router.put(
   '/:id',
   requirePermission('HOUSEHOLD_UPDATE'),
-  validate(householdParamsSchema, 'params'), 
-  validate(updateHouseholdSchema, 'body'), 
+  validate(householdParamsSchema, 'params'),
+  validate(updateHouseholdSchema, 'body'),
   householdController.update
 );
 
 router.delete(
   '/:id',
   requirePermission('HOUSEHOLD_DELETE'),
-  validate(householdParamsSchema, 'params'), 
+  validate(householdParamsSchema, 'params'),
   householdController.delete
 );
 
 module.exports = router;
+

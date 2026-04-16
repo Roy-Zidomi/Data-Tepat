@@ -11,6 +11,7 @@ import WargaAccountCreate from '../pages/Admin/WargaAccountCreate';
 import HouseholdList from '../pages/Households/HouseholdList';
 import HouseholdDetail from '../pages/Households/HouseholdDetail';
 import HouseholdWizard from '../pages/Households/HouseholdWizard';
+import HouseholdEdit from '../pages/Households/HouseholdEdit';
 import HouseholdDocuments from '../pages/Households/HouseholdDocuments';
 import FamilyMemberList from '../pages/Households/FamilyMemberList';
 import ApplicationCreate from '../pages/Households/ApplicationCreate';
@@ -89,7 +90,7 @@ const AppRouter = () => {
               <Route index element={<HouseholdDocuments />} />
             </Route>
             <Route path=":id/edit" element={<ProtectedRoute allowedRoles={['admin_staff', 'relawan']} />}>
-              <Route index element={<Placeholder title="Edit Rumah Tangga" />} />
+              <Route index element={<HouseholdEdit />} />
             </Route>
             <Route path="create" element={<ProtectedRoute allowedRoles={['admin_staff', 'relawan']} />}>
               <Route index element={<HouseholdWizard />} />

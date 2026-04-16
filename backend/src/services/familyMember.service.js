@@ -8,7 +8,7 @@ class FamilyMemberService {
     await householdService.getById(householdId, user);
 
     const createdMembers = await Promise.all(
-      membersPayload.map(member => 
+      membersPayload.map(member =>
         prisma.familyMember.create({
           data: {
             ...member,
@@ -31,6 +31,64 @@ class FamilyMemberService {
 
     return createdMembers;
   }
+
+  async updateMember(householdId, memberId, payload, user) {
+    // Verify household access
+    await householdService.getById(householdId, user);
+
+    // Verify member belongs to household
+    const existing = await prisma.familyMember.findFirst({
+      where: { id: BigInt(memberId), household_id: BigInt(householdId) }
+    });
+    if (!existing) {
+      throw { statusCode: 404, message: 'Anggota keluarga tidak ditemukan' };
+    }
+
+    const updated = await prisma.familyMember.update({
+      where: { id: BigInt(memberId) },
+      data: {
+        ...payload,
+        birth_date: payload.birth_date ? new Date(payload.birth_date) : existing.birth_date,
+      }
+    });
+
+    await logAudit({
+      userId: user.id,
+      action: 'update',
+      entityType: 'FamilyMember',
+      entityId: memberId,
+      newValue: payload,
+      reason: 'Updated family member data'
+    });
+
+    return updated;
+  }
+
+  async deleteMember(householdId, memberId, user) {
+    // Verify household access
+    await householdService.getById(householdId, user);
+
+    // Verify member belongs to household
+    const existing = await prisma.familyMember.findFirst({
+      where: { id: BigInt(memberId), household_id: BigInt(householdId) }
+    });
+    if (!existing) {
+      throw { statusCode: 404, message: 'Anggota keluarga tidak ditemukan' };
+    }
+
+    await prisma.familyMember.delete({ where: { id: BigInt(memberId) } });
+
+    await logAudit({
+      userId: user.id,
+      action: 'delete',
+      entityType: 'FamilyMember',
+      entityId: memberId,
+      reason: 'Deleted family member from household'
+    });
+
+    return true;
+  }
 }
 
 module.exports = new FamilyMemberService();
+
