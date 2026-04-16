@@ -7,6 +7,7 @@ import Card from '../../components/ui/Card';
 import useAuthStore from '../../store/authStore';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, digitsOnly, phoneOnly } from '../../utils/formLimits';
 
 const steps = [
   { id: 1, title: 'Identitas KK', icon: User },
@@ -44,14 +45,31 @@ const HouseholdWizard = () => {
 
   const handleHouseholdChange = (e) => {
     const { name, value } = e.target;
+    let nextValue = value;
+    if (name === 'nomor_kk' || name === 'nik_kepala_keluarga') {
+      nextValue = digitsOnly(value, FORM_LIMITS.kkNik);
+    } else if (name === 'phone') {
+      nextValue = phoneOnly(value, FORM_LIMITS.phone);
+    } else if (name === 'nama_kepala_keluarga') {
+      nextValue = clampText(value, FORM_LIMITS.name);
+    }
     setHousehold(prev => ({
       ...prev,
-      [name]: name === 'region_id' ? Number(value) : value,
+      [name]: name === 'region_id' ? Number(nextValue) : nextValue,
     }));
   };
 
   const handleMemberChange = (e) => {
-    setNewMember(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    let nextValue = value;
+    if (name === 'nik') {
+      nextValue = digitsOnly(value, FORM_LIMITS.kkNik);
+    } else if (name === 'name') {
+      nextValue = clampText(value, FORM_LIMITS.name);
+    } else if (name === 'relationship_to_head') {
+      nextValue = clampText(value, FORM_LIMITS.relationship);
+    }
+    setNewMember(prev => ({ ...prev, [name]: nextValue }));
   };
 
   const addMember = () => {
@@ -163,10 +181,10 @@ const HouseholdWizard = () => {
              <h2 className="text-xl font-semibold border-b pb-2 dark:border-surface-700">Identitas Kepala Keluarga</h2>
              
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Input label="Nomor Kartu Keluarga" name="nomor_kk" value={household.nomor_kk} onChange={handleHouseholdChange} placeholder="16 Digit Angka" type="text" maxLength={16} required />
-                <Input label="NIK Kepala Keluarga" name="nik_kepala_keluarga" value={household.nik_kepala_keluarga} onChange={handleHouseholdChange} placeholder="16 Digit Angka" type="text" maxLength={16} required />
-                <Input label="Nama Lengkap Sesuai KTP" name="nama_kepala_keluarga" value={household.nama_kepala_keluarga} onChange={handleHouseholdChange} required />
-                <Input label="Nomor Handphone" name="phone" value={household.phone} onChange={handleHouseholdChange} />
+                <Input label="Nomor Kartu Keluarga" name="nomor_kk" value={household.nomor_kk} onChange={handleHouseholdChange} placeholder="16-32 digit angka" type="text" inputMode="numeric" maxLength={FORM_LIMITS.kkNik} required />
+                <Input label="NIK Kepala Keluarga" name="nik_kepala_keluarga" value={household.nik_kepala_keluarga} onChange={handleHouseholdChange} placeholder="16-32 digit angka" type="text" inputMode="numeric" maxLength={FORM_LIMITS.kkNik} required />
+                <Input label="Nama Lengkap Sesuai KTP" name="nama_kepala_keluarga" value={household.nama_kepala_keluarga} onChange={handleHouseholdChange} maxLength={FORM_LIMITS.name} required />
+                <Input label="Nomor Handphone" name="phone" value={household.phone} onChange={handleHouseholdChange} inputMode="tel" maxLength={FORM_LIMITS.phone} />
              </div>
 
              <div className="space-y-2 mt-4">
@@ -188,8 +206,8 @@ const HouseholdWizard = () => {
              <div className="bg-surface-50 dark:bg-surface-800/50 p-4 rounded-xl space-y-4 border border-surface-200 dark:border-surface-700">
                <h3 className="text-sm font-medium text-surface-600 dark:text-surface-300">Tambah Anggota (Istri, Anak, dll)</h3>
                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                 <Input label="Nama Lengkap" name="name" value={newMember.name} onChange={handleMemberChange} />
-                 <Input label="NIK" name="nik" value={newMember.nik} onChange={handleMemberChange} maxLength={16} />
+                 <Input label="Nama Lengkap" name="name" value={newMember.name} onChange={handleMemberChange} maxLength={FORM_LIMITS.name} />
+                 <Input label="NIK" name="nik" value={newMember.nik} onChange={handleMemberChange} inputMode="numeric" maxLength={FORM_LIMITS.kkNik} />
                  <div>
                     <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Hubungan</label>
                     <select name="relationship_to_head" value={newMember.relationship_to_head} onChange={handleMemberChange} className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white">

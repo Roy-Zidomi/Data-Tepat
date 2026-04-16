@@ -20,6 +20,7 @@ import { formatCurrency, formatDateTime } from '../../utils/formatters';
 import api from '../../services/api';
 import surveyService from '../../services/surveyService';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, digitsOnly, phoneOnly } from '../../utils/formLimits';
 
 const TABS = [
   { key: 'household', label: 'Identitas KK', icon: Users },
@@ -66,6 +67,12 @@ const WALL_TYPE_OPTIONS = [
   { value: 'triplek', label: 'Triplek' },
   { value: 'lainnya', label: 'Lainnya' },
 ];
+
+const SURVEY_LIMITS = {
+  address: 500,
+  assetText: 500,
+  notes: FORM_LIMITS.longNote,
+};
 
 const normalizeValue = (value) => (value || '').toString().trim().toLowerCase();
 
@@ -203,6 +210,61 @@ const SurveyAction = () => {
   const [documents, setDocuments] = useState([]);
   const [docType, setDocType] = useState('foto_rumah');
   const [uploadFile, setUploadFile] = useState(null);
+
+  const updateHouseholdField = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'nomor_kk' || field === 'nik_kepala_keluarga') nextValue = digitsOnly(value, FORM_LIMITS.kkNik);
+    if (field === 'nama_kepala_keluarga') nextValue = clampText(value, FORM_LIMITS.name);
+    if (field === 'phone') nextValue = phoneOnly(value, FORM_LIMITS.phone);
+    if (field === 'alamat') nextValue = clampText(value, SURVEY_LIMITS.address);
+
+    setHousehold((prev) => ({ ...prev, [field]: nextValue }));
+  };
+
+  const updateEconomicField = (field, value) => {
+    let nextValue = value;
+
+    if (['monthly_income_total', 'monthly_basic_expense', 'debt_estimation'].includes(field)) {
+      nextValue = digitsOnly(value, FORM_LIMITS.money);
+    }
+    if (field === 'dependents_count') nextValue = digitsOnly(value, FORM_LIMITS.count);
+    if (field === 'income_source') nextValue = clampText(value, 150);
+    if (field === 'head_job_status') nextValue = clampText(value, 100);
+    if (field === 'notes') nextValue = clampText(value, SURVEY_LIMITS.notes);
+
+    setEconomic((prev) => ({ ...prev, [field]: nextValue }));
+  };
+
+  const updateHousingField = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'bedroom_count') nextValue = digitsOnly(value, FORM_LIMITS.count);
+    if (['floor_type_other', 'roof_type_other', 'wall_type_other'].includes(field)) {
+      nextValue = clampText(value, 100);
+    }
+    if (field === 'notes') nextValue = clampText(value, SURVEY_LIMITS.notes);
+
+    setHousing((prev) => ({ ...prev, [field]: nextValue }));
+  };
+
+  const updateAssetsField = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'productive_assets') nextValue = clampText(value, SURVEY_LIMITS.assetText);
+    if (field === 'savings_range') nextValue = clampText(value, 100);
+    if (field === 'other_assets') nextValue = clampText(value, SURVEY_LIMITS.notes);
+
+    setAssets((prev) => ({ ...prev, [field]: nextValue }));
+  };
+
+  const updateVulnerabilityField = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'special_condition_notes') nextValue = clampText(value, SURVEY_LIMITS.notes);
+
+    setVulnerability((prev) => ({ ...prev, [field]: nextValue }));
+  };
 
   const latestDocumentsByType = useMemo(() => {
     const grouped = {};
@@ -516,31 +578,37 @@ const SurveyAction = () => {
             <Input
               label="Nomor KK"
               value={household.nomor_kk}
-              onChange={(e) => setHousehold((prev) => ({ ...prev, nomor_kk: e.target.value }))}
-              maxLength={32}
+              onChange={(e) => updateHouseholdField('nomor_kk', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.kkNik}
             />
             <Input
               label="NIK Kepala Keluarga"
               value={household.nik_kepala_keluarga}
-              onChange={(e) => setHousehold((prev) => ({ ...prev, nik_kepala_keluarga: e.target.value }))}
-              maxLength={32}
+              onChange={(e) => updateHouseholdField('nik_kepala_keluarga', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.kkNik}
             />
             <Input
               label="Nama Kepala Keluarga"
               value={household.nama_kepala_keluarga}
-              onChange={(e) => setHousehold((prev) => ({ ...prev, nama_kepala_keluarga: e.target.value }))}
+              onChange={(e) => updateHouseholdField('nama_kepala_keluarga', e.target.value)}
+              maxLength={FORM_LIMITS.name}
             />
             <Input
               label="Nomor Telepon"
               value={household.phone}
-              onChange={(e) => setHousehold((prev) => ({ ...prev, phone: e.target.value }))}
+              onChange={(e) => updateHouseholdField('phone', e.target.value)}
+              inputMode="tel"
+              maxLength={FORM_LIMITS.phone}
             />
           </div>
 
           <Input
             label="Alamat Lengkap"
             value={household.alamat}
-            onChange={(e) => setHousehold((prev) => ({ ...prev, alamat: e.target.value }))}
+            onChange={(e) => updateHouseholdField('alamat', e.target.value)}
+            maxLength={SURVEY_LIMITS.address}
           />
 
           <div className="flex justify-end">
@@ -561,38 +629,48 @@ const SurveyAction = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Input
-              type="number"
+              type="text"
               label="Pendapatan Bulanan Total (Rp)"
               value={economic.monthly_income_total}
-              onChange={(e) => setEconomic((prev) => ({ ...prev, monthly_income_total: e.target.value }))}
+              onChange={(e) => updateEconomicField('monthly_income_total', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.money}
             />
             <Input
-              type="number"
+              type="text"
               label="Pengeluaran Pokok Bulanan (Rp)"
               value={economic.monthly_basic_expense}
-              onChange={(e) => setEconomic((prev) => ({ ...prev, monthly_basic_expense: e.target.value }))}
+              onChange={(e) => updateEconomicField('monthly_basic_expense', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.money}
             />
             <Input
               label="Sumber Pendapatan Utama"
               value={economic.income_source}
-              onChange={(e) => setEconomic((prev) => ({ ...prev, income_source: e.target.value }))}
+              onChange={(e) => updateEconomicField('income_source', e.target.value)}
+              maxLength={150}
             />
             <Input
               label="Status Pekerjaan Kepala Keluarga"
               value={economic.head_job_status}
-              onChange={(e) => setEconomic((prev) => ({ ...prev, head_job_status: e.target.value }))}
+              onChange={(e) => updateEconomicField('head_job_status', e.target.value)}
+              maxLength={100}
             />
             <Input
-              type="number"
+              type="text"
               label="Jumlah Tanggungan"
               value={economic.dependents_count}
-              onChange={(e) => setEconomic((prev) => ({ ...prev, dependents_count: e.target.value }))}
+              onChange={(e) => updateEconomicField('dependents_count', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.count}
             />
             <Input
-              type="number"
+              type="text"
               label="Estimasi Utang (Rp)"
               value={economic.debt_estimation}
-              onChange={(e) => setEconomic((prev) => ({ ...prev, debt_estimation: e.target.value }))}
+              onChange={(e) => updateEconomicField('debt_estimation', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.money}
             />
           </div>
 
@@ -612,9 +690,11 @@ const SurveyAction = () => {
             <textarea
               rows={3}
               value={economic.notes}
-              onChange={(e) => setEconomic((prev) => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) => updateEconomicField('notes', e.target.value)}
+              maxLength={SURVEY_LIMITS.notes}
               className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm dark:bg-surface-900 dark:border-surface-700 dark:text-white"
             />
+            <p className="mt-1 text-right text-xs text-surface-500">{economic.notes.length}/{SURVEY_LIMITS.notes}</p>
           </div>
 
           <div className="rounded-xl bg-surface-50 dark:bg-surface-900/50 p-4 text-sm text-surface-600 dark:text-surface-300">
@@ -653,17 +733,26 @@ const SurveyAction = () => {
               </select>
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Kondisi Umum Rumah</label>
+              <select
+                value={housing.house_condition}
+                onChange={(e) => updateHousingField('house_condition', e.target.value)}
+                className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white"
+              >
+                <option value="">Pilih kondisi rumah</option>
+                <option value="layak">Layak</option>
+                <option value="semi_layak">Semi Layak</option>
+                <option value="tidak_layak">Tidak Layak</option>
+              </select>
+            </div>
             <Input
-              label="Kondisi Umum Rumah"
-              value={housing.house_condition}
-              onChange={(e) => setHousing((prev) => ({ ...prev, house_condition: e.target.value }))}
-              placeholder="Contoh: baik / sedang / buruk"
-            />
-            <Input
-              type="number"
+              type="text"
               label="Jumlah Kamar Tidur"
               value={housing.bedroom_count}
-              onChange={(e) => setHousing((prev) => ({ ...prev, bedroom_count: e.target.value }))}
+              onChange={(e) => updateHousingField('bedroom_count', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.count}
             />
             <div>
               <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Jenis Lantai</label>
@@ -729,24 +818,27 @@ const SurveyAction = () => {
               <Input
                 label="Lainnya (Jenis Lantai)"
                 value={housing.floor_type_other}
-                onChange={(e) => setHousing((prev) => ({ ...prev, floor_type_other: e.target.value }))}
+                onChange={(e) => updateHousingField('floor_type_other', e.target.value)}
                 placeholder="Tuliskan jenis lantai"
+                maxLength={100}
               />
             )}
             {housing.roof_type_option === 'lainnya' && (
               <Input
                 label="Lainnya (Jenis Atap)"
                 value={housing.roof_type_other}
-                onChange={(e) => setHousing((prev) => ({ ...prev, roof_type_other: e.target.value }))}
+                onChange={(e) => updateHousingField('roof_type_other', e.target.value)}
                 placeholder="Tuliskan jenis atap"
+                maxLength={100}
               />
             )}
             {housing.wall_type_option === 'lainnya' && (
               <Input
                 label="Lainnya (Jenis Dinding)"
                 value={housing.wall_type_other}
-                onChange={(e) => setHousing((prev) => ({ ...prev, wall_type_other: e.target.value }))}
+                onChange={(e) => updateHousingField('wall_type_other', e.target.value)}
                 placeholder="Tuliskan jenis dinding"
+                maxLength={100}
               />
             )}
           </div>
@@ -775,9 +867,11 @@ const SurveyAction = () => {
             <textarea
               rows={3}
               value={housing.notes}
-              onChange={(e) => setHousing((prev) => ({ ...prev, notes: e.target.value }))}
+              onChange={(e) => updateHousingField('notes', e.target.value)}
+              maxLength={SURVEY_LIMITS.notes}
               className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm dark:bg-surface-900 dark:border-surface-700 dark:text-white"
             />
+            <p className="mt-1 text-right text-xs text-surface-500">{housing.notes.length}/{SURVEY_LIMITS.notes}</p>
           </div>
 
           <div className="flex justify-end">
@@ -819,20 +913,23 @@ const SurveyAction = () => {
             <Input
               label="Aset Produktif"
               value={assets.productive_assets}
-              onChange={(e) => setAssets((prev) => ({ ...prev, productive_assets: e.target.value }))}
+              onChange={(e) => updateAssetsField('productive_assets', e.target.value)}
+              maxLength={SURVEY_LIMITS.assetText}
             />
             <Input
               label="Rentang Tabungan"
               value={assets.savings_range}
-              onChange={(e) => setAssets((prev) => ({ ...prev, savings_range: e.target.value }))}
+              onChange={(e) => updateAssetsField('savings_range', e.target.value)}
               placeholder="Contoh: < 500 ribu"
+              maxLength={100}
             />
           </div>
 
           <Input
             label="Aset Lainnya"
             value={assets.other_assets}
-            onChange={(e) => setAssets((prev) => ({ ...prev, other_assets: e.target.value }))}
+            onChange={(e) => updateAssetsField('other_assets', e.target.value)}
+            maxLength={SURVEY_LIMITS.notes}
           />
 
           <div className="flex justify-end">
@@ -878,11 +975,13 @@ const SurveyAction = () => {
             <textarea
               rows={3}
               value={vulnerability.special_condition_notes}
-              onChange={(e) =>
-                setVulnerability((prev) => ({ ...prev, special_condition_notes: e.target.value }))
-              }
+              onChange={(e) => updateVulnerabilityField('special_condition_notes', e.target.value)}
+              maxLength={SURVEY_LIMITS.notes}
               className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm dark:bg-surface-900 dark:border-surface-700 dark:text-white"
             />
+            <p className="mt-1 text-right text-xs text-surface-500">
+              {vulnerability.special_condition_notes.length}/{SURVEY_LIMITS.notes}
+            </p>
           </div>
 
           <div className="flex justify-end">
