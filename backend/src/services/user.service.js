@@ -92,7 +92,8 @@ class UserService {
 
   /**
    * Create a new user account (admin_main creates relawan, pengawas, admin_staff, warga)
-   * Generates a temporary password and sets activation_status to 'pending_otp' if phone is provided.
+   * ALL roles get a system-generated temporary password.
+   * User must change password on first login (must_change_password = true).
    */
   async createUser(data, adminUser) {
     const { name, email, phone, role } = data;
@@ -118,20 +119,9 @@ class UserService {
       throw { statusCode: 409, message: 'Username sudah terdaftar' };
     }
 
-    // For warga: no password (activation via OTP)
-    // For staff/relawan/pengawas: generate temp password
-    let password_hash = '';
-    let tempPassword = null;
-    let activationStatus = 'pending_otp';
-    let mustChangePassword = false;
-
-    if (role !== 'warga') {
-      // Generate random temporary password
-      tempPassword = this._generateTempPassword(10);
-      password_hash = await bcrypt.hash(tempPassword, 10);
-      activationStatus = 'active'; // Staff accounts are immediately active
-      mustChangePassword = true;   // Flag: admin-generated temp password
-    }
+    // ALL roles: generate temp password, set must_change_password = true
+    const tempPassword = this._generateTempPassword(10);
+    const password_hash = await bcrypt.hash(tempPassword, 10);
 
     const newUser = await prisma.user.create({
       data: {
@@ -141,17 +131,11 @@ class UserService {
         password_hash,
         phone: phone || null,
         role,
-        is_active: role !== 'warga', // warga inactive until OTP activation
-        activation_status: activationStatus,
-        must_change_password: mustChangePassword,
+        is_active: true,
+        activation_status: 'active',
+        must_change_password: true, // User wajib ganti password saat login pertama
       },
     });
-
-    // Generate OTP for warga accounts
-    if (role === 'warga' && phone) {
-      const otpService = require('./otp.service');
-      await otpService.generateOTP(newUser.id, phone, 'activation');
-    }
 
     // Audit log
     await logAudit({
@@ -160,14 +144,15 @@ class UserService {
       entityType: 'User',
       entityId: newUser.id,
       newValue: { name, email, username, role, phone },
-      reason: `Admin created ${role} account`,
+      reason: `Admin created ${role} account with temporary password`,
     });
 
     return {
       user: excludeFields({ ...newUser, id: newUser.id.toString() }, ['password_hash']),
-      tempPassword, // null for warga (OTP-based), temporary password for others
+      tempPassword, // Always returned — shown once to admin
     };
   }
+
 
   /**
    * Update user role (admin_main only)

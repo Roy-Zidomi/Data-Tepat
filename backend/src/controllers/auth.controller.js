@@ -106,25 +106,7 @@ class AuthController {
       next(error);
     }
   }
-  async activate(req, res, next) {
-    try {
-      const { phone, otpCode, newPassword } = req.body;
-      await authService.activateAccount(phone, otpCode, newPassword);
-      return successResponse(res, null, 'Account activated successfully. You can now login.', 200);
-    } catch (error) {
-      next(error);
-    }
-  }
-
-  async resendOtp(req, res, next) {
-    try {
-      const { phone } = req.body;
-      await authService.resendOtp(phone);
-      return successResponse(res, null, 'A new OTP has been sent to your phone.', 200);
-    } catch (error) {
-      next(error);
-    }
-  }
+  // OTP endpoints removed — activation via OTP no longer used
 
   async forgotPassword(req, res, next) {
     try {

@@ -19,15 +19,6 @@ function serializeBigInt(obj) {
   ));
 }
 
-function generateTempPassword(length = 10) {
-  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$';
-  let password = '';
-  for (let i = 0; i < length; i += 1) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return password;
-}
-
 /**
  * GET /api/v1/admin/warga-eligible
  * Daftar rumah tangga yang pengajuannya sudah Disetujui 
@@ -100,12 +91,12 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
       throw { statusCode: 404, message: 'Data rumah tangga tidak ditemukan' };
     }
 
-    // Check if warga account already exists for this household
-    const existingHouseholdUser = await prisma.user.findFirst({
-      where: { email, role: 'warga' }
-    });
-    if (existingHouseholdUser) {
-      throw { statusCode: 409, message: 'Akun dengan email ini sudah ada' };
+    // Check duplicate email
+    if (email) {
+      const existingEmail = await prisma.user.findFirst({ where: { email, role: 'warga' } });
+      if (existingEmail) {
+        throw { statusCode: 409, message: 'Akun dengan email ini sudah ada' };
+      }
     }
 
     // Generate username from NIK or name
@@ -114,20 +105,25 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
       .replace(/\s+/g, '_')
       .substring(0, 20);
     const username = `${baseUsername}_${Date.now().toString().slice(-4)}`;
-    const tempPassword = generateTempPassword(10);
-    const passwordHash = await bcrypt.hash(tempPassword, 10);
 
-    // Create warga user
+    // Generate temporary password — same flow as all other roles
+    const tempPassword = Array.from({ length: 10 }, () =>
+      'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$'
+        .charAt(Math.floor(Math.random() * 58))
+    ).join('');
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    // Create warga user — active immediately, must change password on first login
     const newUser = await prisma.user.create({
       data: {
         name,
         email: email || null,
         username,
-        password_hash: passwordHash,
+        password_hash: hashedPassword,
         phone: phone || household.phone || null,
         role: 'warga',
         is_active: true,
-        activation_status: 'pending_otp',
+        activation_status: 'active',
         must_change_password: true,
       }
     });
@@ -137,13 +133,6 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
       where: { id: BigInt(household_id) },
       data: { created_by_user_id: newUser.id }
     });
-
-    // Generate OTP
-    const otpService = require('../services/otp.service');
-    const userPhone = phone || household.phone;
-    if(userPhone) {
-      await otpService.generateOTP(newUser.id, userPhone, 'activation');
-    }
 
     // Audit log
     await logAudit({
@@ -159,16 +148,14 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
       user_id: newUser.id,
       name: newUser.name,
       username: newUser.username,
-      tempPassword,
       email: newUser.email,
       role: newUser.role,
-      phone: userPhone,
-      must_change_password: true,
-      activation_status: newUser.activation_status,
-      household_id: household_id,
+      phone: newUser.phone,
+      tempPassword, // Shown once to admin
+      household_id,
     });
 
-    return successResponse(res, result, 'Akun warga berhasil dibuat. Password sementara dan OTP aktivasi sudah siap digunakan.', 201);
+    return successResponse(res, result, 'Akun warga berhasil dibuat dengan password sementara.', 201);
   } catch (error) {
     next(error);
   }
@@ -183,36 +170,30 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
   try {
     const role = req.user.role;
 
-    // Keep dashboard queries sequential so the endpoint stays stable even when
-    // production/runtime uses a very small pooled connection limit.
-    const totalHouseholds = await prisma.household.count();
-    const totalApplications = await prisma.aidApplication.count();
-    const processingApplications = await prisma.aidApplication.count({
-      where: {
-        status: {
-          in: ['submitted', 'initial_validation', 'document_verification', 'field_survey', 'scoring', 'admin_review'],
-        },
-      },
-    });
-    const approvedDecisions = await prisma.beneficiaryDecision.count({
-      where: { decision_status: 'approved' },
-    });
-    const rejectedDecisions = await prisma.beneficiaryDecision.count({
-      where: { decision_status: 'rejected' },
-    });
-    const totalDistributions = await prisma.aidDistribution.count();
-    const openComplaints = await prisma.complaint.count({
-      where: { status: { in: ['open', 'in_review'] } },
-    });
-    const pendingDocumentVerification = await prisma.document.count({
-      where: { verifications: { none: {} } },
-    });
-    const pendingSurveyReview = await prisma.survey.count({
-      where: { status: 'completed' },
-    });
+    const [
+      totalHouseholds,
+      totalApplications,
+      processingApplications,
+      approvedDecisions,
+      rejectedDecisions,
+      totalDistributions,
+      openComplaints,
+      pendingDocumentVerification,
+      pendingSurveyReview,
+    ] = await Promise.all([
+      prisma.household.count(),
+      prisma.aidApplication.count(),
+      prisma.aidApplication.count({ where: { status: { in: ['submitted', 'initial_validation', 'document_verification', 'field_survey', 'scoring', 'admin_review'] } } }),
+      prisma.beneficiaryDecision.count({ where: { decision_status: 'approved' } }),
+      prisma.beneficiaryDecision.count({ where: { decision_status: 'rejected' } }),
+      prisma.aidDistribution.count(),
+      prisma.complaint.count({ where: { status: { in: ['open', 'in_review'] } } }),
+      prisma.document.count({ where: { verifications: { none: {} } } }),
+      prisma.survey.count({ where: { status: 'completed' } }),
+    ]);
 
     const incompleteHouseholds = await prisma.household.count({
-      where: { economicCondition: null },
+      where: { economicCondition: null }
     });
 
     const recentDistributions = await prisma.aidDistribution.findMany({
@@ -220,8 +201,8 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
       orderBy: { created_at: 'desc' },
       include: {
         aidType: { select: { name: true } },
-        decision: { select: { application: { select: { household: { select: { nama_kepala_keluarga: true } } } } } },
-      },
+        decision: { select: { application: { select: { household: { select: { nama_kepala_keluarga: true } } } } } }
+      }
     });
 
     const applicationsByStatus = await prisma.aidApplication.groupBy({

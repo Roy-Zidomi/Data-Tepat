@@ -171,17 +171,13 @@ const UserList = () => {
 
       setCreateModalOpen(false);
 
-      // If temp password was returned (non-warga), show it
-      if (tempPassword) {
-        setTempPasswordInfo({
-          name: createdUser?.name || formData.name,
-          role: createdUser?.role || formData.role,
-          username: createdUser?.username || '',
-          tempPassword,
-        });
-      } else {
-        toast.success('Akun warga berhasil dibuat (aktivasi via OTP)');
-      }
+      // Selalu tampilkan TempPasswordModal untuk semua role
+      setTempPasswordInfo({
+        name: createdUser?.name || formData.name,
+        role: createdUser?.role || formData.role,
+        username: createdUser?.username || '',
+        tempPassword: tempPassword || '',
+      });
 
       setFormData({ name: '', email: '', phone: '', role: 'relawan' });
       fetchData();
@@ -326,8 +322,8 @@ const UserList = () => {
       <Modal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)} title="Buat Akun Baru" size="md">
         <form onSubmit={handleCreateSubmit} className="space-y-4">
           <Input label="Nama Lengkap" required value={formData.name} onChange={e => updateFormField('name', e.target.value)} placeholder="Cth. Supardi" maxLength={FORM_LIMITS.name} />
-          <Input label="Email Pribadi" type="email" required value={formData.email} onChange={e => updateFormField('email', e.target.value)} placeholder="supardi@email.com" maxLength={FORM_LIMITS.email} />
-          <Input label="Nomor Telepon (WhatsApp)" required value={formData.phone} onChange={e => updateFormField('phone', e.target.value)} placeholder="08123456789" inputMode="tel" maxLength={FORM_LIMITS.phone} />
+          <Input label="Email (Opsional)" type="email" value={formData.email} onChange={e => updateFormField('email', e.target.value)} placeholder="supardi@email.com" maxLength={FORM_LIMITS.email} />
+          <Input label="Nomor Telepon (Opsional)" value={formData.phone} onChange={e => updateFormField('phone', e.target.value)} placeholder="08123456789" inputMode="tel" maxLength={FORM_LIMITS.phone} />
           
           <div className="space-y-1">
             <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Peran Pengguna</label>
@@ -338,7 +334,7 @@ const UserList = () => {
             >
               {roleOptions.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
             </select>
-            <p className="text-xs text-surface-500 mt-1">Username dan Password akan di-generate otomatis dan dikirim via Email atau sistem.</p>
+            <p className="text-xs text-surface-500 mt-1">Password sementara akan di-generate otomatis oleh sistem dan ditampilkan sekali setelah akun berhasil dibuat.</p>
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">

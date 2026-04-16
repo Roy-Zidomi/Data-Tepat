@@ -135,50 +135,7 @@ class AuthService {
 
     return true;
   }
-  async activateAccount(phone, otpCode, newPassword) {
-    const otpService = require('./otp.service');
-    const otpRecord = await otpService.verifyOTP(phone, otpCode, 'activation');
-
-    const user = otpRecord.user;
-    if (user.activation_status === 'active') {
-      throw { statusCode: 400, message: 'Account is already active' };
-    }
-
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: {
-        password_hash: hashedNewPassword,
-        is_active: true,
-        activation_status: 'active'
-      }
-    });
-
-    await logAudit({
-      userId: user.id,
-      action: 'update',
-      entityType: 'User',
-      entityId: user.id,
-      reason: 'Account activated via OTP'
-    });
-
-    return true;
-  }
-
-  async resendOtp(phone) {
-    const user = await prisma.user.findFirst({
-      where: { phone, activation_status: 'pending_otp' }
-    });
-
-    if (!user) {
-      throw { statusCode: 404, message: 'User pending activation not found with this phone number' };
-    }
-
-    const otpService = require('./otp.service');
-    await otpService.generateOTP(user.id, phone, 'activation');
-    return true;
-  }
+  // OTP activation removed — all accounts use system-generated temp passwords
 
   /**
    * Forgot password — generate token, hash it, store in DB, return plaintext token.

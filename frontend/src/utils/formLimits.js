@@ -11,7 +11,6 @@ export const FORM_LIMITS = {
   money: 15,
   name: 150,
   note: 500,
-  otp: 6,
   password: 72,
   phone: 30,
   postalCode: 10,
