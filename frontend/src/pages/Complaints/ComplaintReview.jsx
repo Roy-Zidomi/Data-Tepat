@@ -28,6 +28,8 @@ const ComplaintReview = () => {
     return COMPLAINT_TYPE[type]?.label || capitalizeWords(type);
   };
 
+  const isOversightReport = (description) => description?.startsWith('[Laporan Pengawas:');
+
   const fetchComplaints = async (searchTerm = search) => {
     try {
       setLoading(true);
@@ -147,6 +149,11 @@ const ComplaintReview = () => {
                     <span className="rounded-full bg-surface-100 px-2 py-1 text-xs font-medium text-surface-600 dark:bg-surface-700 dark:text-surface-300">
                       {getComplaintTypeLabel(complaint.complaint_type)}
                     </span>
+                    {!isOwnView && isOversightReport(complaint.description) && (
+                      <span className="rounded-full bg-amber-100 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                        Laporan Pengawasan
+                      </span>
+                    )}
                   </div>
 
                   <p className="text-sm leading-relaxed text-surface-900 dark:text-surface-100">
@@ -158,6 +165,12 @@ const ComplaintReview = () => {
                       <Home className="h-4 w-4" />
                       {complaint.household?.nama_kepala_keluarga || '-'}
                     </div>
+                    {!isOwnView && complaint.submittedByUser?.name && (
+                      <div className="flex items-center gap-1.5">
+                        <MessageSquare className="h-4 w-4" />
+                        {complaint.submittedByUser.name} ({capitalizeWords(complaint.submittedByUser.role)})
+                      </div>
+                    )}
                     <div className="flex items-center gap-1.5">
                       <Clock className="h-4 w-4" />
                       {formatDateTime(complaint.created_at)}

@@ -42,6 +42,8 @@ import EligibilityReportList from '../pages/Applications/EligibilityReportList';
 import DistributionTracking from '../pages/Distributions/DistributionTracking';
 import DistributionProofs from '../pages/Distributions/DistributionProofs';
 import DistributionHistory from '../pages/Distributions/DistributionHistory';
+import OversightReportList from '../pages/Oversight/OversightReportList';
+import OversightReportCreate from '../pages/Oversight/OversightReportCreate';
 
 import UserActivityList from '../pages/Admin/UserActivityList';
 import UserList from '../pages/Admin/UserList';
@@ -166,6 +168,10 @@ const AppRouter = () => {
 
           <Route path="/audit-logs" element={<ProtectedRoute allowedRoles={['admin_main', 'pengawas']} />}>
             <Route index element={<AuditLogList />} />
+          </Route>
+          <Route path="/oversight-reports" element={<ProtectedRoute allowedRoles={['pengawas']} />}>
+            <Route index element={<OversightReportList />} />
+            <Route path="create" element={<OversightReportCreate />} />
           </Route>
           <Route path="/user-activity" element={<ProtectedRoute allowedRoles={['admin_main']} />}>
             <Route index element={<UserActivityList />} />
