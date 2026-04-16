@@ -111,8 +111,8 @@ class DistributionService {
 
     const distributionCode = generateDistributionCode();
 
-    return prisma.$transaction(async (tx) => {
-      const distribution = await tx.aidDistribution.create({
+    const distribution = await prisma.$transaction(async (tx) => {
+      const dist = await tx.aidDistribution.create({
         data: {
           beneficiary_decision_id: BigInt(beneficiary_decision_id),
           aid_type_id: BigInt(aid_type_id),
@@ -132,24 +132,26 @@ class DistributionService {
       // Record initial status history
       await tx.distributionStatusHistory.create({
         data: {
-          distribution_id: distribution.id,
+          distribution_id: dist.id,
           new_status: 'recorded',
           changed_by_user_id: BigInt(user.id),
           reason: 'Distribution record created',
         },
       });
 
-      await logAudit({
-        userId: user.id,
-        action: 'create',
-        entityType: 'AidDistribution',
-        entityId: distribution.id,
-        newValue: { distributionCode, recipient_name, quantity },
-        reason: 'Created distribution record',
-      });
-
-      return distribution;
+      return dist;
     });
+
+    await logAudit({
+      userId: user.id,
+      action: 'create',
+      entityType: 'AidDistribution',
+      entityId: distribution.id,
+      newValue: { distributionCode, recipient_name, quantity },
+      reason: 'Created distribution record',
+    });
+
+    return distribution;
   }
 
   /**
@@ -176,7 +178,7 @@ class DistributionService {
       throw { statusCode: 403, message: `Role '${user.role}' cannot perform transition: ${transitionKey}` };
     }
 
-    return prisma.$transaction(async (tx) => {
+    const updated = await prisma.$transaction(async (tx) => {
       const updateData = { status: newStatus };
 
       // If transitioning to delivered/completed, set distributed_date
@@ -184,14 +186,14 @@ class DistributionService {
         updateData.distributed_date = new Date();
       }
 
-      const updated = await tx.aidDistribution.update({
+      const updatedDist = await tx.aidDistribution.update({
         where: { id: BigInt(id) },
         data: updateData,
       });
 
       await tx.distributionStatusHistory.create({
         data: {
-          distribution_id: updated.id,
+          distribution_id: updatedDist.id,
           old_status: distribution.status,
           new_status: newStatus,
           changed_by_user_id: BigInt(user.id),
@@ -199,18 +201,20 @@ class DistributionService {
         },
       });
 
-      await logAudit({
-        userId: user.id,
-        action: 'distribute',
-        entityType: 'AidDistribution',
-        entityId: updated.id,
-        oldValue: { status: distribution.status },
-        newValue: { status: newStatus },
-        reason: reason || `Distribution status: ${distribution.status} → ${newStatus}`,
-      });
-
-      return updated;
+      return updatedDist;
     });
+
+    await logAudit({
+      userId: user.id,
+      action: 'distribute',
+      entityType: 'AidDistribution',
+      entityId: updated.id,
+      oldValue: { status: distribution.status },
+      newValue: { status: newStatus },
+      reason: reason || `Distribution status: ${distribution.status} → ${newStatus}`,
+    });
+
+    return updated;
   }
 
   /**

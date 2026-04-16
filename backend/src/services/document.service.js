@@ -21,7 +21,7 @@ class DocumentService {
       throw { statusCode: 403, message: 'Forbidden: You can only upload documents to your own household' };
     }
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
       // 1. Create document record
       const document = await tx.document.create({
         data: {
@@ -42,17 +42,19 @@ class DocumentService {
         }
       });
 
-      // 3. Log audit
-      await logAudit({
-        userId: user.id,
-        action: 'create',
-        entityType: 'Document',
-        entityId: document.id,
-        reason: `Uploaded ${document_type} file`
-      });
-
       return document;
     });
+
+    // 3. Log audit outside transaction to prevent connection pool deadlocks
+    await logAudit({
+      userId: user.id,
+      action: 'create',
+      entityType: 'Document',
+      entityId: result.id,
+      reason: `Uploaded ${document_type} file`
+    });
+
+    return result;
   }
 
   async getMyDocuments(user) {
@@ -95,8 +97,8 @@ class DocumentService {
 
   // Admin/Petugas can verify
   async verifyDocument(documentId, status, note, userId) {
-    return prisma.$transaction(async (tx) => {
-      const docVerify = await tx.documentVerification.create({
+    const docVerify = await prisma.$transaction(async (tx) => {
+      return tx.documentVerification.create({
         data: {
           document_id: BigInt(documentId),
           status,
@@ -105,17 +107,17 @@ class DocumentService {
           verified_at: new Date()
         }
       });
-
-      await logAudit({
-        userId,
-        action: 'update',
-        entityType: 'DocumentVerification',
-        entityId: docVerify.id,
-        reason: `Marked document ${documentId} as ${status}`
-      });
-
-      return docVerify;
     });
+
+    await logAudit({
+      userId,
+      action: 'update',
+      entityType: 'DocumentVerification',
+      entityId: docVerify.id,
+      reason: `Marked document ${documentId} as ${status}`
+    });
+
+    return docVerify;
   }
 }
 

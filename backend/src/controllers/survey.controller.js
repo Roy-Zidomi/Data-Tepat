@@ -335,6 +335,9 @@ class SurveyController {
         });
 
         return refreshedSurvey;
+      }, {
+        maxWait: 5000, // default is 2000
+        timeout: 20000 // default is 5000
       });
 
       return successResponse(res, this.serialize(submission), 'Hasil survei berhasil dikirim', 201);
