@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
 import authService from '../../services/authService';
 import toast from 'react-hot-toast';
 import { FORM_LIMITS, clampText } from '../../utils/formLimits';
+import { HeartHandshake, Mail, Lock, LogIn, ChevronDown } from 'lucide-react';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -53,154 +54,177 @@ const Login = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#4A90D9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      {/* Card */}
-      <div style={{
-        backgroundColor: '#fff',
-        borderRadius: '20px',
-        padding: '40px 36px 32px',
-        width: '100%',
-        maxWidth: '420px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
-      }}>
-        {/* Title */}
-        <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1a1a2e', margin: '0 0 4px 0' }}>Sign In</h1>
-        <p style={{ fontSize: '14px', color: '#888', margin: '0 0 28px 0' }}>Silakan masuk ke akun Anda.</p>
+    <div className="flex min-h-screen w-full bg-surface-50 dark:bg-surface-950 font-sans">
+      {/* Left Pane - Branding & Info (Hidden on Mobile) */}
+      <div className="hidden lg:flex w-1/2 relative bg-primary-600 dark:bg-primary-900 overflow-hidden flex-col justify-between p-12">
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute -top-[20%] -left-[10%] w-[70%] h-[70%] rounded-full bg-primary-500/30 dark:bg-primary-800/30 blur-3xl mix-blend-screen"></div>
+          <div className="absolute bottom-[10%] -right-[20%] w-[60%] h-[60%] rounded-full bg-blue-400/20 dark:bg-blue-600/20 blur-3xl mix-blend-screen"></div>
+        </div>
 
-        <form onSubmit={onSubmit}>
-          {/* Username */}
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#444', marginBottom: '8px' }}>
-              Username / Email
-            </label>
-            <input
-              type="text"
-              name="emailOrUsername"
-              value={formData.emailOrUsername}
-              onChange={handleChange}
-              placeholder="Masukkan username atau email"
-              required
-              maxLength={FORM_LIMITS.email}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                border: '1.5px solid #e5e7eb',
-                backgroundColor: '#f3f6fb',
-                fontSize: '14px',
-                color: '#1a1a2e',
-                outline: 'none',
-                boxSizing: 'border-box',
-                transition: 'border-color 0.2s',
-              }}
-              onFocus={e => e.target.style.borderColor = '#4A90D9'}
-              onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-            />
+        {/* Logo/Brand */}
+        <div className="relative z-10 flex items-center gap-3 text-white">
+          <div className="p-2.5 bg-white/20 backdrop-blur-md rounded-xl shadow-sm">
+            <HeartHandshake className="w-8 h-8 text-white" />
           </div>
+          <span className="text-2xl font-bold tracking-tight">BantuTepat</span>
+        </div>
 
-          {/* Password */}
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#444', marginBottom: '8px' }}>
-              Password
-            </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••••"
-              required
-              maxLength={FORM_LIMITS.password}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '10px',
-                border: '1.5px solid #e5e7eb',
-                backgroundColor: '#f3f6fb',
-                fontSize: '14px',
-                color: '#1a1a2e',
-                outline: 'none',
-                boxSizing: 'border-box',
-              }}
-              onFocus={e => e.target.style.borderColor = '#4A90D9'}
-              onBlur={e => e.target.style.borderColor = '#e5e7eb'}
-            />
-          </div>
-
-          {/* Login As */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#444', marginBottom: '8px' }}>
-              Login as
-            </label>
-            <div style={{ position: 'relative' }}>
-              <select
-                value={selectedRole}
-                onChange={e => setSelectedRole(e.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '12px 40px 12px 16px',
-                  borderRadius: '10px',
-                  border: '1.5px solid #e5e7eb',
-                  backgroundColor: '#f3f6fb',
-                  fontSize: '14px',
-                  color: '#1a1a2e',
-                  outline: 'none',
-                  appearance: 'none',
-                  boxSizing: 'border-box',
-                  cursor: 'pointer',
-                }}
-              >
-                <option value="warga">Warga</option>
-                <option value="relawan">Relawan</option>
-                <option value="pengawas">Pengawas</option>
-                <option value="admin_staff">Admin Staff</option>
-                <option value="admin_main">Admin Utama</option>
-              </select>
-              {/* Custom chevron */}
-              <svg
-                style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#888' }}
-                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+        {/* Content */}
+        <div className="relative z-10 max-w-lg mt-10">
+          <h1 className="text-4xl lg:text-5xl font-extrabold text-white leading-tight mb-6 tracking-tight">
+            Distribusi Bantuan Tepat Sasaran & Transparan.
+          </h1>
+          <p className="text-lg text-primary-100 dark:text-primary-200/80 leading-relaxed mb-8 font-medium">
+            Platform terpadu untuk memfasilitasi pendataan, verifikasi, dan penyaluran bantuan sosial bagi masyarakat yang membutuhkan secara akurat dan terpercaya.
+          </p>
+          
+          <div className="flex items-center gap-4 text-sm font-semibold text-white/90 bg-black/10 w-max px-4 py-2 rounded-full backdrop-blur-sm border border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+              </span>
+              Sistem Aktif
             </div>
+            <div className="w-1 h-1 rounded-full bg-white/30"></div>
+            <div>Verifikasi Real-time</div>
           </div>
+        </div>
 
-          {/* Links */}
-          <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'flex-end' }}>
-            <a href="/forgot-password" style={{ fontSize: '13px', color: '#888', fontWeight: '500', textDecoration: 'none' }}>
-              Lupa password?
-            </a>
-          </div>
-
-          {/* Submit Button */}
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%',
-              padding: '14px',
-              borderRadius: '50px',
-              border: 'none',
-              background: loading ? '#a0bfe0' : 'linear-gradient(135deg, #4A90D9, #5B9FE8)',
-              color: '#fff',
-              fontSize: '16px',
-              fontWeight: '700',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: '0 6px 20px rgba(74,144,217,0.45)',
-              transition: 'all 0.2s',
-              letterSpacing: '0.5px',
-            }}
-          >
-            {loading ? 'Memproses...' : 'Sign In'}
-          </button>
-        </form>
+        {/* Footer info */}
+        <div className="relative z-10 text-sm text-primary-200 mt-20 font-medium tracking-wide">
+          <p>&copy; {new Date().getFullYear()} Hak Cipta Dilindungi &mdash; Platform BantuTepat</p>
+        </div>
       </div>
 
-      {/* Footer copyright */}
-      <p style={{ marginTop: '24px', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
-        Copyright &copy; {new Date().getFullYear()} BantuTepat. All rights reserved.
-      </p>
+      {/* Right Pane - Login Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto">
+        {/* Mobile Logo */}
+        <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-primary-600 dark:text-primary-400">
+          <HeartHandshake className="w-6 h-6" />
+          <span className="text-xl font-bold">BantuTepat</span>
+        </div>
+
+        <div className="w-full max-w-md space-y-8 animate-fade-in my-auto pt-10 lg:pt-0">
+          {/* Form Header */}
+          <div className="text-center lg:text-left">
+            <h2 className="text-3xl font-extrabold text-surface-900 dark:text-white tracking-tight">
+              Selamat Datang
+            </h2>
+            <p className="text-surface-500 dark:text-surface-400 mt-2.5 text-sm sm:text-base font-medium">
+              Silakan masuk ke akun Anda untuk mengakses sistem.
+            </p>
+          </div>
+
+          <form onSubmit={onSubmit} className="space-y-6 mt-8">
+            {/* Login Role Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-bold tracking-wide text-surface-700 dark:text-surface-300 uppercase relative top-1">
+                Masuk Sebagai
+              </label>
+              <div className="relative">
+                <select
+                  value={selectedRole}
+                  onChange={e => setSelectedRole(e.target.value)}
+                  className="w-full appearance-none bg-white dark:bg-surface-800/80 border border-surface-200 dark:border-surface-700 text-surface-900 dark:text-white rounded-xl px-4 py-3.5 pr-10 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all font-semibold shadow-sm cursor-pointer"
+                >
+                  <option value="warga">Masyarakat / Warga</option>
+                  <option value="relawan">Relawan Lapangan</option>
+                  <option value="pengawas">Pengawas Program</option>
+                  <option value="admin_staff">Admin Staff</option>
+                  <option value="admin_main">Admin Utama</option>
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="space-y-5">
+              {/* Username Input */}
+              <div className="space-y-2">
+                <label className="text-sm font-bold tracking-wide text-surface-700 dark:text-surface-300 uppercase relative top-1">
+                  Username atau Email
+                </label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400 group-focus-within:text-primary-500 transition-colors">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="text"
+                    name="emailOrUsername"
+                    value={formData.emailOrUsername}
+                    onChange={handleChange}
+                    placeholder="Masukkan username atau email"
+                    required
+                    maxLength={FORM_LIMITS.email}
+                    className="w-full bg-white dark:bg-surface-800/80 border border-surface-200 dark:border-surface-700 text-surface-900 dark:text-white rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all font-medium placeholder:font-normal shadow-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Password Input */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-bold tracking-wide text-surface-700 dark:text-surface-300 uppercase relative top-1">
+                    Password
+                  </label>
+                  <Link 
+                    to="/forgot-password" 
+                    className="text-xs font-bold text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors"
+                  >
+                    Lupa Password?
+                  </Link>
+                </div>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-surface-400 group-focus-within:text-primary-500 transition-colors">
+                    <Lock className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="password"
+                    name="password"
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="••••••••••"
+                    required
+                    maxLength={FORM_LIMITS.password}
+                    className="w-full bg-white dark:bg-surface-800/80 border border-surface-200 dark:border-surface-700 text-surface-900 dark:text-white rounded-xl pl-11 pr-4 py-3.5 focus:outline-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-500 transition-all tracking-widest font-medium placeholder:font-normal placeholder:tracking-normal shadow-sm"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-2 py-3.5 px-4 border border-transparent rounded-xl shadow-md text-base font-bold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all ${
+                loading ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-0.5 hover:shadow-lg'
+              }`}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <LogIn className="w-5 h-5 -ml-1" />
+                  Sign In
+                </>
+              )}
+            </button>
+          </form>
+          
+          <div className="pt-8 text-center lg:hidden">
+            <p className="text-xs font-medium text-surface-500 dark:text-surface-400">
+              &copy; {new Date().getFullYear()} BantuTepat. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
