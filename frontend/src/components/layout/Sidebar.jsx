@@ -12,7 +12,6 @@ import {
   ChevronRight,
   ClipboardList,
   DollarSign,
-  FileIcon,
   FileSearch,
   FileText,
   Heart,
@@ -43,15 +42,22 @@ const navStructure = [
     type: 'group',
     label: 'Data Warga',
     icon: Home,
-    roles: ['admin_staff', 'pengawas', 'relawan', 'warga'],
+    roles: ['admin_staff', 'pengawas', 'relawan'],
     children: [
-      { path: '/households', label: 'Rumah Tangga', icon: Home, roles: ['admin_staff', 'pengawas', 'relawan', 'warga'] },
-      { path: '/family-members', label: 'Anggota Keluarga', icon: Users, roles: ['admin_staff', 'relawan', 'warga'] },
+      { path: '/households', label: 'Rumah Tangga', icon: Home, roles: ['admin_staff', 'pengawas', 'relawan'] },
+      { path: '/family-members', label: 'Anggota Keluarga', icon: Users, roles: ['admin_staff', 'relawan'] },
       { path: '/economic-conditions', label: 'Kondisi Ekonomi', icon: DollarSign, roles: ['admin_staff'] },
       { path: '/housing-conditions', label: 'Kondisi Tempat Tinggal', icon: Home, roles: ['admin_staff'] },
       { path: '/household-assets', label: 'Aset Rumah Tangga', icon: Briefcase, roles: ['admin_staff'] },
       { path: '/vulnerabilities', label: 'Kerentanan', icon: AlertTriangle, roles: ['admin_staff'] },
     ],
+  },
+  {
+    type: 'item',
+    path: '/family-members',
+    label: 'Anggota Keluarga',
+    icon: Users,
+    roles: ['warga'],
   },
   {
     type: 'group',
@@ -129,13 +135,6 @@ const navStructure = [
       { path: '/surveys', label: 'Tugas Survei', icon: ClipboardList, roles: ['relawan'] },
       { path: '/my-survey-results', label: 'Hasil Survei Saya', icon: CheckSquare, roles: ['relawan'] },
     ],
-  },
-  {
-    type: 'item',
-    path: '/documents',
-    label: 'Dokumen Saya',
-    icon: FileIcon,
-    roles: ['warga'],
   },
 ];
 
