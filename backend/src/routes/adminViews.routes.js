@@ -125,7 +125,7 @@ router.get('/documents', requirePermission('DOCUMENT_VERIFY'), async (req, res, 
  * GET /api/v1/admin-views/scoring-results
  * List all scoring results with application and household info
  */
-router.get('/scoring-results', requirePermission('DECISION_LIST'), async (req, res, next) => {
+router.get('/scoring-results', requirePermission('SCORING_RESULT_LIST'), async (req, res, next) => {
   try {
     const { page = 1, limit = 20, search, priority_level } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
