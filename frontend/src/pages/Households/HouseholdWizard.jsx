@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { User, MapPin, Users, CheckCircle, ChevronRight, ChevronLeft } from 'lucide-react';
 import Button from '../../components/ui/Button';
@@ -26,7 +26,7 @@ const HouseholdWizard = () => {
     nama_kepala_keluarga: '',
     nik_kepala_keluarga: '',
     alamat: '',
-    region_id: 1, // Default or loaded dynamically
+    region_id: 1,
     phone: user?.phone || ''
   });
 
@@ -35,15 +35,19 @@ const HouseholdWizard = () => {
   const [newMember, setNewMember] = useState({
     nik: '',
     name: '',
-    relationship_to_head: 'ISTRI',
+    relationship_to_head: 'istri',
     birth_date: '',
-    gender: 'PEREMPUAN'
+    gender: 'perempuan'
   });
 
   const [createdHouseholdId, setCreatedHouseholdId] = useState(null);
 
   const handleHouseholdChange = (e) => {
-    setHousehold(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setHousehold(prev => ({
+      ...prev,
+      [name]: name === 'region_id' ? Number(value) : value,
+    }));
   };
 
   const handleMemberChange = (e) => {
@@ -59,9 +63,9 @@ const HouseholdWizard = () => {
     setNewMember({
       nik: '',
       name: '',
-      relationship_to_head: 'ANAK',
+      relationship_to_head: 'anak',
       birth_date: '',
-      gender: 'LAKI-LAKI'
+      gender: 'laki_laki'
     });
   };
 
@@ -72,17 +76,28 @@ const HouseholdWizard = () => {
   const submitHousehold = async () => {
     try {
       setLoading(true);
+      const parsedRegionId = Number(household.region_id);
+      if (!Number.isInteger(parsedRegionId) || parsedRegionId <= 0) {
+        toast.error('Region tidak valid. Hubungi admin untuk setup wilayah terlebih dahulu.');
+        return;
+      }
+
       const payload = {
         ...household,
-        region_id: Number(household.region_id),
+        region_id: parsedRegionId,
         registration_source: user?.role === 'warga' ? 'self' : 'assisted',
       };
+
       const res = await api.post('/households', payload);
       setCreatedHouseholdId(res.data.data.id);
       toast.success('Data Kepala Keluarga Berhasil Disimpan');
       setCurrentStep(2);
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Gagal menyimpan data KK');
+      const firstError = error.response?.data?.errors?.[0];
+      const message = firstError
+        ? `Validasi ${firstError.field}: ${firstError.message}`
+        : (error.response?.data?.message || 'Gagal menyimpan data KK');
+      toast.error(message);
     } finally {
       setLoading(false);
     }
@@ -178,20 +193,20 @@ const HouseholdWizard = () => {
                  <div>
                     <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Hubungan</label>
                     <select name="relationship_to_head" value={newMember.relationship_to_head} onChange={handleMemberChange} className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white">
-                      <option value="ISTRI">Istri</option>
-                      <option value="SUAMI">Suami</option>
-                      <option value="ANAK">Anak</option>
-                      <option value="ORANG_TUA">Orang Tua</option>
-                      <option value="MERTUA">Mertua</option>
-                      <option value="LAINNYA">Lainnya</option>
+                      <option value="istri">Istri</option>
+                      <option value="suami">Suami</option>
+                      <option value="anak">Anak</option>
+                      <option value="orang_tua">Orang Tua</option>
+                      <option value="mertua">Mertua</option>
+                      <option value="lainnya">Lainnya</option>
                     </select>
                  </div>
                  <Input label="Tanggal Lahir" type="date" name="birth_date" value={newMember.birth_date} onChange={handleMemberChange} />
                  <div>
                     <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Jenis Kelamin</label>
                     <select name="gender" value={newMember.gender} onChange={handleMemberChange} className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white">
-                      <option value="LAKI-LAKI">Laki-Laki</option>
-                      <option value="PEREMPUAN">Perempuan</option>
+                      <option value="laki_laki">Laki-Laki</option>
+                      <option value="perempuan">Perempuan</option>
                     </select>
                  </div>
                  <div className="flex items-end pb-1">

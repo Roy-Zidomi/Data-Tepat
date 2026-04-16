@@ -1,6 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip as RechartsTooltip, XAxis, YAxis } from 'recharts';
-import { AlertTriangle, CheckSquare, ClipboardList, Home, Shield, Truck, Users } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckSquare,
+  ClipboardList,
+  FileCheck2,
+  Home,
+  Send,
+  Shield,
+  Truck,
+  Users,
+  UserCheck,
+} from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Alert from '../../components/ui/Alert';
 import { PageLoader } from '../../components/ui/Spinner';
@@ -9,7 +20,6 @@ import { capitalizeWords, formatNumber } from '../../utils/formatters';
 import useAuthStore from '../../store/authStore';
 import WargaDashboard from './WargaDashboard';
 import RelawanDashboard from './RelawanDashboard';
-import StaffDashboard from './StaffDashboard';
 
 const StatCard = ({ colorClass, icon: Icon, title, value }) => (
   <Card className="flex items-center gap-4 hover:shadow-card-hover transition-all">
@@ -18,9 +28,7 @@ const StatCard = ({ colorClass, icon: Icon, title, value }) => (
     </div>
     <div>
       <p className="text-sm font-medium text-surface-500 dark:text-surface-400">{title}</p>
-      <h3 className="mt-1 text-2xl font-bold text-surface-900 dark:text-surface-100">
-        {formatNumber(value)}
-      </h3>
+      <h3 className="mt-1 text-2xl font-bold text-surface-900 dark:text-surface-100">{formatNumber(value)}</h3>
     </div>
   </Card>
 );
@@ -45,7 +53,7 @@ const Dashboard = () => {
       }
     };
 
-    if (user?.role === 'admin_main' || user?.role === 'admin_staff' || user?.role === 'pengawas') {
+    if (['admin_main', 'admin_staff', 'pengawas'].includes(user?.role)) {
       fetchStats();
       return;
     }
@@ -53,35 +61,34 @@ const Dashboard = () => {
     setLoading(false);
   }, [user?.role]);
 
-  if (user?.role === 'warga') {
-    return <WargaDashboard />;
-  }
+  const chartData = useMemo(
+    () =>
+      (stats?.applicationsByStatus || []).map((item) => ({
+        name: capitalizeWords(item.status),
+        total: item.count,
+      })),
+    [stats?.applicationsByStatus]
+  );
 
-  if (user?.role === 'relawan') {
-    return <RelawanDashboard />;
-  }
-
-  if (user?.role === 'admin_staff') {
-    return <StaffDashboard />;
-  }
-
+  if (user?.role === 'warga') return <WargaDashboard />;
+  if (user?.role === 'relawan') return <RelawanDashboard />;
   if (loading) return <PageLoader />;
-
   if (error) return <Alert type="error" title="Error">{error}</Alert>;
 
-  const processingApplications = stats?.processingApplications ?? stats?.pendingApplications ?? 0;
-  const chartData = (stats?.applicationsByStatus || []).map((item) => ({
-    name: capitalizeWords(item.status),
-    total: item.count,
-  }));
+  const isStaff = user?.role === 'admin_staff';
+  const isMain = user?.role === 'admin_main';
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Dashboard Overview</h1>
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
+            {isStaff ? 'Dashboard Operasional Staff' : 'Dashboard Overview'}
+          </h1>
           <p className="mt-1 text-sm text-surface-500 dark:text-surface-400">
-            Ringkasan kondisi sistem bantuan sosial untuk monitoring dan pengawasan.
+            {isStaff
+              ? 'Fokus pada antrian verifikasi, finalisasi keputusan, revisi, dan laporan ke admin utama.'
+              : 'Ringkasan kondisi sistem bantuan sosial untuk monitoring dan pengawasan.'}
           </p>
         </div>
         {user?.role === 'pengawas' && (
@@ -91,53 +98,87 @@ const Dashboard = () => {
         )}
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard
-          title="Total Rumah Tangga"
-          value={stats?.totalHouseholds ?? 0}
-          icon={Home}
-          colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-        />
-        <StatCard
-          title="Total Permohonan"
-          value={stats?.totalApplications ?? 0}
-          icon={ClipboardList}
-          colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
-        />
-        <StatCard
-          title="Keputusan Disetujui"
-          value={stats?.approvedDecisions ?? 0}
-          icon={CheckSquare}
-          colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
-        />
-        <StatCard
-          title="Distribusi Bantuan"
-          value={stats?.totalDistributions ?? 0}
-          icon={Truck}
-          colorClass="bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400"
-        />
-        <StatCard
-          title="Pengaduan Aktif"
-          value={stats?.openComplaints ?? 0}
-          icon={AlertTriangle}
-          colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
-        />
-        {user?.role === 'admin_main' ? (
+      {!isStaff && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <StatCard
+            title="Total Rumah Tangga"
+            value={stats?.totalHouseholds ?? 0}
+            icon={Home}
+            colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+          />
+          <StatCard
+            title="Total Permohonan"
+            value={stats?.totalApplications ?? 0}
+            icon={ClipboardList}
+            colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+          />
+          <StatCard
+            title="Keputusan Disetujui"
+            value={stats?.approvedDecisions ?? 0}
+            icon={CheckSquare}
+            colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          />
+          <StatCard
+            title="Distribusi Bantuan"
+            value={stats?.totalDistributions ?? 0}
+            icon={Truck}
+            colorClass="bg-cyan-100 text-cyan-600 dark:bg-cyan-900/30 dark:text-cyan-400"
+          />
+          <StatCard
+            title="Pengaduan Aktif"
+            value={stats?.openComplaints ?? 0}
+            icon={AlertTriangle}
+            colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+          />
           <StatCard
             title="Total Pengguna"
             value={stats?.totalUsers ?? 0}
             icon={Users}
             colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
           />
-        ) : (
+        </div>
+      )}
+
+      {isStaff && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <StatCard
-            title="Permohonan Diproses"
-            value={processingApplications}
+            title="Menunggu Verifikasi Dokumen"
+            value={stats?.staffMetrics?.pendingDocumentVerification ?? 0}
+            icon={FileCheck2}
+            colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+          />
+          <StatCard
+            title="Menunggu Validasi Survei"
+            value={stats?.staffMetrics?.pendingSurveyValidation ?? 0}
+            icon={ClipboardList}
+            colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+          />
+          <StatCard
+            title="Menunggu Finalisasi"
+            value={stats?.staffMetrics?.pendingFinalization ?? 0}
             icon={Shield}
+            colorClass="bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400"
+          />
+          <StatCard
+            title="Approved Minggu Ini"
+            value={stats?.staffMetrics?.finalizedApprovedThisWeek ?? 0}
+            icon={CheckSquare}
+            colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400"
+          />
+          <StatCard
+            title="Revisi Aktif"
+            value={stats?.staffMetrics?.revisedCases ?? 0}
+            icon={AlertTriangle}
+            colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
+          />
+          <StatCard
+            title="Belum Dilaporkan ke Utama"
+            value={stats?.staffMetrics?.unreportedEligible ?? 0}
+            icon={Send}
             colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
         <Card className="xl:col-span-2">
@@ -172,32 +213,84 @@ const Dashboard = () => {
 
         <Card>
           <Card.Header>
-            <Card.Title>Ringkasan Pengawasan</Card.Title>
+            <Card.Title>{isStaff ? 'Prioritas Staff' : 'Ringkasan Monitoring'}</Card.Title>
           </Card.Header>
           <div className="space-y-4">
-            <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
-              <div className="flex items-center gap-2 text-sm font-medium text-surface-600 dark:text-surface-300">
-                <Shield className="h-4 w-4" />
-                Permohonan Menunggu Tindak Lanjut
-              </div>
-              <p className="mt-2 text-3xl font-bold text-surface-900 dark:text-white">
-                {formatNumber(processingApplications)}
-              </p>
-            </div>
-            <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
-              <p className="text-sm font-medium text-surface-600 dark:text-surface-300">
-                Keputusan Ditolak
-              </p>
-              <p className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">
-                {formatNumber(stats?.rejectedDecisions ?? 0)}
-              </p>
-            </div>
-            <Alert type="info" title="Interpretasi Cepat">
-              Fokus pengawasan utama ada pada permohonan yang masih berjalan, pengaduan aktif, dan distribusi yang perlu dicocokkan dengan audit log.
-            </Alert>
+            {!isStaff && (
+              <>
+                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                  <div className="flex items-center gap-2 text-sm font-medium text-surface-600 dark:text-surface-300">
+                    <UserCheck className="h-4 w-4" />
+                    Laporan Staff Masuk
+                  </div>
+                  <p className="mt-2 text-3xl font-bold text-surface-900 dark:text-white">
+                    {formatNumber(stats?.mainMetrics?.reportedEligible ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                  <p className="text-sm font-medium text-surface-600 dark:text-surface-300">
+                    Antrian Buat Akun Warga
+                  </p>
+                  <p className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">
+                    {formatNumber(stats?.mainMetrics?.pendingAccountCreation ?? 0)}
+                  </p>
+                </div>
+                <Alert type="info" title="Arah Tindak Lanjut">
+                  Fokus pada antrian akun warga, kasus revisi, dan pengaduan yang belum terselesaikan.
+                </Alert>
+              </>
+            )}
+
+            {isStaff && (
+              <>
+                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                  <p className="text-sm font-medium text-surface-600 dark:text-surface-300">Rejected Minggu Ini</p>
+                  <p className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">
+                    {formatNumber(stats?.staffMetrics?.finalizedRejectedThisWeek ?? 0)}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                  <p className="text-sm font-medium text-surface-600 dark:text-surface-300">Pengaduan Butuh Eskalasi</p>
+                  <p className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">
+                    {formatNumber(stats?.staffMetrics?.complaintsNeedEscalation ?? 0)}
+                  </p>
+                </div>
+                <Alert type="info" title="Arah Operasional">
+                  Selesaikan finalisasi, kirim laporan warga layak ke admin utama, lalu tindak lanjuti bukti distribusi.
+                </Alert>
+              </>
+            )}
           </div>
         </Card>
       </div>
+
+      {isMain && (
+        <Card>
+          <Card.Header>
+            <Card.Title>Kontrol Admin Utama</Card.Title>
+          </Card.Header>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-xl bg-surface-50 p-4 dark:bg-surface-900/50">
+              <p className="text-sm text-surface-500">Laporan Staff Minggu Ini</p>
+              <p className="mt-2 text-xl font-bold text-surface-900 dark:text-white">
+                {formatNumber(stats?.mainMetrics?.reportedThisWeek ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-surface-50 p-4 dark:bg-surface-900/50">
+              <p className="text-sm text-surface-500">Kasus Dengan Revisi</p>
+              <p className="mt-2 text-xl font-bold text-surface-900 dark:text-white">
+                {formatNumber(stats?.mainMetrics?.revisedCases ?? 0)}
+              </p>
+            </div>
+            <div className="rounded-xl bg-surface-50 p-4 dark:bg-surface-900/50">
+              <p className="text-sm text-surface-500">Pengaduan Belum Selesai</p>
+              <p className="mt-2 text-xl font-bold text-surface-900 dark:text-white">
+                {formatNumber(stats?.openComplaints ?? 0)}
+              </p>
+            </div>
+          </div>
+        </Card>
+      )}
     </div>
   );
 };

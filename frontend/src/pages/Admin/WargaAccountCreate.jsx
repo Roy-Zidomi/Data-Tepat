@@ -217,9 +217,9 @@ const WargaAccountCreate = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Buat Akun Portal Warga</h1>
+          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Antrian Buat Akun Warga</h1>
           <p className="text-sm text-surface-500 mt-1">
-            Daftar warga yang pengajuannya telah <strong>Disetujui</strong> dan siap dibuatkan akun login.
+            Daftar warga layak yang sudah dilaporkan oleh admin staff dan siap dibuatkan akun login.
           </p>
         </div>
         <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-4 py-2 rounded-xl border border-green-200 dark:border-green-800 text-sm font-medium">
@@ -290,7 +290,7 @@ const WargaAccountCreate = () => {
                     size="sm"
                     icon={UserPlus}
                     onClick={() => setSelectedHousehold(h)}
-                    shadow
+
                   >
                     Buatkan Akun Login
                   </Button>

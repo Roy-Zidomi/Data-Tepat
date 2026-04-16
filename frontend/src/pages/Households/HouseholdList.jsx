@@ -8,8 +8,7 @@ import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import { StatusBadge } from '../../components/ui/Badge';
 import { HOUSEHOLD_STATUS } from '../../utils/constants';
-import Alert from '../../components/ui/Alert';
-import { formatDate, maskIdentifier, maskNIK } from '../../utils/formatters';
+import { formatDate } from '../../utils/formatters';
 import toast from 'react-hot-toast';
 
 const HouseholdList = () => {
@@ -20,8 +19,7 @@ const HouseholdList = () => {
   
   const user = useAuthStore((s) => s.user);
   const navigate = useNavigate();
-  const isPengawas = user?.role === 'pengawas';
-  const canManageHouseholds = user?.role && !isPengawas;
+  const canManageHouseholds = ['admin_staff', 'relawan', 'warga'].includes(user?.role);
 
   const fetchHouseholds = async (page = 1, searchQuery = search) => {
     try {
@@ -56,18 +54,14 @@ const HouseholdList = () => {
     {
       key: 'nomor_kk',
       label: 'Nomor KK',
-      render: (val) => (
+      render: (val, row) => (
         <span className="font-semibold text-primary-600 dark:text-primary-400">
-          {isPengawas ? maskIdentifier(val) : val}
+          {val}
         </span>
       ),
     },
     { key: 'nama_kepala_keluarga', label: 'Kepala Keluarga' },
-    {
-      key: 'nik_kepala_keluarga',
-      label: 'NIK',
-      render: (value) => (isPengawas ? maskNIK(value) : value),
-    },
+    { key: 'nik_kepala_keluarga', label: 'NIK' },
     {
       key: 'region',
       label: 'Wilayah',
@@ -134,9 +128,7 @@ const HouseholdList = () => {
         <div>
           <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Data Rumah Tangga</h1>
           <p className="text-sm text-surface-500 dark:text-surface-400 mt-1">
-            {isPengawas
-              ? 'Pantau profil rumah tangga dan integritas data warga secara read-only.'
-              : 'Kelola data rumah tangga dan kepala keluarga'}
+            Kelola data rumah tangga dan kepala keluarga
           </p>
         </div>
         {canManageHouseholds && (
@@ -148,12 +140,6 @@ const HouseholdList = () => {
           </Button>
         )}
       </div>
-
-      {isPengawas && (
-        <Alert type="info" title="Mode Pengawasan">
-          Data sensitif ditampilkan seperlunya untuk pemantauan. Semua perubahan data tetap dilakukan oleh petugas operasional.
-        </Alert>
-      )}
 
       <Card noPadding className="overflow-hidden">
         <div className="p-4 border-b border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800/50">

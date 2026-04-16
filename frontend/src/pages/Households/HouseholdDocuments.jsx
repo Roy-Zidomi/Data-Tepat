@@ -8,19 +8,6 @@ import toast from 'react-hot-toast';
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 const MAX_SIZE_MB = 2;
-const DOC_TYPE_OPTIONS = [
-  { value: 'ktp', label: 'KTP Kepala Keluarga' },
-  { value: 'kk', label: 'Kartu Keluarga' },
-  { value: 'sktm', label: 'Surat Keterangan Tidak Mampu (SKTM)' },
-  { value: 'photo_house', label: 'Foto Depan Rumah' },
-];
-const DOC_TYPE_LABELS = {
-  ktp: 'KTP Kepala Keluarga',
-  kk: 'Kartu Keluarga',
-  sktm: 'SKTM',
-  photo_house: 'Foto Depan Rumah',
-  photo_field: 'Foto Lapangan',
-};
 
 const HouseholdDocuments = () => {
   const { id } = useParams();
@@ -41,7 +28,7 @@ const HouseholdDocuments = () => {
       const res = await api.get(`/documents/household/${id}`);
       setDocuments(res.data.data);
     } catch (error) {
-      toast.error('Gagal memuat dokumen');
+      toast.error(error.response?.data?.message || 'Gagal memuat dokumen');
     }
   };
 
@@ -72,15 +59,18 @@ const HouseholdDocuments = () => {
       fetchDocuments();
       if(fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
-      const detailError = error.response?.data?.errors?.[0]?.message;
-      toast.error(detailError || error.response?.data?.message || 'Gagal mengunggah dokumen');
+      const firstError = error.response?.data?.errors?.[0];
+      const message = firstError
+        ? `Validasi ${firstError.field}: ${firstError.message}`
+        : (error.response?.data?.message || 'Gagal mengunggah dokumen');
+      toast.error(message);
     } finally {
       setLoading(false);
     }
   };
 
-  const requiredDocs = ['ktp', 'kk', 'photo_house'];
-  const uploadedTypes = documents.map(d => d.document_type);
+  const requiredDocs = ['ktp', 'kk', 'foto_rumah'];
+  const uploadedTypes = documents.map((d) => (d.document_type || '').toLowerCase());
   const isComplete = requiredDocs.every(type => uploadedTypes.includes(type));
 
   return (
@@ -112,9 +102,11 @@ const HouseholdDocuments = () => {
                  onChange={(e) => setDocType(e.target.value)}
                  className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white"
                >
-                 {DOC_TYPE_OPTIONS.map((option) => (
-                   <option key={option.value} value={option.value}>{option.label}</option>
-                 ))}
+                 <option value="ktp">KTP Kepala Keluarga</option>
+                 <option value="kk">Kartu Keluarga</option>
+                 <option value="sktm">Surat Keterangan Tidak Mampu (SKTM)</option>
+                 <option value="foto_rumah">Foto Depan Rumah</option>
+                 <option value="foto_lapangan">Foto Lapangan</option>
                </select>
              </div>
 
@@ -157,11 +149,11 @@ const HouseholdDocuments = () => {
                        <FileText className="w-5 h-5" />
                      </div>
                      <div>
-                       <p className="text-sm font-semibold dark:text-white">{DOC_TYPE_LABELS[doc.document_type] || doc.document_type}</p>
+                       <p className="text-sm font-semibold dark:text-white">{doc.document_type}</p>
                        <p className="text-xs text-surface-500 capitalize">{doc.verifications?.[0]?.status || 'Dalam Review'}</p>
                      </div>
                    </div>
-                   {doc.verifications?.[0]?.status === 'verified' && <CheckCircle className="w-5 h-5 text-green-500" />}
+                    {doc.verifications?.[0]?.status === 'approved' && <CheckCircle className="w-5 h-5 text-green-500" />}
                    {doc.verifications?.[0]?.status === 'rejected' && <AlertTriangle className="w-5 h-5 text-red-500" />}
                 </div>
               ))}

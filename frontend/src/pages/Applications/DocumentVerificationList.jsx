@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileSearch, Search, Eye, CheckCircle, XCircle, Clock, FileText, Download } from 'lucide-react';
+import { FileSearch, Search, Eye, CheckCircle, XCircle, Clock, FileText, AlertTriangle } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -10,8 +10,9 @@ import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const verifyStatusConfig = {
-  verified: { label: 'Terverifikasi', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle },
+  approved: { label: 'Terverifikasi', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', icon: CheckCircle },
   rejected: { label: 'Ditolak', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400', icon: XCircle },
+  revision_required: { label: 'Perlu Revisi', color: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400', icon: AlertTriangle },
   pending: { label: 'Menunggu', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', icon: Clock },
 };
 
@@ -19,13 +20,9 @@ const docTypeLabels = {
   ktp: 'Kartu Tanda Penduduk',
   kk: 'Kartu Keluarga',
   sktm: 'Surat Ket. Tidak Mampu',
-  photo_house: 'Foto Rumah',
-  photo_field: 'Foto Lapangan',
-  KTP: 'Kartu Tanda Penduduk',
-  KK: 'Kartu Keluarga',
-  SKTM: 'Surat Ket. Tidak Mampu',
-  FOTO_RUMAH: 'Foto Rumah',
-  BUKTI_PENGHASILAN: 'Bukti Penghasilan',
+  foto_rumah: 'Foto Rumah',
+  foto_lapangan: 'Foto Lapangan',
+  bukti_penghasilan: 'Bukti Penghasilan',
 };
 
 const DocumentVerificationList = () => {
@@ -61,7 +58,7 @@ const DocumentVerificationList = () => {
       if (status === 'rejected' && !note) return;
       
       await api.patch(`/documents/${docId}/verify`, { status, note: note || '' });
-      toast.success(`Dokumen berhasil di-${status === 'verified' ? 'verifikasi' : 'tolak'}`);
+      toast.success(`Dokumen berhasil di-${status === 'approved' ? 'verifikasi' : 'tolak'}`);
       setDetailModal(null);
       fetchData();
     } catch (err) {
@@ -169,7 +166,7 @@ const DocumentVerificationList = () => {
             )}
 
             {detailModal.latestVerification && (
-              <div className={`p-3 rounded-lg text-sm ${detailModal.latestVerification.status === 'verified' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+              <div className={`p-3 rounded-lg text-sm ${detailModal.latestVerification.status === 'approved' ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
                 <span className="font-medium">Status:</span> {detailModal.latestVerification.status} oleh {detailModal.latestVerification.verifiedByUser?.name}
                 {detailModal.latestVerification.verification_note && <p className="mt-1 opacity-80">{detailModal.latestVerification.verification_note}</p>}
               </div>
@@ -178,7 +175,7 @@ const DocumentVerificationList = () => {
             {getStatus(detailModal) === 'pending' && (
               <div className="flex gap-3 justify-end pt-2 border-t border-surface-200 dark:border-surface-700">
                 <Button variant="outline" className="border-red-500 text-red-600" icon={XCircle} onClick={() => handleVerify(detailModal.id, 'rejected')} loading={verifyLoading}>Tolak</Button>
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" icon={CheckCircle} onClick={() => handleVerify(detailModal.id, 'verified')} loading={verifyLoading}>Verifikasi</Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white" icon={CheckCircle} onClick={() => handleVerify(detailModal.id, 'approved')} loading={verifyLoading}>Verifikasi</Button>
               </div>
             )}
           </div>

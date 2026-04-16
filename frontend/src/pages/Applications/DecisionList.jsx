@@ -1,5 +1,15 @@
-import { useState, useEffect } from 'react';
-import { ShieldAlert, Search, Filter, Stamp, XCircle, CheckCircle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import {
+  AlertCircle,
+  CheckCircle2,
+  ClipboardList,
+  FileCheck2,
+  Pencil,
+  Search,
+  Send,
+  ShieldAlert,
+  XCircle,
+} from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -7,219 +17,769 @@ import Alert from '../../components/ui/Alert';
 import Modal from '../../components/ui/Modal';
 import { PageLoader } from '../../components/ui/Spinner';
 import api from '../../services/api';
+import decisionService from '../../services/decisionService';
+import applicationService from '../../services/applicationService';
 import toast from 'react-hot-toast';
 
-const DecisionList = () => {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const REASON_OPTIONS = [
+  { code: 'income_below_threshold', label: 'Penghasilan di bawah ambang' },
+  { code: 'high_dependents', label: 'Jumlah tanggungan tinggi' },
+  { code: 'poor_housing_condition', label: 'Kondisi rumah tidak layak' },
+  { code: 'no_meaningful_assets', label: 'Tidak memiliki aset bernilai' },
+  { code: 'vulnerability_factor', label: 'Faktor kerentanan keluarga tinggi' },
+  { code: 'document_mismatch', label: 'Ketidaksesuaian dokumen/data' },
+];
+
+const TAB_CONFIG = {
+  finalize: { title: 'Finalisasi Kelayakan', icon: ClipboardList },
+  revise: { title: 'Revisi Keputusan', icon: Pencil },
+  report: { title: 'Laporan ke Admin Utama', icon: Send },
+};
+
+const blankForm = {
+  decision_status: 'approved',
+  approved_aid_type_id: '',
+  approved_amount: '',
+  approved_note: '',
+  reason_codes: [],
+  reason_summary: '',
+  evidence_items_manual: [],
+  revision_note: '',
+};
+
+const DecisionList = ({ defaultTab = 'finalize' }) => {
+  const [activeTab, setActiveTab] = useState(defaultTab);
   const [search, setSearch] = useState('');
-  
-  // Modal states
-  const [selectedApp, setSelectedApp] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
+  const [pendingApps, setPendingApps] = useState([]);
+  const [decisions, setDecisions] = useState([]);
   const [aidTypes, setAidTypes] = useState([]);
-  
-  const [formData, setFormData] = useState({
-    decision_status: 'approved',
-    approved_aid_type_id: '',
-    approved_amount: '',
-    approved_note: ''
-  });
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  useEffect(() => { 
-    fetchData(); 
-    fetchAidTypes();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setLoading(true); setError(null);
-      // We will reuse the application list endpoint but filter for admin_review
-      const res = await api.get('/aid-applications/all', {
-        params: { search, status: 'admin_review', limit: 50 }
-      });
-      setData(res.data.data?.records || []);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Gagal memuat daftar permohonan siap review');
-    } finally { setLoading(false); }
-  };
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [selectedDecision, setSelectedDecision] = useState(null);
+  const [applicationDocuments, setApplicationDocuments] = useState([]);
+  const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
+  const [manualEvidence, setManualEvidence] = useState({ evidence_type: '', label: '', file_url: '', note: '' });
+  const [formData, setFormData] = useState(blankForm);
 
   const fetchAidTypes = async () => {
+    const response = await api.get('/aid-types');
+    setAidTypes(response.data.data || []);
+  };
+
+  const fetchPending = async () => {
+    const response = await api.get('/aid-applications/all', {
+      params: { status: 'admin_review', limit: 100, search: search || undefined },
+    });
+    setPendingApps(response.data.data?.records || []);
+  };
+
+  const fetchDecisions = async () => {
+    const response = await decisionService.getAll({
+      limit: 100,
+      application_no: search || undefined,
+      household_name: search || undefined,
+    });
+    setDecisions(response.data.data?.records || []);
+  };
+
+  const loadApplicationDocuments = async (applicationId) => {
+    const detail = await applicationService.getById(applicationId);
+    const docs = detail.data?.data?.household?.documents || [];
+    setApplicationDocuments(docs);
+  };
+
+  const refreshAll = async () => {
     try {
-      const res = await api.get('/aid-types');
-      setAidTypes(res.data.data || []);
+      setLoading(true);
+      setError('');
+      await Promise.all([fetchAidTypes(), fetchPending(), fetchDecisions()]);
     } catch (err) {
-      console.error(err);
+      setError(err.response?.data?.message || 'Gagal memuat data keputusan');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDecisionSubmit = async (e) => {
-    e.preventDefault();
-    if (!selectedApp) return;
+  useEffect(() => {
+    refreshAll();
+  }, []);
+
+  useEffect(() => {
+    setActiveTab(defaultTab);
+  }, [defaultTab]);
+
+  const filteredDecisions = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    if (!keyword) return decisions;
+    return decisions.filter((decision) => {
+      const appNo = decision.application?.application_no?.toLowerCase() || '';
+      const household = decision.application?.household?.nama_kepala_keluarga?.toLowerCase() || '';
+      return appNo.includes(keyword) || household.includes(keyword);
+    });
+  }, [decisions, search]);
+
+  const reportableDecisions = filteredDecisions.filter(
+    (decision) => decision.decision_status === 'approved' && !decision.reported_to_main
+  );
+
+  const resetFormState = () => {
+    setFormData(blankForm);
+    setSelectedDocumentIds([]);
+    setApplicationDocuments([]);
+    setManualEvidence({ evidence_type: '', label: '', file_url: '', note: '' });
+  };
+
+  const openFinalizeModal = async (application) => {
+    try {
+      setSelectedApplication(application);
+      setSelectedDecision(null);
+      resetFormState();
+      setFormData((prev) => ({ ...prev, approved_aid_type_id: application.aid_type_id?.toString() || '' }));
+      await loadApplicationDocuments(application.id);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal memuat dokumen rumah tangga');
+      setSelectedApplication(null);
+    }
+  };
+
+  const openRevisionModal = async (decision) => {
+    try {
+      setSelectedDecision(decision);
+      setSelectedApplication(null);
+      resetFormState();
+
+      setFormData({
+        decision_status: decision.decision_status || 'approved',
+        approved_aid_type_id: decision.approved_aid_type_id?.toString() || '',
+        approved_amount: decision.approved_amount || '',
+        approved_note: decision.approved_note || '',
+        reason_codes: Array.isArray(decision.reason_codes) ? decision.reason_codes : [],
+        reason_summary: decision.reason_summary || '',
+        evidence_items_manual: [],
+        revision_note: '',
+      });
+
+      const existingEvidence = Array.isArray(decision.evidence_items) ? decision.evidence_items : [];
+      const existingDocIds = existingEvidence
+        .filter((item) => item.source_type === 'document' && item.source_id)
+        .map((item) => item.source_id.toString());
+      setSelectedDocumentIds(existingDocIds);
+      const existingManual = existingEvidence
+        .filter((item) => item.source_type !== 'document')
+        .map((item) => ({
+          evidence_type: item.evidence_type || '',
+          label: item.label || '',
+          file_url: item.file_url || '',
+          note: item.note || '',
+        }));
+      if (existingManual.length > 0) {
+        setFormData((prev) => ({ ...prev, evidence_items_manual: existingManual }));
+      }
+
+      await loadApplicationDocuments(decision.application?.id);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal memuat data revisi');
+      setSelectedDecision(null);
+    }
+  };
+
+  const toggleReasonCode = (code) => {
+    const exists = formData.reason_codes.includes(code);
+    setFormData((prev) => ({
+      ...prev,
+      reason_codes: exists
+        ? prev.reason_codes.filter((item) => item !== code)
+        : [...prev.reason_codes, code],
+    }));
+  };
+
+  const toggleDocumentEvidence = (documentId) => {
+    const idString = documentId.toString();
+    setSelectedDocumentIds((prev) =>
+      prev.includes(idString) ? prev.filter((id) => id !== idString) : [...prev, idString]
+    );
+  };
+
+  const addManualEvidence = () => {
+    if (!manualEvidence.evidence_type || !manualEvidence.label) {
+      toast.error('Tipe bukti dan label bukti manual wajib diisi');
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      evidence_items_manual: [...prev.evidence_items_manual, manualEvidence],
+    }));
+    setManualEvidence({ evidence_type: '', label: '', file_url: '', note: '' });
+  };
+
+  const removeManualEvidence = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      evidence_items_manual: prev.evidence_items_manual.filter((_, idx) => idx !== index),
+    }));
+  };
+
+  const buildEvidenceItems = () => {
+    const selectedDocs = applicationDocuments
+      .filter((doc) => selectedDocumentIds.includes(doc.id.toString()))
+      .map((doc) => ({
+        evidence_type: doc.document_type || 'document',
+        label: doc.original_filename || doc.document_type || `Dokumen #${doc.id}`,
+        source_type: 'document',
+        source_id: doc.id,
+        file_url: doc.file_url?.startsWith('http') ? doc.file_url : null,
+        note: null,
+      }));
+
+    const manualItems = formData.evidence_items_manual.map((item) => ({
+      evidence_type: item.evidence_type,
+      label: item.label,
+      source_type: 'manual',
+      source_id: null,
+      file_url: item.file_url || null,
+      note: item.note || null,
+    }));
+
+    return [...selectedDocs, ...manualItems];
+  };
+
+  const validateDecisionPayload = (payload, { isRevision = false } = {}) => {
+    if (payload.reason_codes.length < 2) {
+      toast.error('Pilih minimal 2 alasan keputusan');
+      return false;
+    }
+
+    if (!payload.reason_summary || payload.reason_summary.length < 20) {
+      toast.error('Ringkasan alasan minimal 20 karakter');
+      return false;
+    }
+
+    if (payload.decision_status === 'approved' && !payload.approved_aid_type_id) {
+      toast.error('Jenis bantuan wajib dipilih untuk keputusan approved');
+      return false;
+    }
+
+    if (!Array.isArray(payload.evidence_items) || payload.evidence_items.length === 0) {
+      toast.error('Minimal 1 bukti dokumen/foto wajib dipilih');
+      return false;
+    }
+
+    if (isRevision && (!payload.revision_note || payload.revision_note.length < 10)) {
+      toast.error('Catatan revisi minimal 10 karakter');
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleFinalizeSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedApplication) return;
+
+    const payload = {
+      application_id: selectedApplication.id,
+      decision_status: formData.decision_status,
+      approved_aid_type_id: formData.approved_aid_type_id || null,
+      approved_amount: formData.approved_amount || null,
+      approved_note: formData.approved_note || null,
+      reason_codes: formData.reason_codes,
+      reason_summary: formData.reason_summary,
+      evidence_items: buildEvidenceItems(),
+    };
+
+    if (!validateDecisionPayload(payload)) return;
 
     try {
       setSubmitting(true);
-      await api.post('/decisions', {
-        application_id: selectedApp.id,
-        ...formData
-      });
-      toast.success(`Keputusan berhasil disimpan untuk ${selectedApp.application_no}`);
-      setSelectedApp(null);
-      fetchData();
+      await decisionService.create(payload);
+      toast.success('Keputusan final staff berhasil disimpan');
+      setSelectedApplication(null);
+      resetFormState();
+      await refreshAll();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Gagal menyimpan keputusan');
-    } finally { setSubmitting(false); }
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const openDecisionModal = (app) => {
-    setSelectedApp(app);
-    setFormData({
-      decision_status: 'approved',
-      approved_aid_type_id: app.aid_type_id?.toString() || '',
-      approved_amount: '',
-      approved_note: ''
-    });
+  const handleRevisionSubmit = async (event) => {
+    event.preventDefault();
+    if (!selectedDecision) return;
+
+    const payload = {
+      decision_status: formData.decision_status,
+      approved_aid_type_id: formData.approved_aid_type_id || null,
+      approved_amount: formData.approved_amount || null,
+      approved_note: formData.approved_note || null,
+      reason_codes: formData.reason_codes,
+      reason_summary: formData.reason_summary,
+      evidence_items: buildEvidenceItems(),
+      revision_note: formData.revision_note,
+    };
+
+    if (!validateDecisionPayload(payload, { isRevision: true })) return;
+
+    try {
+      setSubmitting(true);
+      await decisionService.revise(selectedDecision.id, payload);
+      toast.success('Revisi keputusan berhasil disimpan');
+      setSelectedDecision(null);
+      resetFormState();
+      await refreshAll();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal merevisi keputusan');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleReportToMain = async (decisionId) => {
+    try {
+      await decisionService.reportToMain(decisionId);
+      toast.success('Laporan berhasil dikirim ke admin utama');
+      await fetchDecisions();
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Gagal mengirim laporan ke admin utama');
+    }
   };
 
   if (loading) return <PageLoader />;
 
-  return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Review & Keputusan</h1>
-          <p className="text-sm text-surface-500 mt-1">Buat keputusan (Approve/Reject) untuk permohonan yang telah disurvei</p>
+  const renderDecisionForm = ({ isRevision = false } = {}) => (
+    <>
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Status Keputusan</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <button
+            type="button"
+            onClick={() => setFormData((prev) => ({ ...prev, decision_status: 'approved' }))}
+            className={`rounded-xl border-2 p-3 text-sm font-semibold transition ${
+              formData.decision_status === 'approved'
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                : 'border-surface-200 text-surface-500 dark:border-surface-700'
+            }`}
+          >
+            Layak (Approved)
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData((prev) => ({ ...prev, decision_status: 'rejected' }))}
+            className={`rounded-xl border-2 p-3 text-sm font-semibold transition ${
+              formData.decision_status === 'rejected'
+                ? 'border-red-500 bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-300'
+                : 'border-surface-200 text-surface-500 dark:border-surface-700'
+            }`}
+          >
+            Tidak Layak
+          </button>
+          <button
+            type="button"
+            onClick={() => setFormData((prev) => ({ ...prev, decision_status: 'waitlisted' }))}
+            className={`rounded-xl border-2 p-3 text-sm font-semibold transition ${
+              formData.decision_status === 'waitlisted'
+                ? 'border-amber-500 bg-amber-50 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'
+                : 'border-surface-200 text-surface-500 dark:border-surface-700'
+            }`}
+          >
+            Perlu Review
+          </button>
         </div>
       </div>
 
+      {formData.decision_status === 'approved' && (
+        <div className="grid grid-cols-1 gap-4 rounded-xl border border-emerald-200 bg-emerald-50/40 p-4 dark:border-emerald-900/40 dark:bg-emerald-900/10 md:grid-cols-2">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-surface-700 dark:text-surface-300">Jenis Bantuan</label>
+            <select
+              value={formData.approved_aid_type_id}
+              onChange={(e) => setFormData((prev) => ({ ...prev, approved_aid_type_id: e.target.value }))}
+              className="w-full rounded-xl border border-surface-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 dark:border-surface-700 dark:bg-surface-800"
+              required
+            >
+              <option value="">Pilih bantuan...</option>
+              {aidTypes.map((item) => (
+                <option key={item.id} value={item.id}>{item.name}</option>
+              ))}
+            </select>
+          </div>
+          <Input
+            label="Nominal / Kuota"
+            value={formData.approved_amount}
+            onChange={(e) => setFormData((prev) => ({ ...prev, approved_amount: e.target.value }))}
+            placeholder="Contoh: 250000"
+          />
+        </div>
+      )}
+
+      <div className="space-y-2">
+        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Alasan Keputusan (minimal 2)</label>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {REASON_OPTIONS.map((reason) => (
+            <label key={reason.code} className="inline-flex items-center gap-2 rounded-lg border border-surface-200 px-3 py-2 text-sm dark:border-surface-700">
+              <input
+                type="checkbox"
+                checked={formData.reason_codes.includes(reason.code)}
+                onChange={() => toggleReasonCode(reason.code)}
+              />
+              {reason.label}
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Ringkasan Alasan</label>
+        <textarea
+          rows={4}
+          value={formData.reason_summary}
+          onChange={(e) => setFormData((prev) => ({ ...prev, reason_summary: e.target.value }))}
+          className="w-full rounded-xl border border-surface-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 dark:border-surface-700 dark:bg-surface-800"
+          placeholder="Tuliskan alasan final secara ringkas (min 20 karakter)..."
+        />
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-surface-200 p-4 dark:border-surface-700">
+        <h3 className="text-sm font-semibold text-surface-800 dark:text-surface-200">Pilih Bukti Dokumen/Foto</h3>
+        {applicationDocuments.length === 0 ? (
+          <p className="text-xs text-surface-500">Belum ada dokumen di rumah tangga ini. Tambahkan bukti manual di bawah.</p>
+        ) : (
+          <div className="space-y-2">
+            {applicationDocuments.map((doc) => (
+              <label key={doc.id} className="flex items-start gap-2 rounded-lg border border-surface-200 px-3 py-2 text-sm dark:border-surface-700">
+                <input
+                  type="checkbox"
+                  checked={selectedDocumentIds.includes(doc.id.toString())}
+                  onChange={() => toggleDocumentEvidence(doc.id)}
+                  className="mt-0.5"
+                />
+                <span>
+                  <span className="font-medium">{doc.original_filename || doc.document_type || `Dokumen #${doc.id}`}</span>
+                  <span className="block text-xs text-surface-500">Tipe: {doc.document_type || '-'} </span>
+                </span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-dashed border-surface-300 p-4 dark:border-surface-700">
+        <h3 className="text-sm font-semibold text-surface-800 dark:text-surface-200">Tambah Bukti Manual</h3>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <Input
+            label="Tipe Bukti"
+            value={manualEvidence.evidence_type}
+            onChange={(e) => setManualEvidence((prev) => ({ ...prev, evidence_type: e.target.value }))}
+            placeholder="contoh: foto_rumah_depan"
+          />
+          <Input
+            label="Label Bukti"
+            value={manualEvidence.label}
+            onChange={(e) => setManualEvidence((prev) => ({ ...prev, label: e.target.value }))}
+            placeholder="contoh: Foto rumah bagian depan"
+          />
+          <Input
+            label="URL Bukti (opsional)"
+            value={manualEvidence.file_url}
+            onChange={(e) => setManualEvidence((prev) => ({ ...prev, file_url: e.target.value }))}
+            placeholder="https://..."
+          />
+          <Input
+            label="Catatan (opsional)"
+            value={manualEvidence.note}
+            onChange={(e) => setManualEvidence((prev) => ({ ...prev, note: e.target.value }))}
+            placeholder="Catatan bukti"
+          />
+        </div>
+        <div className="flex justify-end">
+          <Button type="button" size="sm" variant="outline" onClick={addManualEvidence}>Tambah Bukti Manual</Button>
+        </div>
+
+        {formData.evidence_items_manual.length > 0 && (
+          <div className="space-y-2">
+            {formData.evidence_items_manual.map((item, index) => (
+              <div key={`${item.label}-${index}`} className="flex items-center justify-between rounded-lg bg-surface-50 px-3 py-2 text-sm dark:bg-surface-800/50">
+                <span>{item.label} ({item.evidence_type})</span>
+                <button
+                  type="button"
+                  onClick={() => removeManualEvidence(index)}
+                  className="text-red-500 hover:underline"
+                >
+                  Hapus
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="space-y-1">
+        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Catatan Administratif</label>
+        <textarea
+          rows={3}
+          value={formData.approved_note}
+          onChange={(e) => setFormData((prev) => ({ ...prev, approved_note: e.target.value }))}
+          className="w-full rounded-xl border border-surface-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 dark:border-surface-700 dark:bg-surface-800"
+          placeholder="Catatan tambahan keputusan"
+        />
+      </div>
+
+      {isRevision && (
+        <div className="space-y-1">
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Catatan Revisi (wajib)</label>
+          <textarea
+            rows={3}
+            value={formData.revision_note}
+            onChange={(e) => setFormData((prev) => ({ ...prev, revision_note: e.target.value }))}
+            className="w-full rounded-xl border border-surface-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 dark:border-surface-700 dark:bg-surface-800"
+            placeholder="Jelaskan alasan koreksi data atau perubahan keputusan"
+          />
+        </div>
+      )}
+    </>
+  );
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <div className="flex flex-col gap-1">
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Finalisasi Kelayakan Staff</h1>
+        <p className="text-sm text-surface-500">
+          Staff melakukan keputusan final, revisi berjejak, dan mengirim laporan warga layak ke admin utama.
+        </p>
+      </div>
+
       <Card className="p-4 bg-surface-50 dark:bg-surface-800/50">
-        <form onSubmit={(e) => { e.preventDefault(); fetchData(); }} className="flex flex-wrap gap-3 items-end">
-          <div className="flex-1 min-w-[200px]">
-            <Input icon={Search} placeholder="Cari nomor permohonan..." value={search} onChange={e => setSearch(e.target.value)} />
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            refreshAll();
+          }}
+          className="flex flex-wrap items-end gap-3"
+        >
+          <div className="min-w-[220px] flex-1">
+            <Input
+              icon={Search}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Cari no. permohonan / kepala keluarga..."
+            />
           </div>
           <Button type="submit" variant="secondary">Cari</Button>
         </form>
       </Card>
 
-      {error ? <Alert type="error" title="Error">{error}</Alert> : (
-        <div className="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-2xl overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-surface-50 dark:bg-surface-800/50 text-surface-500 dark:text-surface-400 font-medium border-b border-surface-200 dark:border-surface-800">
-                <tr>
-                  <th className="px-6 py-4">No Permohonan</th>
-                  <th className="px-6 py-4">Keluarga</th>
-                  <th className="px-6 py-4">Scoring</th>
-                  <th className="px-6 py-4">Validasi</th>
-                  <th className="px-6 py-4 text-right">Aksi</th>
+      <div className="flex flex-wrap gap-2">
+        {Object.entries(TAB_CONFIG).map(([key, tab]) => {
+          const Icon = tab.icon;
+          const active = activeTab === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setActiveTab(key)}
+              className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-semibold transition ${
+                active
+                  ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/25 dark:text-primary-300'
+                  : 'border-surface-200 text-surface-600 hover:bg-surface-50 dark:border-surface-700 dark:text-surface-300'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.title}
+            </button>
+          );
+        })}
+      </div>
+
+      {error && <Alert type="error" title="Error">{error}</Alert>}
+
+      {activeTab === 'finalize' && (
+        <Card className="overflow-x-auto p-0">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-surface-200 bg-surface-50 text-surface-500 dark:border-surface-800 dark:bg-surface-800/40 dark:text-surface-400">
+              <tr>
+                <th className="px-5 py-3">No Permohonan</th>
+                <th className="px-5 py-3">Kepala Keluarga</th>
+                <th className="px-5 py-3">Status</th>
+                <th className="px-5 py-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-100 dark:divide-surface-800/60">
+              {pendingApps.map((app) => (
+                <tr key={app.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/30">
+                  <td className="px-5 py-4 font-semibold text-surface-900 dark:text-white">{app.application_no}</td>
+                  <td className="px-5 py-4">{app.household?.nama_kepala_keluarga || '-'}</td>
+                  <td className="px-5 py-4">
+                    <span className="rounded-lg bg-amber-100 px-2 py-1 text-xs font-bold text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                      {app.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Button size="xs" icon={CheckCircle2} onClick={() => openFinalizeModal(app)}>
+                      Finalisasi
+                    </Button>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-100 dark:divide-surface-800/50 text-surface-700 dark:text-surface-300">
-                {data.map((app) => (
-                  <tr key={app.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/30 transition-colors">
-                    <td className="px-6 py-4 font-medium dark:text-white">{app.application_no}</td>
-                    <td className="px-6 py-4">{app.household?.nama_kepala_keluarga || '-'}</td>
-                    <td className="px-6 py-4">
-                       <span className="px-2 py-1 bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 rounded-lg font-bold">
-                         Menunggu
-                       </span>
-                    </td>
-                    <td className="px-6 py-4 font-medium dark:text-white text-xs">{app.status.replace(/_/g, ' ').toUpperCase()}</td>
-                    <td className="px-6 py-4 text-right">
-                      <Button size="xs" variant="primary" icon={Stamp} onClick={() => openDecisionModal(app)}>Eksekusi</Button>
-                    </td>
-                  </tr>
-                ))}
-                {data.length === 0 && (
-                  <tr>
-                    <td colSpan="5" className="px-6 py-10 text-center text-surface-500">
-                      <ShieldAlert className="w-8 h-8 mx-auto mb-2 opacity-40" />
-                      Tidak ada permohonan yang menunggu keputusan admin.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+              ))}
+              {pendingApps.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-12 text-center text-surface-500">
+                    <ShieldAlert className="mx-auto mb-2 h-7 w-7 opacity-50" />
+                    Tidak ada permohonan pada status admin_review.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </Card>
       )}
 
-      {/* DECISION MODAL */}
-      <Modal isOpen={!!selectedApp} onClose={() => setSelectedApp(null)} title="Eksekusi Keputusan" size="md">
-        {selectedApp && (
-          <form onSubmit={handleDecisionSubmit} className="space-y-4">
-            <div className="bg-surface-50 dark:bg-surface-800/50 p-3 rounded-lg mb-4 text-sm text-surface-700 dark:text-surface-300">
-              <span className="font-medium text-surface-500">Permohonan:</span> <span className="font-bold">{selectedApp.application_no}</span>
-            </div>
+      {activeTab === 'revise' && (
+        <Card className="overflow-x-auto p-0">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-surface-200 bg-surface-50 text-surface-500 dark:border-surface-800 dark:bg-surface-800/40 dark:text-surface-400">
+              <tr>
+                <th className="px-5 py-3">No Permohonan</th>
+                <th className="px-5 py-3">Kepala Keluarga</th>
+                <th className="px-5 py-3">Keputusan</th>
+                <th className="px-5 py-3">Revisi</th>
+                <th className="px-5 py-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-100 dark:divide-surface-800/60">
+              {filteredDecisions.map((decision) => (
+                <tr key={decision.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/30">
+                  <td className="px-5 py-4 font-semibold text-surface-900 dark:text-white">{decision.application?.application_no || '-'}</td>
+                  <td className="px-5 py-4">{decision.application?.household?.nama_kepala_keluarga || '-'}</td>
+                  <td className="px-5 py-4">
+                    <span className={`rounded-lg px-2 py-1 text-xs font-bold ${
+                      decision.decision_status === 'approved'
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300'
+                        : decision.decision_status === 'rejected'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                          : 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+                    }`}>
+                      {decision.decision_status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4">v{decision.latest_revision_no || 1}</td>
+                  <td className="px-5 py-4 text-right">
+                    <Button size="xs" variant="secondary" icon={Pencil} onClick={() => openRevisionModal(decision)}>
+                      Koreksi
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {filteredDecisions.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-surface-500">
+                    Belum ada keputusan yang dapat direvisi.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
-            <div className="space-y-3">
-              <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Tentukan Keputusan</label>
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setFormData({...formData, decision_status: 'approved'})}
-                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    formData.decision_status === 'approved' 
-                    ? 'border-emerald-500 bg-emerald-50/50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' 
-                    : 'border-surface-200 dark:border-surface-700 text-surface-500 hover:border-surface-300 dark:hover:border-surface-600'
-                  }`}
-                >
-                  <CheckCircle className="w-6 h-6" />
-                  <span className="font-bold text-sm">SETUJUI</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({...formData, decision_status: 'rejected'})}
-                  className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 transition-all ${
-                    formData.decision_status === 'rejected' 
-                    ? 'border-red-500 bg-red-50/50 text-red-700 dark:bg-red-500/10 dark:text-red-400' 
-                    : 'border-surface-200 dark:border-surface-700 text-surface-500 hover:border-surface-300 dark:hover:border-surface-600'
-                  }`}
-                >
-                  <XCircle className="w-6 h-6" />
-                  <span className="font-bold text-sm">TOLAK</span>
-                </button>
-              </div>
-            </div>
+      {activeTab === 'report' && (
+        <Card className="overflow-x-auto p-0">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-surface-200 bg-surface-50 text-surface-500 dark:border-surface-800 dark:bg-surface-800/40 dark:text-surface-400">
+              <tr>
+                <th className="px-5 py-3">No Permohonan</th>
+                <th className="px-5 py-3">Kepala Keluarga</th>
+                <th className="px-5 py-3">Ringkasan Alasan</th>
+                <th className="px-5 py-3">Bukti</th>
+                <th className="px-5 py-3 text-right">Aksi</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-surface-100 dark:divide-surface-800/60">
+              {reportableDecisions.map((decision) => (
+                <tr key={decision.id} className="hover:bg-surface-50 dark:hover:bg-surface-800/30">
+                  <td className="px-5 py-4 font-semibold text-surface-900 dark:text-white">{decision.application?.application_no || '-'}</td>
+                  <td className="px-5 py-4">{decision.application?.household?.nama_kepala_keluarga || '-'}</td>
+                  <td className="px-5 py-4 max-w-md">
+                    <p className="line-clamp-2">{decision.reason_summary || '-'}</p>
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="inline-flex items-center gap-1 rounded-lg bg-blue-100 px-2 py-1 text-xs font-bold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                      <FileCheck2 className="h-3.5 w-3.5" />
+                      {Array.isArray(decision.evidence_items) ? decision.evidence_items.length : 0}
+                    </span>
+                  </td>
+                  <td className="px-5 py-4 text-right">
+                    <Button size="xs" icon={Send} onClick={() => handleReportToMain(decision.id)}>
+                      Kirim ke Admin Utama
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {reportableDecisions.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-6 py-12 text-center text-surface-500">
+                    Semua keputusan approved sudah dilaporkan ke admin utama.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
-            {formData.decision_status === 'approved' && (
-              <div className="space-y-4 animate-fade-in bg-emerald-50/30 dark:bg-emerald-900/10 p-4 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                <div className="space-y-1">
-                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Jenis Bantuan Disetujui</label>
-                  <select
-                    value={formData.approved_aid_type_id}
-                    onChange={e => setFormData({...formData, approved_aid_type_id: e.target.value})}
-                    required
-                    className="w-full rounded-xl border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800 text-sm px-3 py-2.5 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                  >
-                    <option value="">Pilih Bantuan...</option>
-                    {aidTypes.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select>
-                </div>
-                <Input label="Nominal/Keterangan Bantuan" value={formData.approved_amount} onChange={e => setFormData({...formData, approved_amount: e.target.value})} placeholder="Contoh: Sembako Senilai Rp 200.000 / bln" />
-              </div>
-            )}
-
-            <div className="space-y-1">
-               <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Catatan Administratif</label>
-               <textarea
-                 className="w-full rounded-xl border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800 text-sm px-3 py-2.5 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                 rows={3}
-                 value={formData.approved_note}
-                 onChange={e => setFormData({...formData, approved_note: e.target.value})}
-                 placeholder="Tambahkan catatan mengapa permohonan ini disetujui/ditolak..."
-               />
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">
-              <Button type="button" variant="ghost" onClick={() => setSelectedApp(null)}>Batal</Button>
-              <Button type="submit" variant="primary" loading={submitting}>Simpan Keputusan Final</Button>
+      <Modal
+        isOpen={Boolean(selectedApplication)}
+        onClose={() => {
+          setSelectedApplication(null);
+          resetFormState();
+        }}
+        title="Finalisasi Kelayakan"
+        size="xl"
+      >
+        {selectedApplication && (
+          <form onSubmit={handleFinalizeSubmit} className="space-y-4">
+            <Alert type="info" title="Kebijakan">
+              Keputusan final tidak dihapus. Jika ada salah input, gunakan fitur revisi dengan jejak audit.
+            </Alert>
+            {renderDecisionForm({ isRevision: false })}
+            <div className="flex justify-end gap-3 border-t border-surface-200 pt-4 dark:border-surface-700">
+              <Button type="button" variant="ghost" onClick={() => setSelectedApplication(null)}>Batal</Button>
+              <Button type="submit" loading={submitting} icon={CheckCircle2}>Simpan Keputusan Final</Button>
             </div>
           </form>
         )}
       </Modal>
 
+      <Modal
+        isOpen={Boolean(selectedDecision)}
+        onClose={() => {
+          setSelectedDecision(null);
+          resetFormState();
+        }}
+        title="Revisi Keputusan"
+        size="xl"
+      >
+        {selectedDecision && (
+          <form onSubmit={handleRevisionSubmit} className="space-y-4">
+            <div className="rounded-xl border border-amber-200 bg-amber-50/70 p-3 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-300">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <p>
+                  Revisi akan membuat versi baru (v{(selectedDecision.latest_revision_no || 1) + 1}) dan otomatis membatalkan status laporan sebelumnya.
+                </p>
+              </div>
+            </div>
+            {renderDecisionForm({ isRevision: true })}
+            <div className="flex justify-end gap-3 border-t border-surface-200 pt-4 dark:border-surface-700">
+              <Button type="button" variant="ghost" onClick={() => setSelectedDecision(null)}>Batal</Button>
+              <Button type="submit" loading={submitting} icon={Pencil}>Simpan Revisi</Button>
+            </div>
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };
