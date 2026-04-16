@@ -5,6 +5,9 @@ import api from '../../services/api';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
 import toast from 'react-hot-toast';
+import { clampText } from '../../utils/formLimits';
+
+const COMPLAINT_DESCRIPTION_LIMIT = 2000;
 
 const ComplaintCreate = () => {
   const [households, setHouseholds] = useState([]);
@@ -35,7 +38,9 @@ const ComplaintCreate = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const nextValue = name === 'description' ? clampText(value, COMPLAINT_DESCRIPTION_LIMIT) : value;
+    setFormData({ ...formData, [name]: nextValue });
   };
 
   const handleSubmit = async (e) => {
@@ -113,9 +118,13 @@ const ComplaintCreate = () => {
                 onChange={handleChange}
                 rows={5}
                 required
+                maxLength={COMPLAINT_DESCRIPTION_LIMIT}
                 className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white"
                 placeholder="Ceritakan keluhan atau masalah yang Anda alami secara rinci..."
               />
+              <p className="mt-1 text-xs text-surface-500 text-right">
+                {formData.description.length}/{COMPLAINT_DESCRIPTION_LIMIT}
+              </p>
             </div>
 
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-200 rounded-lg text-sm flex gap-3">

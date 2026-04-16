@@ -20,6 +20,13 @@ import api from '../../services/api';
 import decisionService from '../../services/decisionService';
 import applicationService from '../../services/applicationService';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, digitsOnly } from '../../utils/formLimits';
+
+const DECISION_LIMITS = {
+  approvedNote: FORM_LIMITS.longNote,
+  reasonSummary: FORM_LIMITS.longNote,
+  revisionNote: FORM_LIMITS.longNote,
+};
 
 const REASON_OPTIONS = [
   { code: 'income_below_threshold', label: 'Penghasilan di bawah ambang' },
@@ -63,6 +70,32 @@ const DecisionList = ({ defaultTab = 'finalize' }) => {
   const [selectedDocumentIds, setSelectedDocumentIds] = useState([]);
   const [manualEvidence, setManualEvidence] = useState({ evidence_type: '', label: '', file_url: '', note: '' });
   const [formData, setFormData] = useState(blankForm);
+
+  const updateSearch = (value) => {
+    setSearch(clampText(value, FORM_LIMITS.search));
+  };
+
+  const updateFormField = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'approved_amount') nextValue = digitsOnly(value, FORM_LIMITS.money);
+    if (field === 'reason_summary') nextValue = clampText(value, DECISION_LIMITS.reasonSummary);
+    if (field === 'approved_note') nextValue = clampText(value, DECISION_LIMITS.approvedNote);
+    if (field === 'revision_note') nextValue = clampText(value, DECISION_LIMITS.revisionNote);
+
+    setFormData((prev) => ({ ...prev, [field]: nextValue }));
+  };
+
+  const updateManualEvidence = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'evidence_type') nextValue = clampText(value, FORM_LIMITS.evidenceType);
+    if (field === 'label') nextValue = clampText(value, FORM_LIMITS.evidenceLabel);
+    if (field === 'file_url') nextValue = clampText(value, FORM_LIMITS.url);
+    if (field === 'note') nextValue = clampText(value, FORM_LIMITS.note);
+
+    setManualEvidence((prev) => ({ ...prev, [field]: nextValue }));
+  };
 
   const fetchAidTypes = async () => {
     const response = await api.get('/aid-types');
@@ -410,8 +443,10 @@ const DecisionList = ({ defaultTab = 'finalize' }) => {
           <Input
             label="Nominal / Kuota"
             value={formData.approved_amount}
-            onChange={(e) => setFormData((prev) => ({ ...prev, approved_amount: e.target.value }))}
+            onChange={(e) => updateFormField('approved_amount', e.target.value)}
             placeholder="Contoh: 250000"
+            inputMode="numeric"
+            maxLength={FORM_LIMITS.money}
           />
         </div>
       )}
@@ -437,10 +472,14 @@ const DecisionList = ({ defaultTab = 'finalize' }) => {
         <textarea
           rows={4}
           value={formData.reason_summary}
-          onChange={(e) => setFormData((prev) => ({ ...prev, reason_summary: e.target.value }))}
+          onChange={(e) => updateFormField('reason_summary', e.target.value)}
+          maxLength={DECISION_LIMITS.reasonSummary}
           className="w-full rounded-xl border border-surface-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 dark:border-surface-700 dark:bg-surface-800"
           placeholder="Tuliskan alasan final secara ringkas (min 20 karakter)..."
         />
+        <p className="text-right text-xs text-surface-500">
+          {formData.reason_summary.length}/{DECISION_LIMITS.reasonSummary}
+        </p>
       </div>
 
       <div className="space-y-3 rounded-xl border border-surface-200 p-4 dark:border-surface-700">
@@ -473,26 +512,30 @@ const DecisionList = ({ defaultTab = 'finalize' }) => {
           <Input
             label="Tipe Bukti"
             value={manualEvidence.evidence_type}
-            onChange={(e) => setManualEvidence((prev) => ({ ...prev, evidence_type: e.target.value }))}
+            onChange={(e) => updateManualEvidence('evidence_type', e.target.value)}
             placeholder="contoh: foto_rumah_depan"
+            maxLength={FORM_LIMITS.evidenceType}
           />
           <Input
             label="Label Bukti"
             value={manualEvidence.label}
-            onChange={(e) => setManualEvidence((prev) => ({ ...prev, label: e.target.value }))}
+            onChange={(e) => updateManualEvidence('label', e.target.value)}
             placeholder="contoh: Foto rumah bagian depan"
+            maxLength={FORM_LIMITS.evidenceLabel}
           />
           <Input
             label="URL Bukti (opsional)"
             value={manualEvidence.file_url}
-            onChange={(e) => setManualEvidence((prev) => ({ ...prev, file_url: e.target.value }))}
+            onChange={(e) => updateManualEvidence('file_url', e.target.value)}
             placeholder="https://..."
+            maxLength={FORM_LIMITS.url}
           />
           <Input
             label="Catatan (opsional)"
             value={manualEvidence.note}
-            onChange={(e) => setManualEvidence((prev) => ({ ...prev, note: e.target.value }))}
+            onChange={(e) => updateManualEvidence('note', e.target.value)}
             placeholder="Catatan bukti"
+            maxLength={FORM_LIMITS.note}
           />
         </div>
         <div className="flex justify-end">
@@ -522,10 +565,14 @@ const DecisionList = ({ defaultTab = 'finalize' }) => {
         <textarea
           rows={3}
           value={formData.approved_note}
-          onChange={(e) => setFormData((prev) => ({ ...prev, approved_note: e.target.value }))}
+          onChange={(e) => updateFormField('approved_note', e.target.value)}
+          maxLength={DECISION_LIMITS.approvedNote}
           className="w-full rounded-xl border border-surface-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 dark:border-surface-700 dark:bg-surface-800"
           placeholder="Catatan tambahan keputusan"
         />
+        <p className="text-right text-xs text-surface-500">
+          {formData.approved_note.length}/{DECISION_LIMITS.approvedNote}
+        </p>
       </div>
 
       {isRevision && (
@@ -534,10 +581,14 @@ const DecisionList = ({ defaultTab = 'finalize' }) => {
           <textarea
             rows={3}
             value={formData.revision_note}
-            onChange={(e) => setFormData((prev) => ({ ...prev, revision_note: e.target.value }))}
+            onChange={(e) => updateFormField('revision_note', e.target.value)}
+            maxLength={DECISION_LIMITS.revisionNote}
             className="w-full rounded-xl border border-surface-300 bg-white px-3 py-2.5 text-sm outline-none focus:border-primary-500 dark:border-surface-700 dark:bg-surface-800"
             placeholder="Jelaskan alasan koreksi data atau perubahan keputusan"
           />
+          <p className="text-right text-xs text-surface-500">
+            {formData.revision_note.length}/{DECISION_LIMITS.revisionNote}
+          </p>
         </div>
       )}
     </>
@@ -564,8 +615,9 @@ const DecisionList = ({ defaultTab = 'finalize' }) => {
             <Input
               icon={Search}
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => updateSearch(e.target.value)}
               placeholder="Cari no. permohonan / kepala keluarga..."
+              maxLength={FORM_LIMITS.search}
             />
           </div>
           <Button type="submit" variant="secondary">Cari</Button>

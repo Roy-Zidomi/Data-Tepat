@@ -5,6 +5,9 @@ import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, digitsOnly, phoneOnly } from '../../utils/formLimits';
+
+const DONATION_MESSAGE_LIMIT = 500;
 
 const DonationForm = () => {
   const navigate = useNavigate();
@@ -20,11 +23,20 @@ const DonationForm = () => {
   });
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    let nextValue = value;
+
+    if (name === 'amount') nextValue = digitsOnly(value, FORM_LIMITS.money);
+    if (name === 'name') nextValue = clampText(value, FORM_LIMITS.name);
+    if (name === 'email') nextValue = clampText(value, FORM_LIMITS.email);
+    if (name === 'phone') nextValue = phoneOnly(value, FORM_LIMITS.phone);
+    if (name === 'message') nextValue = clampText(value, DONATION_MESSAGE_LIMIT);
+
+    setFormData({ ...formData, [name]: nextValue });
   };
 
   const setAmount = (val) => {
-    setFormData({ ...formData, amount: val });
+    setFormData({ ...formData, amount: val.toString() });
   };
 
   const handleSubmit = (e) => {
@@ -101,13 +113,15 @@ const DonationForm = () => {
                    ))}
                  </div>
                  <Input 
-                   type="number" 
-                   name="amount" 
-                   value={formData.amount} 
-                   onChange={handleChange} 
-                   placeholder="Atau masukkan nominal lain" 
-                   className="text-lg font-bold pb-2"
-                   required
+                   type="text" 
+                    name="amount" 
+                    value={formData.amount} 
+                    onChange={handleChange} 
+                    placeholder="Atau masukkan nominal lain" 
+                    className="text-lg font-bold pb-2"
+                    inputMode="numeric"
+                    maxLength={FORM_LIMITS.money}
+                    required
                  />
               </div>
 
@@ -115,10 +129,10 @@ const DonationForm = () => {
               <div className="space-y-4">
                  <h2 className="text-lg font-bold dark:text-white border-b pb-2 dark:border-surface-700">2. Informasi Donatur</h2>
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Input label="Nama Lengkap" name="name" value={formData.name} onChange={handleChange} placeholder="Hamba Allah / Anonim" />
-                    <Input label="Email (Untuk Bukti)" type="email" name="email" value={formData.email} onChange={handleChange} />
+                    <Input label="Nama Lengkap" name="name" value={formData.name} onChange={handleChange} placeholder="Hamba Allah / Anonim" maxLength={FORM_LIMITS.name} />
+                    <Input label="Email (Untuk Bukti)" type="email" name="email" value={formData.email} onChange={handleChange} maxLength={FORM_LIMITS.email} />
                     <div className="col-span-full">
-                       <Input label="Nomor WhatsApp (Opsional)" name="phone" value={formData.phone} onChange={handleChange} />
+                       <Input label="Nomor WhatsApp (Opsional)" name="phone" value={formData.phone} onChange={handleChange} inputMode="tel" maxLength={FORM_LIMITS.phone} />
                     </div>
                     <div className="col-span-full">
                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">Pesan atau Doa (Opsional)</label>
@@ -127,9 +141,13 @@ const DonationForm = () => {
                          value={formData.message}
                          onChange={handleChange}
                          rows={2}
+                         maxLength={DONATION_MESSAGE_LIMIT}
                          className="w-full rounded-lg border-surface-300 focus:border-primary-500 dark:bg-surface-900 dark:border-surface-700 dark:text-white"
                          placeholder="Tulis doa atau dukungan Anda..."
                        />
+                       <p className="mt-1 text-xs text-surface-500 text-right">
+                         {formData.message.length}/{DONATION_MESSAGE_LIMIT}
+                       </p>
                     </div>
                  </div>
               </div>
