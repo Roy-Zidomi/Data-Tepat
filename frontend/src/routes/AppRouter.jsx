@@ -68,7 +68,6 @@ const AppRouter = () => {
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
-      <Route path="/activation" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Activation />} />
 
       <Route path="/public-dashboard" element={<PublicDashboard />} />
       <Route path="/donasi" element={<DonationForm />} />
