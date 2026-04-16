@@ -6,6 +6,15 @@ const { buildPaginationMeta, generateApplicationNo } = require('../utils/helpers
 const { calculateTotalScore, determinePriorityLevel } = require('../utils/scoring');
 
 class SurveyController {
+  constructor() {
+    // Bind all route-handler methods so `this` is preserved when Express calls them
+    this.submitFromHousehold = this.submitFromHousehold.bind(this);
+    this.getMyResults = this.getMyResults.bind(this);
+    this.uploadPhotos = this.uploadPhotos.bind(this);
+    this.listPhotos = this.listPhotos.bind(this);
+    this.deletePhoto = this.deletePhoto.bind(this);
+  }
+
   serialize(data) {
     return JSON.parse(
       JSON.stringify(data, (_, value) => (typeof value === 'bigint' ? value.toString() : value))
