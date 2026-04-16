@@ -7,6 +7,7 @@ import Modal from '../../components/ui/Modal';
 import Alert from '../../components/ui/Alert';
 import { PageLoader } from '../../components/ui/Spinner';
 import api from '../../services/api';
+import useAuthStore from '../../store/authStore';
 
 const proofTypeConfig = {
   photo: { label: 'Foto', icon: Image, color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
@@ -16,6 +17,7 @@ const proofTypeConfig = {
 };
 
 const DistributionProofs = () => {
+  const user = useAuthStore((state) => state.user);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -40,8 +42,18 @@ const DistributionProofs = () => {
     <div className="space-y-6 animate-fade-in">
       <div>
         <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Bukti Distribusi</h1>
-        <p className="text-sm text-surface-500 mt-1">Galeri foto dan dokumen bukti penyaluran bantuan (BAST)</p>
+        <p className="text-sm text-surface-500 mt-1">
+          {user?.role === 'pengawas'
+            ? 'Tinjau bukti penyaluran untuk memastikan distribusi benar-benar terlaksana.'
+            : 'Galeri foto dan dokumen bukti penyaluran bantuan (BAST)'}
+        </p>
       </div>
+
+      {user?.role === 'pengawas' && (
+        <Alert type="info" title="Akses Pengawas">
+          Bukti distribusi tersedia untuk verifikasi visual dan audit, tanpa kemampuan mengubah atau mengunggah file.
+        </Alert>
+      )}
 
       <Card className="p-4 bg-surface-50 dark:bg-surface-800/50">
         <form onSubmit={(e) => { e.preventDefault(); fetchData(); }} className="flex gap-3 max-w-md">

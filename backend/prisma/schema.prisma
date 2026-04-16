@@ -15,10 +15,13 @@ model User {
   password_hash     String    @db.Text
   phone             String?   @db.VarChar(30)
   role              String    @db.VarChar(30)
-  is_active         Boolean   @default(true)
-  activation_status String    @default("active") @db.VarChar(30)
-  created_at        DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at        DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  is_active              Boolean   @default(true)
+  activation_status      String    @default("active") @db.VarChar(30)
+  must_change_password   Boolean   @default(false)
+  password_reset_token   String?   @db.Text
+  password_reset_expires DateTime? @db.Timestamptz(6)
+  created_at             DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at             DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
   otpCodes                    OtpCode[]
   householdsCreated           Household[]
@@ -40,6 +43,7 @@ model User {
   complaintsSubmitted         Complaint[] @relation("ComplaintSubmitter")
   complaintsResolved          Complaint[] @relation("ComplaintResolver")
   auditLogs                   AuditLog[]
+  surveyPhotosUploaded        SurveyPhoto[]
 
   @@map("users")
 }
@@ -363,13 +367,16 @@ model SurveyChecklist {
 }
 
 model SurveyPhoto {
-  id          BigInt    @id @default(autoincrement())
-  survey_id   BigInt
-  file_url    String    @db.Text
-  caption     String?   @db.Text
-  uploaded_at DateTime  @default(now()) @db.Timestamptz(6)
+  id                    BigInt    @id @default(autoincrement())
+  survey_id             BigInt
+  file_url              String    @db.Text
+  cloudinary_public_id  String?   @db.VarChar(255)
+  caption               String?   @db.Text
+  uploaded_by_user_id   BigInt
+  uploaded_at           DateTime  @default(now()) @db.Timestamptz(6)
 
-  survey      Survey    @relation(fields: [survey_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  survey                Survey    @relation(fields: [survey_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  uploadedByUser        User      @relation(fields: [uploaded_by_user_id], references: [id], onDelete: Restrict, onUpdate: Cascade)
 
   @@map("survey_photos")
 }

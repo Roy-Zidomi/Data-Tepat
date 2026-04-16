@@ -29,10 +29,21 @@ const resendOtpSchema = z.object({
   phone: z.string().min(8, 'Phone number is required')
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Format email tidak valid'),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(1, 'Token is required'),
+  newPassword: z.string().min(6, 'Password minimal 6 karakter'),
+});
+
 module.exports = {
   loginSchema,
   registerSchema,
   changePasswordSchema,
   activateSchema,
-  resendOtpSchema
+  resendOtpSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema
 };

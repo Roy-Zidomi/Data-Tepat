@@ -9,6 +9,7 @@ import { capitalizeWords, formatNumber } from '../../utils/formatters';
 import useAuthStore from '../../store/authStore';
 import WargaDashboard from './WargaDashboard';
 import RelawanDashboard from './RelawanDashboard';
+import StaffDashboard from './StaffDashboard';
 
 const StatCard = ({ colorClass, icon: Icon, title, value }) => (
   <Card className="flex items-center gap-4 hover:shadow-card-hover transition-all">
@@ -60,10 +61,15 @@ const Dashboard = () => {
     return <RelawanDashboard />;
   }
 
+  if (user?.role === 'admin_staff') {
+    return <StaffDashboard />;
+  }
+
   if (loading) return <PageLoader />;
 
   if (error) return <Alert type="error" title="Error">{error}</Alert>;
 
+  const processingApplications = stats?.processingApplications ?? stats?.pendingApplications ?? 0;
   const chartData = (stats?.applicationsByStatus || []).map((item) => ({
     name: capitalizeWords(item.status),
     total: item.count,
@@ -116,12 +122,21 @@ const Dashboard = () => {
           icon={AlertTriangle}
           colorClass="bg-rose-100 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400"
         />
-        <StatCard
-          title="Total Pengguna"
-          value={stats?.totalUsers ?? 0}
-          icon={Users}
-          colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
-        />
+        {user?.role === 'admin_main' ? (
+          <StatCard
+            title="Total Pengguna"
+            value={stats?.totalUsers ?? 0}
+            icon={Users}
+            colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+          />
+        ) : (
+          <StatCard
+            title="Permohonan Diproses"
+            value={processingApplications}
+            icon={Shield}
+            colorClass="bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400"
+          />
+        )}
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
@@ -166,7 +181,7 @@ const Dashboard = () => {
                 Permohonan Menunggu Tindak Lanjut
               </div>
               <p className="mt-2 text-3xl font-bold text-surface-900 dark:text-white">
-                {formatNumber(stats?.pendingApplications ?? 0)}
+                {formatNumber(processingApplications)}
               </p>
             </div>
             <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">

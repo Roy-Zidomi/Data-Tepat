@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Camera, Save, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { Camera, Save, ArrowLeft, CheckCircle, AlertCircle, Trash2, Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import toast from 'react-hot-toast';
+import surveyService from '../../services/surveyService';
 
 const SurveyAction = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
   
-  // Dummy Checklist items for demo since we don't have dynamic endpoint yet
+  // Checklist State
   const [answers, setAnswers] = useState({
     kondisi_atap: 'genteng_layak',
     kondisi_dinding: 'tembok_permanen',
@@ -21,35 +22,128 @@ const SurveyAction = () => {
     catatan_tambahan: ''
   });
 
-  const [photo, setPhoto] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState(null);
+  // Photo Gallery State
+  const [photos, setPhotos] = useState([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [filesToUpload, setFilesToUpload] = useState([]);
+  const [captions, setCaptions] = useState([]);
+
+  useEffect(() => {
+    fetchPhotos();
+  }, [id]);
+
+  const fetchPhotos = async () => {
+    try {
+      setLoadingPhotos(true);
+      const _photos = await surveyService.getPhotos(id);
+      setPhotos(_photos.data?.data || _photos.data || []);
+    } catch (error) {
+      console.error(error);
+      toast.error('Gagal memuat foto survei');
+    } finally {
+      setLoadingPhotos(false);
+    }
+  };
 
   const handleChange = (e) => {
     setAnswers({ ...answers, [e.target.name]: e.target.value });
   };
 
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setPhoto(file);
-      setPhotoPreview(URL.createObjectURL(file));
+  // --- Photo Upload Logic ---
+  const handleFileSelect = (e) => {
+    const selectedFiles = Array.from(e.target.files);
+    
+    // Validate Max 5 files at once
+    if (selectedFiles.length > 5) {
+      toast.error('Maksimal upload 5 foto sekaligus');
+      return;
+    }
+
+    // Validate size (5MB) and type
+    const validFiles = [];
+    selectedFiles.forEach(f => {
+      if (!f.type.startsWith('image/')) {
+        toast.error(`File ${f.name} bukan gambar`);
+      } else if (f.size > 5 * 1024 * 1024) {
+        toast.error(`Ukuran file ${f.name} melebih 5MB`);
+      } else {
+        validFiles.push(f);
+      }
+    });
+
+    if (validFiles.length > 0) {
+      setFilesToUpload(validFiles);
+      setCaptions(validFiles.map(() => '')); // empty caption initially
+    }
+    
+    // Reset input
+    e.target.value = null;
+  };
+
+  const handleCaptionChange = (index, value) => {
+    const newCaptions = [...captions];
+    newCaptions[index] = value;
+    setCaptions(newCaptions);
+  };
+
+  const doUploadSelectedPhotos = async () => {
+    if (filesToUpload.length === 0) return;
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      filesToUpload.forEach((f, i) => {
+        formData.append('photos', f);
+        formData.append('captions[]', captions[i] || '');
+      });
+
+      await surveyService.uploadPhotos(id, formData);
+      toast.success('Foto berhasil diunggah!');
+      setFilesToUpload([]);
+      setCaptions([]);
+      fetchPhotos(); // Refresh gallery
+    } catch (error) {
+      toast.error(error?.response?.data?.message || 'Gagal mengunggah foto');
+    } finally {
+      setUploading(false);
     }
   };
 
+  const handleDeletePhoto = async (photoId) => {
+    if (!window.confirm('Hapus foto ini dari sistem? (Tindakan tidak dapat dibatalkan)')) return;
+    
+    try {
+      await surveyService.deletePhoto(id, photoId);
+      toast.success('Foto dihapus');
+      setPhotos(photos.filter(p => p.id !== photoId));
+    } catch (error) {
+      toast.error('Gagal menghapus foto');
+    }
+  };
+
+  // --- Submit All Logic ---
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!photo) {
-      toast.error('Harap unggah minimal 1 foto kondisi rumah/keadaan lapangan');
+    if (photos.length === 0 && filesToUpload.length === 0) {
+      toast.error('Harap unggah minimal 1 foto kondisi rumah/lapangan!');
       return;
     }
     
     setSubmitting(true);
-    // Simulate API Call for Submitting Checklist & Photo
-    setTimeout(() => {
-      setSubmitting(false);
-      toast.success('Hasil survei berhasil disimpan dan dikirim ke petugas');
-      navigate('/surveys');
-    }, 1500);
+    // Kalau ada file yang blm diupload, upload dlu baru submit akhir (simulate workflow)
+    const proceedComplete = () => {
+      setTimeout(() => {
+        setSubmitting(false);
+        toast.success('Hasil survei berhasil disimpan dan dikirim ke petugas');
+        navigate('/surveys');
+      }, 1000);
+    };
+
+    if (filesToUpload.length > 0) {
+       doUploadSelectedPhotos().then(() => proceedComplete());
+    } else {
+       proceedComplete();
+    }
   };
 
   return (
@@ -143,31 +237,83 @@ const SurveyAction = () => {
 
         {/* Upload Bukti */}
         <Card className="p-6">
-           <h2 className="text-lg font-semibold mb-4 dark:text-white">Unggah Bukti Foto Lapangan</h2>
-           <div className="bg-surface-50 dark:bg-surface-800/50 p-6 rounded-xl border border-dashed border-surface-300 dark:border-surface-600 flex flex-col items-center justify-center text-center">
+           <h2 className="text-lg font-semibold mb-4 dark:text-white">Galeri Bukti Foto Lapangan</h2>
+           
+           {/* Existing Photos Gallery */}
+           {loadingPhotos ? (
+             <div className="flex justify-center p-8"><Loader2 className="w-6 h-6 animate-spin text-primary-500" /></div>
+           ) : (
+             photos.length > 0 && (
+               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                 {photos.map(p => (
+                   <div key={p.id} className="relative group rounded-xl overflow-hidden border border-surface-200 dark:border-surface-700">
+                     <img src={p.file_url} alt="Survei" className="w-full h-32 object-cover" />
+                     {p.caption && (
+                        <div className="absolute bottom-0 inset-x-0 bg-black/60 p-2 text-xs text-white truncate">
+                          {p.caption}
+                        </div>
+                     )}
+                     <button
+                       type="button"
+                       onClick={() => handleDeletePhoto(p.id)}
+                       className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                       title="Hapus"
+                     >
+                       <Trash2 className="w-4 h-4" />
+                     </button>
+                   </div>
+                 ))}
+               </div>
+             )
+           )}
+
+           <div className="bg-surface-50 dark:bg-surface-800/50 p-6 rounded-xl border border-dashed border-surface-300 dark:border-surface-600">
              
-             {photoPreview ? (
+             {filesToUpload.length > 0 ? (
                <div className="space-y-4">
-                 <img src={photoPreview} alt="Preview" className="w-48 h-48 object-cover rounded-lg mx-auto shadow-md border-4 border-white dark:border-surface-700" />
-                 <p className="text-sm font-medium">{photo.name}</p>
-                 <Button variant="outline" size="sm" onClick={() => { setPhoto(null); setPhotoPreview(null); }} type="button">Hapus Foto</Button>
+                 <h3 className="text-sm font-semibold text-surface-700 dark:text-surface-300">File Siap Upload</h3>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                   {filesToUpload.map((file, idx) => (
+                     <div key={idx} className="flex gap-3 bg-white dark:bg-surface-900 p-3 rounded-lg border border-surface-200 dark:border-surface-700 items-start">
+                        <img src={URL.createObjectURL(file)} alt="preview" className="w-16 h-16 object-cover rounded-md flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-surface-900 dark:text-white truncate mb-1">{file.name}</p>
+                          <input 
+                            type="text" 
+                            placeholder="Opsional: Keterangan foto (mis. Ruang Tamu)" 
+                            className="w-full text-xs rounded border border-surface-300 p-1.5 dark:bg-surface-800 dark:border-surface-600 dark:text-white"
+                            value={captions[idx]}
+                            onChange={(e) => handleCaptionChange(idx, e.target.value)}
+                          />
+                        </div>
+                     </div>
+                   ))}
+                 </div>
+                 <div className="flex gap-3 justify-end items-center pt-2">
+                   <Button variant="outline" size="sm" type="button" onClick={() => setFilesToUpload([])} disabled={uploading}>
+                     Batal
+                   </Button>
+                   <Button variant="primary" size="sm" icon={Upload} type="button" onClick={doUploadSelectedPhotos} loading={uploading}>
+                     Unggah Sekarang
+                   </Button>
+                 </div>
                </div>
              ) : (
-                <>
+                <div className="flex flex-col items-center justify-center text-center py-4">
                   <div className="w-16 h-16 bg-primary-100 text-primary-600 rounded-full flex items-center justify-center mb-3">
                     <Camera className="w-8 h-8" />
                   </div>
-                  <h3 className="font-semibold text-surface-900 dark:text-white">Ambil Foto / Unggah Berkas</h3>
-                  <p className="text-sm text-surface-500 mt-1 max-w-xs mb-4">
-                    Foto yang diambil wajib mencakup bagian depan rumah dan terlihat kepala keluarga jika memungkinkan.
+                  <h3 className="font-semibold text-surface-900 dark:text-white">Ambil Foto / Tambah Berkas</h3>
+                  <p className="text-sm text-surface-500 mt-1 max-w-sm mb-4">
+                    Foto yang diambil wajib mencakup bagian depan rumah dan terlihat kepala keluarga (Maks 5 foto, 5MB).
                   </p>
                   <label className="cursor-pointer">
                     <span className="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium text-sm transition-colors inline-block">
                        Pilih File Foto
                     </span>
-                    <input type="file" className="hidden" accept="image/*" capture="environment" onChange={handlePhotoUpload} />
+                    <input type="file" className="hidden" accept="image/*" multiple capture="environment" onChange={handleFileSelect} />
                   </label>
-                </>
+                </div>
              )}
 
            </div>

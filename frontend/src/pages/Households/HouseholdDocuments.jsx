@@ -8,6 +8,19 @@ import toast from 'react-hot-toast';
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
 const MAX_SIZE_MB = 2;
+const DOC_TYPE_OPTIONS = [
+  { value: 'ktp', label: 'KTP Kepala Keluarga' },
+  { value: 'kk', label: 'Kartu Keluarga' },
+  { value: 'sktm', label: 'Surat Keterangan Tidak Mampu (SKTM)' },
+  { value: 'photo_house', label: 'Foto Depan Rumah' },
+];
+const DOC_TYPE_LABELS = {
+  ktp: 'KTP Kepala Keluarga',
+  kk: 'Kartu Keluarga',
+  sktm: 'SKTM',
+  photo_house: 'Foto Depan Rumah',
+  photo_field: 'Foto Lapangan',
+};
 
 const HouseholdDocuments = () => {
   const { id } = useParams();
@@ -16,7 +29,7 @@ const HouseholdDocuments = () => {
   
   const [documents, setDocuments] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [docType, setDocType] = useState('KTP');
+  const [docType, setDocType] = useState('ktp');
   
   // Fetch existing docs
   useEffect(() => {
@@ -59,13 +72,14 @@ const HouseholdDocuments = () => {
       fetchDocuments();
       if(fileInputRef.current) fileInputRef.current.value = '';
     } catch (error) {
-      toast.error('Gagal mengunggah dokumen');
+      const detailError = error.response?.data?.errors?.[0]?.message;
+      toast.error(detailError || error.response?.data?.message || 'Gagal mengunggah dokumen');
     } finally {
       setLoading(false);
     }
   };
 
-  const requiredDocs = ['KTP', 'KK', 'FOTO_RUMAH'];
+  const requiredDocs = ['ktp', 'kk', 'photo_house'];
   const uploadedTypes = documents.map(d => d.document_type);
   const isComplete = requiredDocs.every(type => uploadedTypes.includes(type));
 
@@ -98,10 +112,9 @@ const HouseholdDocuments = () => {
                  onChange={(e) => setDocType(e.target.value)}
                  className="w-full rounded-lg border-surface-300 focus:border-primary-500 focus:ring-primary-500 text-sm py-2 dark:bg-surface-900 dark:border-surface-700 dark:text-white"
                >
-                 <option value="KTP">KTP Kepala Keluarga</option>
-                 <option value="KK">Kartu Keluarga</option>
-                 <option value="SKTM">Surat Keterangan Tidak Mampu (SKTM)</option>
-                 <option value="FOTO_RUMAH">Foto Depan Rumah</option>
+                 {DOC_TYPE_OPTIONS.map((option) => (
+                   <option key={option.value} value={option.value}>{option.label}</option>
+                 ))}
                </select>
              </div>
 
@@ -144,7 +157,7 @@ const HouseholdDocuments = () => {
                        <FileText className="w-5 h-5" />
                      </div>
                      <div>
-                       <p className="text-sm font-semibold dark:text-white">{doc.document_type}</p>
+                       <p className="text-sm font-semibold dark:text-white">{DOC_TYPE_LABELS[doc.document_type] || doc.document_type}</p>
                        <p className="text-xs text-surface-500 capitalize">{doc.verifications?.[0]?.status || 'Dalam Review'}</p>
                      </div>
                    </div>

@@ -49,6 +49,7 @@ class UserService {
           role: true,
           is_active: true,
           activation_status: true,
+          must_change_password: true,
           created_at: true,
           updated_at: true,
         },
@@ -76,6 +77,7 @@ class UserService {
         role: true,
         is_active: true,
         activation_status: true,
+        must_change_password: true,
         created_at: true,
         updated_at: true,
       },
@@ -121,12 +123,14 @@ class UserService {
     let password_hash = '';
     let tempPassword = null;
     let activationStatus = 'pending_otp';
+    let mustChangePassword = false;
 
     if (role !== 'warga') {
       // Generate random temporary password
       tempPassword = this._generateTempPassword(10);
       password_hash = await bcrypt.hash(tempPassword, 10);
       activationStatus = 'active'; // Staff accounts are immediately active
+      mustChangePassword = true;   // Flag: admin-generated temp password
     }
 
     const newUser = await prisma.user.create({
@@ -139,6 +143,7 @@ class UserService {
         role,
         is_active: role !== 'warga', // warga inactive until OTP activation
         activation_status: activationStatus,
+        must_change_password: mustChangePassword,
       },
     });
 

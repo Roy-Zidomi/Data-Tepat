@@ -16,6 +16,11 @@ const verifyStatusConfig = {
 };
 
 const docTypeLabels = {
+  ktp: 'Kartu Tanda Penduduk',
+  kk: 'Kartu Keluarga',
+  sktm: 'Surat Ket. Tidak Mampu',
+  photo_house: 'Foto Rumah',
+  photo_field: 'Foto Lapangan',
   KTP: 'Kartu Tanda Penduduk',
   KK: 'Kartu Keluarga',
   SKTM: 'Surat Ket. Tidak Mampu',

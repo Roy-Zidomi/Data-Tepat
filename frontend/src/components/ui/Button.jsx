@@ -28,8 +28,16 @@ const Button = forwardRef(({
   disabled = false,
   className = '',
   icon: Icon,
+  iconPosition = 'left',
   ...props
 }, ref) => {
+  const isIconRight = iconPosition === 'right';
+  const iconEl = loading ? (
+    <Loader2 className="w-4 h-4 animate-spin" />
+  ) : Icon ? (
+    <Icon className="w-4 h-4" />
+  ) : null;
+
   return (
     <button
       ref={ref}
@@ -43,12 +51,9 @@ const Button = forwardRef(({
       `}
       {...props}
     >
-      {loading ? (
-        <Loader2 className="w-4 h-4 animate-spin" />
-      ) : Icon ? (
-        <Icon className="w-4 h-4" />
-      ) : null}
+      {!isIconRight && iconEl}
       {children}
+      {isIconRight && iconEl}
     </button>
   );
 });

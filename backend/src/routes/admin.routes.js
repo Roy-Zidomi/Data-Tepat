@@ -162,20 +162,23 @@ router.post('/create-warga', requirePermission('WARGA_ACCOUNT_CREATE'), async (r
 
 /**
  * GET /api/v1/admin/dashboard-stats
- * Dashboard statistics for admin overview
+ * Dashboard statistics — response terstruktur per role (Revisi #2 & #6)
  * Access: admin_main, admin_staff
  */
 router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (req, res, next) => {
   try {
+    const role = req.user.role;
+
     const [
       totalHouseholds,
       totalApplications,
-      pendingApplications,
+      processingApplications,
       approvedDecisions,
       rejectedDecisions,
       totalDistributions,
       openComplaints,
-      totalUsers,
+      pendingDocumentVerification,
+      pendingSurveyReview,
     ] = await Promise.all([
       prisma.household.count(),
       prisma.aidApplication.count(),
@@ -184,28 +187,60 @@ router.get('/dashboard-stats', requirePermission('DASHBOARD_OVERVIEW'), async (r
       prisma.beneficiaryDecision.count({ where: { decision_status: 'rejected' } }),
       prisma.aidDistribution.count(),
       prisma.complaint.count({ where: { status: { in: ['open', 'in_review'] } } }),
-      prisma.user.count(),
+      prisma.document.count({ where: { verifications: { none: {} } } }),
+      prisma.survey.count({ where: { status: 'completed' } }),
     ]);
+
+    const incompleteHouseholds = await prisma.household.count({
+      where: { economicCondition: null }
+    });
+
+    const recentDistributions = await prisma.aidDistribution.findMany({
+      take: 5,
+      orderBy: { created_at: 'desc' },
+      include: {
+        aidType: { select: { name: true } },
+        decision: { select: { application: { select: { household: { select: { nama_kepala_keluarga: true } } } } } }
+      }
+    });
 
     const applicationsByStatus = await prisma.aidApplication.groupBy({
       by: ['status'],
       _count: { status: true },
     });
 
-    return successResponse(res, {
+    const dashboardExtras = {
+      applicationsByStatus: applicationsByStatus.map((statusGroup) => ({
+        status: statusGroup.status,
+        count: statusGroup._count.status,
+      })),
+    };
+
+    if (role === 'admin_main') {
+      dashboardExtras.totalUsers = await prisma.user.count();
+    }
+
+    return successResponse(res, serializeBigInt({
+      role,
       totalHouseholds,
       totalApplications,
-      pendingApplications,
+      processingApplications,
+      pendingApplications: processingApplications,
       approvedDecisions,
       rejectedDecisions,
       totalDistributions,
       openComplaints,
-      totalUsers,
-      applicationsByStatus: applicationsByStatus.map(s => ({
-        status: s.status,
-        count: s._count.status,
+      pendingDocumentVerification,
+      pendingSurveyReview,
+      incompleteHouseholds,
+      recentDistributions: recentDistributions.map(d => ({
+        id: d.id, distribution_code: d.distribution_code, recipient_name: d.recipient_name,
+        status: d.status, aid_type: d.aidType?.name,
+        household_head: d.decision?.application?.household?.nama_kepala_keluarga,
+        created_at: d.created_at,
       })),
-    }, 'Dashboard statistics retrieved');
+      ...dashboardExtras,
+    }), 'Dashboard statistics retrieved');
   } catch (error) {
     next(error);
   }
