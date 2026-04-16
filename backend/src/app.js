@@ -10,11 +10,26 @@ const routes = require('./routes');
 const { notFoundHandler, globalErrorHandler } = require('./middlewares/error.middleware');
 
 const app = express();
+app.set('trust proxy', 1);
+
+const allowedOrigins = (
+  process.env.ALLOWED_ORIGINS ||
+  process.env.FRONTEND_URL ||
+  'http://localhost:3000'
+)
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 // Security Middlewares
 app.use(helmet());
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`Origin ${origin} is not allowed by CORS`));
+  },
   credentials: true
 }));
 app.use(cookieParser());

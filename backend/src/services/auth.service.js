@@ -210,7 +210,7 @@ class AuthService {
     });
 
     // Build reset URL (frontend route)
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${plainToken}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${plainToken}`;
 
     // In production: send email with resetUrl
     // For development: log to console

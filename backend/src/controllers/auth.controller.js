@@ -1,7 +1,41 @@
 const authService = require('../services/auth.service');
 const { successResponse } = require('../utils/response');
 const prisma = require('../config/database');
-const { excludeFields } = require('../utils/helpers');
+
+const userProfileSelect = {
+  id: true,
+  name: true,
+  email: true,
+  username: true,
+  phone: true,
+  role: true,
+  is_active: true,
+  activation_status: true,
+  created_at: true,
+  updated_at: true,
+};
+
+const buildCookieOptions = () => {
+  const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = process.env.COOKIE_SAMESITE || (isProduction ? 'none' : 'lax');
+  const secure =
+    process.env.COOKIE_SECURE !== undefined
+      ? process.env.COOKIE_SECURE === 'true'
+      : isProduction;
+
+  const options = {
+    httpOnly: true,
+    secure,
+    sameSite,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  };
+
+  if (process.env.COOKIE_DOMAIN) {
+    options.domain = process.env.COOKIE_DOMAIN;
+  }
+
+  return options;
+};
 
 class AuthController {
   async register(req, res, next) {
@@ -9,12 +43,7 @@ class AuthController {
       const data = req.body;
       const { token, user } = await authService.register(data);
 
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
+      res.cookie('token', token, buildCookieOptions());
 
       return successResponse(res, { user }, 'Registration successful', 201);
     } catch (error) {
@@ -30,12 +59,7 @@ class AuthController {
       const { token, user } = await authService.login(emailOrUsername, password, ipAddress, role);
 
       // Set cookie
-      res.cookie('token', token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-      });
+      res.cookie('token', token, buildCookieOptions());
 
       return successResponse(res, { user }, 'Login successful');
     } catch (error) {
@@ -45,11 +69,9 @@ class AuthController {
 
   async logout(req, res, next) {
     try {
-      res.clearCookie('token', {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-      });
+      const cookieOptions = buildCookieOptions();
+      delete cookieOptions.maxAge;
+      res.clearCookie('token', cookieOptions);
       return successResponse(res, null, 'Logout successful');
     } catch (error) {
       next(error);
@@ -59,15 +81,15 @@ class AuthController {
   async getMe(req, res, next) {
     try {
       const user = await prisma.user.findUnique({
-        where: { id: BigInt(req.user.id) }
+        where: { id: BigInt(req.user.id) },
+        select: userProfileSelect,
       });
 
       if (!user) {
         throw { statusCode: 404, message: 'User not found' };
       }
 
-      const safeUser = excludeFields(user, ['password_hash']);
-      return successResponse(res, safeUser, 'Current user profile');
+      return successResponse(res, user, 'Current user profile');
     } catch (error) {
       next(error);
     }
