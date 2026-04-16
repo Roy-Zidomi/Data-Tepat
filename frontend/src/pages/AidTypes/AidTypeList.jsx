@@ -9,6 +9,7 @@ import { PageLoader } from '../../components/ui/Spinner';
 import aidTypeService from '../../services/aidTypeService';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText } from '../../utils/formLimits';
 
 const AidTypeList = () => {
   const user = useAuthStore(s => s.user);
@@ -59,6 +60,16 @@ const AidTypeList = () => {
       is_active: aidType.is_active !== false,
     });
     setModalOpen(true);
+  };
+
+  const updateFormField = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'code') nextValue = clampText(value.toUpperCase(), FORM_LIMITS.aidTypeCode);
+    if (field === 'name') nextValue = clampText(value, FORM_LIMITS.aidTypeName);
+    if (field === 'unit') nextValue = clampText(value, FORM_LIMITS.aidTypeUnit);
+
+    setForm((prev) => ({ ...prev, [field]: nextValue }));
   };
 
   const handleSubmit = async (e) => {
@@ -199,15 +210,17 @@ const AidTypeList = () => {
             label="Kode *"
             placeholder="Contoh: BPNT, PKH, BLT"
             value={form.code}
-            onChange={(e) => setForm(f => ({ ...f, code: e.target.value }))}
+            onChange={(e) => updateFormField('code', e.target.value)}
             required
+            maxLength={FORM_LIMITS.aidTypeCode}
           />
           <Input
             label="Nama Program *"
             placeholder="Contoh: Bantuan Pangan Non Tunai"
             value={form.name}
-            onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))}
+            onChange={(e) => updateFormField('name', e.target.value)}
             required
+            maxLength={FORM_LIMITS.aidTypeName}
           />
           <div>
             <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5">Deskripsi</label>
@@ -223,7 +236,8 @@ const AidTypeList = () => {
             label="Satuan"
             placeholder="Contoh: kg, paket, rupiah"
             value={form.unit}
-            onChange={(e) => setForm(f => ({ ...f, unit: e.target.value }))}
+            onChange={(e) => updateFormField('unit', e.target.value)}
+            maxLength={FORM_LIMITS.aidTypeUnit}
           />
           <div className="flex items-center gap-3">
             <input

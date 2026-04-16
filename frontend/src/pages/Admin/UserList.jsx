@@ -8,6 +8,7 @@ import Alert from '../../components/ui/Alert';
 import { PageLoader } from '../../components/ui/Spinner';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, phoneOnly } from '../../utils/formLimits';
 
 const roleOptions = [
   { value: 'admin_main', label: 'Admin Utama' },
@@ -230,6 +231,16 @@ const UserList = () => {
     setEditUser(user);
   };
 
+  const updateFormField = (field, value) => {
+    let nextValue = value;
+
+    if (field === 'name') nextValue = clampText(value, FORM_LIMITS.name);
+    if (field === 'email') nextValue = clampText(value, FORM_LIMITS.email);
+    if (field === 'phone') nextValue = phoneOnly(value, FORM_LIMITS.phone);
+
+    setFormData((prev) => ({ ...prev, [field]: nextValue }));
+  };
+
   if (loading) return <PageLoader />;
 
   return (
@@ -314,9 +325,9 @@ const UserList = () => {
       {/* CREATE MODAL */}
       <Modal isOpen={isCreateModalOpen} onClose={() => setCreateModalOpen(false)} title="Buat Akun Baru" size="md">
         <form onSubmit={handleCreateSubmit} className="space-y-4">
-          <Input label="Nama Lengkap" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="Cth. Supardi" />
-          <Input label="Email Pribadi" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} placeholder="supardi@email.com" />
-          <Input label="Nomor Telepon (WhatsApp)" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} placeholder="08123456789" />
+          <Input label="Nama Lengkap" required value={formData.name} onChange={e => updateFormField('name', e.target.value)} placeholder="Cth. Supardi" maxLength={FORM_LIMITS.name} />
+          <Input label="Email Pribadi" type="email" required value={formData.email} onChange={e => updateFormField('email', e.target.value)} placeholder="supardi@email.com" maxLength={FORM_LIMITS.email} />
+          <Input label="Nomor Telepon (WhatsApp)" required value={formData.phone} onChange={e => updateFormField('phone', e.target.value)} placeholder="08123456789" inputMode="tel" maxLength={FORM_LIMITS.phone} />
           
           <div className="space-y-1">
             <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Peran Pengguna</label>
@@ -340,9 +351,9 @@ const UserList = () => {
       {/* EDIT MODAL */}
       <Modal isOpen={!!editUser} onClose={() => setEditUser(null)} title="Edit Profil Pengguna" size="md">
         <form onSubmit={handleEditSubmit} className="space-y-4">
-          <Input label="Nama Lengkap" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
-          <Input label="Email Pribadi" type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-          <Input label="Nomor Telepon (WhatsApp)" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+          <Input label="Nama Lengkap" required value={formData.name} onChange={e => updateFormField('name', e.target.value)} maxLength={FORM_LIMITS.name} />
+          <Input label="Email Pribadi" type="email" required value={formData.email} onChange={e => updateFormField('email', e.target.value)} maxLength={FORM_LIMITS.email} />
+          <Input label="Nomor Telepon (WhatsApp)" required value={formData.phone} onChange={e => updateFormField('phone', e.target.value)} inputMode="tel" maxLength={FORM_LIMITS.phone} />
           
           <div className="space-y-1">
             <label className="block text-sm font-medium text-surface-700 dark:text-surface-300">Peran Pengguna</label>

@@ -9,6 +9,7 @@ import { PageLoader } from '../../components/ui/Spinner';
 import regionService from '../../services/regionService';
 import useAuthStore from '../../store/authStore';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, digitsOnly } from '../../utils/formLimits';
 
 const RegionList = () => {
   const user = useAuthStore(s => s.user);
@@ -61,6 +62,24 @@ const RegionList = () => {
       postal_code: region.postal_code || '',
     });
     setModalOpen(true);
+  };
+
+  const updateFormField = (field, value) => {
+    let nextValue = value;
+
+    if (['province', 'city_regency', 'district', 'village'].includes(field)) {
+      nextValue = clampText(value, FORM_LIMITS.regionName);
+    }
+
+    if (['rt', 'rw'].includes(field)) {
+      nextValue = digitsOnly(value, FORM_LIMITS.rtRw);
+    }
+
+    if (field === 'postal_code') {
+      nextValue = digitsOnly(value, FORM_LIMITS.postalCode);
+    }
+
+    setForm((prev) => ({ ...prev, [field]: nextValue }));
   };
 
   const handleSubmit = async (e) => {
@@ -195,41 +214,51 @@ const RegionList = () => {
             <Input
               label="Provinsi *"
               value={form.province}
-              onChange={(e) => setForm(f => ({ ...f, province: e.target.value }))}
+              onChange={(e) => updateFormField('province', e.target.value)}
               required
+              maxLength={FORM_LIMITS.regionName}
             />
             <Input
               label="Kota/Kabupaten *"
               value={form.city_regency}
-              onChange={(e) => setForm(f => ({ ...f, city_regency: e.target.value }))}
+              onChange={(e) => updateFormField('city_regency', e.target.value)}
               required
+              maxLength={FORM_LIMITS.regionName}
             />
             <Input
               label="Kecamatan *"
               value={form.district}
-              onChange={(e) => setForm(f => ({ ...f, district: e.target.value }))}
+              onChange={(e) => updateFormField('district', e.target.value)}
               required
+              maxLength={FORM_LIMITS.regionName}
             />
             <Input
               label="Kelurahan/Desa *"
               value={form.village}
-              onChange={(e) => setForm(f => ({ ...f, village: e.target.value }))}
+              onChange={(e) => updateFormField('village', e.target.value)}
               required
+              maxLength={FORM_LIMITS.regionName}
             />
             <Input
               label="RT"
               value={form.rt}
-              onChange={(e) => setForm(f => ({ ...f, rt: e.target.value }))}
+              onChange={(e) => updateFormField('rt', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.rtRw}
             />
             <Input
               label="RW"
               value={form.rw}
-              onChange={(e) => setForm(f => ({ ...f, rw: e.target.value }))}
+              onChange={(e) => updateFormField('rw', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.rtRw}
             />
             <Input
               label="Kode Pos"
               value={form.postal_code}
-              onChange={(e) => setForm(f => ({ ...f, postal_code: e.target.value }))}
+              onChange={(e) => updateFormField('postal_code', e.target.value)}
+              inputMode="numeric"
+              maxLength={FORM_LIMITS.postalCode}
             />
           </div>
         </form>

@@ -9,6 +9,7 @@ import Input from '../../components/ui/Input';
 import { PageLoader } from '../../components/ui/Spinner';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
+import { FORM_LIMITS, clampText, phoneOnly } from '../../utils/formLimits';
 
 // ─── Mini Modal Component ────────────────────────────────────────────────────
 const CreateAccountModal = ({ household, onClose, onSuccess }) => {
@@ -21,7 +22,16 @@ const CreateAccountModal = ({ household, onClose, onSuccess }) => {
   const [createdAccount, setCreatedAccount] = useState(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    let nextValue = value;
+
+    if (name === 'name') nextValue = clampText(value, FORM_LIMITS.name);
+    if (name === 'email') nextValue = clampText(value, FORM_LIMITS.email);
+    if (name === 'phone') nextValue = phoneOnly(value, FORM_LIMITS.phone);
+
+    setForm((prev) => ({ ...prev, [name]: nextValue }));
+  };
 
   const handleCopy = (text) => {
     navigator.clipboard.writeText(text);
@@ -81,6 +91,7 @@ const CreateAccountModal = ({ household, onClose, onSuccess }) => {
                 onChange={handleChange}
                 icon={User}
                 required
+                maxLength={FORM_LIMITS.name}
               />
 
               <Input
@@ -91,6 +102,7 @@ const CreateAccountModal = ({ household, onClose, onSuccess }) => {
                 onChange={handleChange}
                 icon={Mail}
                 placeholder="email@contoh.com"
+                maxLength={FORM_LIMITS.email}
               />
 
               <Input
@@ -99,6 +111,8 @@ const CreateAccountModal = ({ household, onClose, onSuccess }) => {
                 value={form.phone}
                 onChange={handleChange}
                 icon={Phone}
+                inputMode="tel"
+                maxLength={FORM_LIMITS.phone}
               />
 
               <div className="flex gap-3 pt-2">
