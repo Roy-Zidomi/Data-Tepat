@@ -21,6 +21,7 @@ import MySurveyResults from '../pages/Surveys/MySurveyResults';
 import ApplicationList from '../pages/Applications/ApplicationList';
 import ApplicationDetail from '../pages/Applications/ApplicationDetail';
 import DistributionList from '../pages/Distributions/DistributionList';
+import DistributionAction from '../pages/Distributions/DistributionAction';
 import ComplaintReview from '../pages/Complaints/ComplaintReview';
 import PublicDashboard from '../pages/Public/PublicDashboard';
 import RegionList from '../pages/Regions/RegionList';
@@ -138,6 +139,9 @@ const AppRouter = () => {
 
           <Route path="/distributions" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan']} />}>
             <Route index element={<DistributionList />} />
+            <Route path=":id/action" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'relawan']} />}>
+              <Route index element={<DistributionAction />} />
+            </Route>
           </Route>
           <Route path="/distribution-tracking" element={<ProtectedRoute allowedRoles={['admin_main', 'pengawas']} />}>
             <Route index element={<DistributionTracking />} />
