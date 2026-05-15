@@ -41,11 +41,14 @@ const navStructure = [
   {
     type: 'group',
     label: 'Data Warga',
+    labelByRole: { relawan: 'Registrasi & Survei' },
     icon: Home,
     roles: ['admin_staff', 'pengawas', 'relawan'],
     children: [
       { path: '/households', label: 'Rumah Tangga', icon: Home, roles: ['admin_staff', 'pengawas', 'relawan'] },
       { path: '/family-members', label: 'Anggota Keluarga', icon: Users, roles: ['admin_staff', 'relawan'] },
+      { path: '/surveys', label: 'Tugas Survei', icon: ClipboardList, roles: ['relawan'] },
+      { path: '/my-survey-results', label: 'Hasil Survei Saya', icon: CheckSquare, roles: ['relawan'] },
       { path: '/economic-conditions', label: 'Kondisi Ekonomi', icon: DollarSign, roles: ['admin_staff'] },
       { path: '/housing-conditions', label: 'Kondisi Tempat Tinggal', icon: Home, roles: ['admin_staff'] },
       { path: '/household-assets', label: 'Aset Rumah Tangga', icon: Briefcase, roles: ['admin_staff'] },
@@ -128,20 +131,12 @@ const navStructure = [
     icon: MessageSquare,
     roles: ['admin_main', 'admin_staff', 'pengawas', 'warga'],
   },
-  {
-    type: 'group',
-    label: 'Survei Lapangan',
-    icon: ClipboardList,
-    roles: ['relawan'],
-    children: [
-      { path: '/surveys', label: 'Tugas Survei', icon: ClipboardList, roles: ['relawan'] },
-      { path: '/my-survey-results', label: 'Hasil Survei Saya', icon: CheckSquare, roles: ['relawan'] },
-    ],
-  },
+
 ];
 
-const SidebarGroup = ({ group, isOpen, onToggle, sidebarOpen, onNavClick }) => {
+const SidebarGroup = ({ group, isOpen, onToggle, sidebarOpen, onNavClick, userRole }) => {
   const hasActiveChild = group.children.some((child) => window.location.pathname.startsWith(child.path));
+  const displayLabel = (group.labelByRole && group.labelByRole[userRole]) || group.label;
 
   return (
     <div>
@@ -156,7 +151,7 @@ const SidebarGroup = ({ group, isOpen, onToggle, sidebarOpen, onNavClick }) => {
         <group.icon className="w-5 h-5 flex-shrink-0" />
         {sidebarOpen && (
           <>
-            <span className="whitespace-nowrap flex-1 text-left">{group.label}</span>
+            <span className="whitespace-nowrap flex-1 text-left">{displayLabel}</span>
             <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
           </>
         )}
@@ -255,6 +250,7 @@ const Sidebar = () => {
                   onToggle={() => toggleGroup(item.label)}
                   sidebarOpen={sidebarOpen}
                   onNavClick={handleNavClick}
+                  userRole={user?.role}
                 />
               );
             }

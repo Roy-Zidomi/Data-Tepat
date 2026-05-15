@@ -4,6 +4,8 @@ import {
   ArrowLeft,
   Camera,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   DollarSign,
   FileText,
   Home,
@@ -1075,6 +1077,39 @@ const SurveyAction = () => {
     );
   };
 
+  const currentTabIndex = TABS.findIndex((t) => t.key === activeTab);
+
+  const saveCurrentTab = async () => {
+    const saveMap = {
+      household: saveHousehold,
+      economic: saveEconomic,
+      housing: saveHousing,
+      assets: saveAssets,
+      vulnerability: saveVulnerability,
+    };
+    const saveFn = saveMap[activeTab];
+    if (saveFn) return saveFn();
+    return true; // documents tab doesn't need explicit save
+  };
+
+  const handleNext = async () => {
+    const success = await saveCurrentTab();
+    if (success && currentTabIndex < TABS.length - 1) {
+      setActiveTab(TABS[currentTabIndex + 1].key);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentTabIndex > 0) {
+      setActiveTab(TABS[currentTabIndex - 1].key);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const isLastTab = currentTabIndex === TABS.length - 1;
+  const isFirstTab = currentTabIndex === 0;
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-in pb-10">
       <Button variant="ghost" icon={ArrowLeft} onClick={() => navigate('/surveys')} className="-ml-4">
@@ -1084,31 +1119,42 @@ const SurveyAction = () => {
       <div>
         <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Form Input & Edit Data Lapangan</h1>
         <p className="text-sm text-surface-500 mt-1">
-          Relawan mengisi seluruh data kelayakan berdasarkan hasil kunjungan lapangan, lalu memperbarui dokumen bila ada perubahan.
+          Isi data secara berurutan. Setiap langkah otomatis tersimpan saat Anda menekan &quot;Lanjut&quot;.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-2">
-        {TABS.map((tab) => {
+      {/* Stepper Progress Bar */}
+      <div className="flex items-center justify-between relative">
+        <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-1 bg-surface-200 dark:bg-surface-700 -z-10" />
+        <div
+          className="absolute left-0 top-1/2 -translate-y-1/2 h-1 bg-primary-500 transition-all duration-500 -z-10"
+          style={{ width: `${(currentTabIndex / (TABS.length - 1)) * 100}%` }}
+        />
+        {TABS.map((tab, idx) => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.key;
+          const isDone = idx < currentTabIndex;
+          const isActive = idx === currentTabIndex;
           return (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveTab(tab.key)}
-              className={`rounded-xl border px-3 py-3 text-left transition-colors ${
-                isActive
-                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-surface-200 dark:border-surface-700 hover:bg-surface-50 dark:hover:bg-surface-800'
-              }`}
+              className="flex flex-col items-center gap-1.5 group"
             >
-              <div className="flex items-center gap-2">
-                <Icon className={`w-4 h-4 ${isActive ? 'text-primary-600' : 'text-surface-500'}`} />
-                <span className={`text-xs font-semibold ${isActive ? 'text-primary-700 dark:text-primary-300' : 'text-surface-600 dark:text-surface-300'}`}>
-                  {tab.label}
-                </span>
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center border-4 transition-colors ${
+                isActive
+                  ? 'bg-primary-500 border-primary-200 dark:border-primary-800 text-white'
+                  : isDone
+                    ? 'bg-primary-400 border-primary-100 dark:border-primary-900 text-white'
+                    : 'bg-surface-100 border-white dark:bg-surface-800 dark:border-surface-900 text-surface-400'
+              }`}>
+                <Icon className="w-4 h-4" />
               </div>
+              <span className={`text-[10px] font-medium text-center leading-tight hidden sm:block ${
+                isActive ? 'text-primary-700 dark:text-primary-400' : isDone ? 'text-primary-500' : 'text-surface-400'
+              }`}>
+                {tab.label}
+              </span>
             </button>
           );
         })}
@@ -1116,18 +1162,32 @@ const SurveyAction = () => {
 
       {renderTabContent()}
 
+      {/* Sequential Navigation */}
+      <div className="flex items-center justify-between gap-3 pt-2 border-t border-surface-200 dark:border-surface-700">
+        <div>
+          {!isFirstTab && (
+            <Button variant="outline" icon={ChevronLeft} onClick={handlePrevious}>
+              Kembali
+            </Button>
+          )}
+        </div>
+
+        <div className="flex gap-3">
+          {isLastTab ? (
+            <Button icon={CheckCircle2} loading={saving.submitSurvey} onClick={handleSubmitAndExit}>
+              Selesai & Kirim Hasil Survei
+            </Button>
+          ) : (
+            <Button icon={ChevronRight} iconPosition="right" onClick={handleNext}>
+              Simpan & Lanjut
+            </Button>
+          )}
+        </div>
+      </div>
+
       <Alert type="warning" title="Catatan Integritas Data">
         Pastikan data lapangan yang diinput benar sesuai kondisi nyata. Semua perubahan tersimpan dalam jejak audit sistem.
       </Alert>
-
-      <div className="flex flex-wrap justify-end gap-3">
-        <Button variant="outline" onClick={() => navigate('/surveys')}>
-          Kembali ke Daftar Tugas
-        </Button>
-        <Button icon={CheckCircle2} loading={saving.submitSurvey} onClick={handleSubmitAndExit}>
-          Selesai & Kirim Hasil Survei
-        </Button>
-      </div>
     </div>
   );
 };

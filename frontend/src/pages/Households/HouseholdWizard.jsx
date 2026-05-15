@@ -277,11 +277,18 @@ const HouseholdWizard = () => {
              </div>
              <h2 className="text-2xl font-bold text-surface-900 dark:text-white mb-2">Pendaftaran Selesai!</h2>
              <p className="text-surface-500 mb-8 max-w-md mx-auto">
-               Data profil keluarga Anda telah berhasil disimpan di sistem. Anda sekarang bisa melanjutkannya dengan mengunggah dokumen KTP/KK lalu mengajukan bantuan.
+               {user?.role === 'relawan'
+                 ? 'Lanjutkan ke pengisian data survei lapangan (ekonomi, tempat tinggal, aset, kerentanan, dan dokumen foto).'
+                 : 'Data profil keluarga Anda telah berhasil disimpan di sistem. Anda sekarang bisa melanjutkannya dengan mengunggah dokumen KTP/KK lalu mengajukan bantuan.'
+               }
              </p>
              <div className="flex justify-center gap-4">
                 <Button variant="outline" onClick={() => navigate('/dashboard')}>Ke Dashboard</Button>
-                <Button onClick={() => navigate(`/households/${createdHouseholdId}/documents`)}>Lanjut Upload Dokumen</Button>
+                {user?.role === 'relawan' ? (
+                  <Button onClick={() => navigate(`/surveys/${createdHouseholdId}`)}>Lanjut Isi Data Survei</Button>
+                ) : (
+                  <Button onClick={() => navigate(`/households/${createdHouseholdId}/documents`)}>Lanjut Upload Dokumen</Button>
+                )}
              </div>
           </div>
         )}
