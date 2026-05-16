@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
 const { logAudit } = require('../utils/auditLogger');
+const { sendPasswordResetEmail } = require('./email.service');
 
 const RESET_PASSWORD_MESSAGE = 'Jika email terdaftar, link reset password telah dikirim.';
 const RESET_TOKEN_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES) || 15;
@@ -175,7 +176,20 @@ class AuthService {
 
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${plainToken}`;
 
-    console.log(`[Password Reset] Token for ${email}: ${resetUrl}`);
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[Password Reset] Token for ${email}: ${resetUrl}`);
+    }
+
+    try {
+      await sendPasswordResetEmail({
+        toEmail: user.email,
+        toName: user.name,
+        resetUrl,
+        expiresInMinutes: RESET_TOKEN_TTL_MINUTES,
+      });
+    } catch (error) {
+      console.error('[Password Reset] Failed to send reset email:', error);
+    }
 
     await logAudit({
       userId: user.id,
