@@ -1,6 +1,7 @@
 const authService = require('../services/auth.service');
 const { successResponse } = require('../utils/response');
 const prisma = require('../config/database');
+const { createCsrfToken } = require('../middlewares/csrf.middleware');
 
 const userProfileSelect = {
   id: true,
@@ -37,6 +38,12 @@ const buildCookieOptions = () => {
   return options;
 };
 
+const buildAuthResponse = (token, user) => ({
+  token,
+  csrfToken: createCsrfToken(token),
+  user,
+});
+
 class AuthController {
   async register(req, res, next) {
     try {
@@ -45,7 +52,7 @@ class AuthController {
 
       res.cookie('token', token, buildCookieOptions());
 
-      return successResponse(res, { token, user }, 'Registration successful', 201);
+      return successResponse(res, buildAuthResponse(token, user), 'Registration successful', 201);
     } catch (error) {
       next(error);
     }
@@ -61,7 +68,7 @@ class AuthController {
       // Set cookie
       res.cookie('token', token, buildCookieOptions());
 
-      return successResponse(res, { token, user }, 'Login successful');
+      return successResponse(res, buildAuthResponse(token, user), 'Login successful');
     } catch (error) {
       next(error);
     }
@@ -89,7 +96,10 @@ class AuthController {
         throw { statusCode: 404, message: 'User not found' };
       }
 
-      return successResponse(res, user, 'Current user profile');
+      return successResponse(res, {
+        ...user,
+        csrfToken: req.authToken ? createCsrfToken(req.authToken) : null,
+      }, 'Current user profile');
     } catch (error) {
       next(error);
     }
