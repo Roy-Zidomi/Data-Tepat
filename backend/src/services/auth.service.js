@@ -4,6 +4,17 @@ const jwt = require('jsonwebtoken');
 const prisma = require('../config/database');
 const { logAudit } = require('../utils/auditLogger');
 
+const RESET_PASSWORD_MESSAGE = 'Jika email terdaftar, link reset password telah dikirim.';
+const RESET_TOKEN_TTL_MINUTES = Number(process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES) || 15;
+
+const shouldExposeResetUrl = () => {
+  if (process.env.PASSWORD_RESET_EXPOSE_LINK !== undefined) {
+    return process.env.PASSWORD_RESET_EXPOSE_LINK === 'true';
+  }
+
+  return process.env.NODE_ENV !== 'production';
+};
+
 class AuthService {
   async register(data) {
     const { name, username, email, password, phone } = data;
@@ -142,35 +153,28 @@ class AuthService {
    * In production, the plaintext token would be sent via email.
    */
   async forgotPassword(email) {
-    // Always return generic message to prevent email enumeration
     const user = await prisma.user.findFirst({
       where: { email: { equals: email, mode: 'insensitive' } }
     });
 
     if (!user || !user.is_active) {
-      // Don't reveal whether email exists
-      return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
+      return { message: RESET_PASSWORD_MESSAGE };
     }
 
-    // Generate random token
     const plainToken = crypto.randomBytes(32).toString('hex');
-    // Hash with SHA-256 before storing
     const hashedToken = crypto.createHash('sha256').update(plainToken).digest('hex');
+    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MINUTES * 60 * 1000);
 
-    // Set token and expiry (15 minutes)
     await prisma.user.update({
       where: { id: user.id },
       data: {
         password_reset_token: hashedToken,
-        password_reset_expires: new Date(Date.now() + 15 * 60 * 1000) // 15 minutes
+        password_reset_expires: expiresAt
       }
     });
 
-    // Build reset URL (frontend route)
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/reset-password?token=${plainToken}`;
 
-    // In production: send email with resetUrl
-    // For development: log to console
     console.log(`[Password Reset] Token for ${email}: ${resetUrl}`);
 
     await logAudit({
@@ -181,7 +185,14 @@ class AuthService {
       reason: 'Password reset requested'
     });
 
-    return { message: 'Jika email terdaftar, link reset password telah dikirim.' };
+    const response = { message: RESET_PASSWORD_MESSAGE };
+
+    if (shouldExposeResetUrl()) {
+      response.resetUrl = resetUrl;
+      response.expiresAt = expiresAt.toISOString();
+    }
+
+    return response;
   }
 
   /**
