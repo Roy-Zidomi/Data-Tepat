@@ -16,8 +16,15 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = useAuthStore.getState().token;
+    const csrfToken = useAuthStore.getState().csrfToken;
+    const method = (config.method || 'get').toUpperCase();
+    const unsafeMethods = ['POST', 'PUT', 'PATCH', 'DELETE'];
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+    if (csrfToken && unsafeMethods.includes(method)) {
+      config.headers['X-CSRF-Token'] = csrfToken;
     }
     return config;
   },
