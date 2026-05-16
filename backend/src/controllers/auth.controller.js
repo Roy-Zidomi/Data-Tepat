@@ -45,7 +45,7 @@ class AuthController {
 
       res.cookie('token', token, buildCookieOptions());
 
-      return successResponse(res, { user }, 'Registration successful', 201);
+      return successResponse(res, { token, user }, 'Registration successful', 201);
     } catch (error) {
       next(error);
     }
@@ -61,7 +61,7 @@ class AuthController {
       // Set cookie
       res.cookie('token', token, buildCookieOptions());
 
-      return successResponse(res, { user }, 'Login successful');
+      return successResponse(res, { token, user }, 'Login successful');
     } catch (error) {
       next(error);
     }
