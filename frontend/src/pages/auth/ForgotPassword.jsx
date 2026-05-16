@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
 import authService from '../../services/authService';
 import { FORM_LIMITS, clampText } from '../../utils/formLimits';
@@ -11,8 +11,8 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [resetInfo, setResetInfo] = useState(null);
   const [error, setError] = useState('');
-  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +23,9 @@ const ForgotPassword = () => {
     try {
       setLoading(true);
       setError('');
-      await authService.forgotPassword(email);
+      const response = await authService.forgotPassword(email);
+      const responseData = response.data?.data;
+      setResetInfo(responseData?.resetUrl ? responseData : null);
       setSent(true);
     } catch (err) {
       setError(err.response?.data?.message || 'Terjadi kesalahan. Silakan coba lagi.');
@@ -148,6 +150,29 @@ const ForgotPassword = () => {
             <p style={{ fontSize: '12px', color: '#999', margin: '0 0 24px 0' }}>
               Link berlaku selama 15 menit. Periksa juga folder spam Anda.
             </p>
+            {resetInfo?.resetUrl && (
+              <div style={{
+                backgroundColor: '#eef6ff',
+                border: '1px solid #bfdbfe',
+                borderRadius: '12px',
+                padding: '12px',
+                marginBottom: '18px',
+                textAlign: 'left'
+              }}>
+                <p style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700', margin: '0 0 8px 0' }}>
+                  Mode development
+                </p>
+                <p style={{ fontSize: '12px', color: '#475569', lineHeight: '1.5', margin: '0 0 10px 0' }}>
+                  Email belum dikonfigurasi, jadi link reset ditampilkan di sini untuk testing lokal.
+                </p>
+                <a
+                  href={resetInfo.resetUrl}
+                  style={{ color: '#2563eb', fontSize: '13px', fontWeight: '700', wordBreak: 'break-all' }}
+                >
+                  Buka link reset password
+                </a>
+              </div>
+            )}
             <Link
               to="/login"
               style={{
