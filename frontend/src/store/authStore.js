@@ -5,6 +5,7 @@ import { create } from 'zustand';
  */
 const useAuthStore = create((set, get) => ({
   user: JSON.parse(localStorage.getItem('bt_user') || 'null'),
+  token: localStorage.getItem('bt_token') || null,
   isAuthenticated: !!localStorage.getItem('bt_user'), // Initial guess based on local cache
   isCheckingAuth: true, // Used for initial load spinner
 
@@ -16,6 +17,7 @@ const useAuthStore = create((set, get) => ({
       const { data } = await api.get('/auth/me');
       set({
         user: data.data,
+        token: get().token,
         isAuthenticated: true,
         isCheckingAuth: false
       });
@@ -24,13 +26,17 @@ const useAuthStore = create((set, get) => ({
       // Token invalid or doesn't exist
       set({ user: null, isAuthenticated: false, isCheckingAuth: false });
       localStorage.removeItem('bt_user');
+      localStorage.removeItem('bt_token');
     }
   },
 
   /** Save login data to state and local storage */
-  login: (user) => {
+  login: (user, token = null) => {
     localStorage.setItem('bt_user', JSON.stringify(user));
-    set({ user, isAuthenticated: true });
+    if (token) {
+      localStorage.setItem('bt_token', token);
+    }
+    set({ user, token: token || get().token, isAuthenticated: true });
   },
 
   /** Clear auth state and hit logout endpoint */
@@ -42,7 +48,8 @@ const useAuthStore = create((set, get) => ({
       console.error('Logout error', error);
     } finally {
       localStorage.removeItem('bt_user');
-      set({ user: null, isAuthenticated: false });
+      localStorage.removeItem('bt_token');
+      set({ user: null, token: null, isAuthenticated: false });
       if (window.location.pathname !== '/login') {
         window.location.href = '/login';
       }
