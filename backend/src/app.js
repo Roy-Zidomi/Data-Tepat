@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 
 const routes = require('./routes');
+const { csrfProtection } = require('./middlewares/csrf.middleware');
 const { notFoundHandler, globalErrorHandler } = require('./middlewares/error.middleware');
 
 const app = express();
@@ -33,6 +34,7 @@ app.use(cors({
   credentials: true
 }));
 app.use(cookieParser());
+app.use(csrfProtection);
 
 // Logging
 if (process.env.NODE_ENV === 'development') {
