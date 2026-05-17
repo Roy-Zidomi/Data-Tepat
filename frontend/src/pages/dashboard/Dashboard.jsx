@@ -22,13 +22,13 @@ import WargaDashboard from './WargaDashboard';
 import RelawanDashboard from './RelawanDashboard';
 
 const StatCard = ({ colorClass, icon: Icon, title, value }) => (
-  <Card className="flex items-center gap-4 hover:shadow-card-hover transition-all">
-    <div className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl ${colorClass}`}>
-      <Icon className="h-7 w-7" />
+  <Card className="flex items-center gap-3.5">
+    <div className={`flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-lg ${colorClass}`}>
+      <Icon className="h-5 w-5" />
     </div>
     <div>
-      <p className="text-sm font-medium text-surface-500 dark:text-surface-400">{title}</p>
-      <h3 className="mt-1 text-2xl font-bold text-surface-900 dark:text-surface-100">{formatNumber(value)}</h3>
+      <p className="text-xs font-medium text-surface-500 dark:text-surface-400">{title}</p>
+      <h3 className="mt-0.5 text-xl font-bold text-surface-800 dark:text-surface-100">{formatNumber(value)}</h3>
     </div>
   </Card>
 );
@@ -82,10 +82,10 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fade-in">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
+          <h1 className="text-xl font-bold text-surface-800 dark:text-white">
             {isStaff ? 'Dashboard Operasional Staff' : 'Dashboard Overview'}
           </h1>
-          <p className="mt-1 text-sm text-surface-500 dark:text-surface-400">
+          <p className="mt-0.5 text-sm text-surface-500 dark:text-surface-400">
             {isStaff
               ? 'Fokus pada antrian verifikasi, finalisasi keputusan, revisi, dan laporan ke admin utama.'
               : 'Ringkasan kondisi sistem bantuan sosial untuk monitoring dan pengawasan.'}
@@ -188,23 +188,24 @@ const Dashboard = () => {
           {chartData.length === 0 ? (
             <p className="text-sm text-surface-500">Belum ada data status permohonan untuk ditampilkan.</p>
           ) : (
-            <div className="mt-4 h-80 w-full">
+            <div className="mt-4 h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" opacity={0.2} />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} className="text-xs fill-surface-500" />
-                  <YAxis axisLine={false} tickLine={false} className="text-xs fill-surface-500" allowDecimals={false} />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" opacity={0.6} />
+                  <XAxis dataKey="name" axisLine={false} tickLine={false} className="text-xs fill-surface-400" />
+                  <YAxis axisLine={false} tickLine={false} className="text-xs fill-surface-400" allowDecimals={false} />
                   <RechartsTooltip
-                    cursor={{ fill: 'transparent' }}
+                    cursor={{ fill: 'rgba(0,0,0,0.02)' }}
                     contentStyle={{
-                      borderRadius: '12px',
-                      border: 'none',
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                      backgroundColor: '#1e293b',
-                      color: '#fff',
+                      borderRadius: '8px',
+                      border: '1px solid #e2e8f0',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+                      backgroundColor: '#fff',
+                      color: '#334155',
+                      fontSize: '13px',
                     }}
                   />
-                  <Bar dataKey="total" fill="#0f766e" radius={[6, 6, 0, 0]} maxBarSize={48} />
+                  <Bar dataKey="total" fill="#0ea5e9" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -218,7 +219,7 @@ const Dashboard = () => {
           <div className="space-y-4">
             {!isStaff && (
               <>
-                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                <div className="rounded-xl bg-surface-50 p-3.5 dark:bg-surface-800/50">
                   <div className="flex items-center gap-2 text-sm font-medium text-surface-600 dark:text-surface-300">
                     <UserCheck className="h-4 w-4" />
                     Laporan Staff Masuk
@@ -227,7 +228,7 @@ const Dashboard = () => {
                     {formatNumber(stats?.mainMetrics?.reportedEligible ?? 0)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                <div className="rounded-xl bg-surface-50 p-3.5 dark:bg-surface-800/50">
                   <p className="text-sm font-medium text-surface-600 dark:text-surface-300">
                     Antrian Buat Akun Warga
                   </p>
@@ -243,13 +244,13 @@ const Dashboard = () => {
 
             {isStaff && (
               <>
-                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                <div className="rounded-xl bg-surface-50 p-3.5 dark:bg-surface-800/50">
                   <p className="text-sm font-medium text-surface-600 dark:text-surface-300">Rejected Minggu Ini</p>
                   <p className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">
                     {formatNumber(stats?.staffMetrics?.finalizedRejectedThisWeek ?? 0)}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-surface-50 p-4 dark:bg-surface-900/50">
+                <div className="rounded-xl bg-surface-50 p-3.5 dark:bg-surface-800/50">
                   <p className="text-sm font-medium text-surface-600 dark:text-surface-300">Pengaduan Butuh Eskalasi</p>
                   <p className="mt-2 text-2xl font-bold text-surface-900 dark:text-white">
                     {formatNumber(stats?.staffMetrics?.complaintsNeedEscalation ?? 0)}

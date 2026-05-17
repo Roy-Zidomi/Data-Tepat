@@ -41,32 +41,32 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md', footer }) => {
       onClick={(e) => e.target === overlayRef.current && onClose()}
     >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-surface-900/40 dark:bg-black/50 backdrop-blur-[2px]" />
 
       {/* Content */}
-      <div className={`relative w-full ${sizeMap[size]} bg-white dark:bg-surface-800 rounded-2xl shadow-xl animate-slide-up overflow-hidden`}>
+      <div className={`relative w-full ${sizeMap[size]} bg-white dark:bg-surface-900 rounded-xl shadow-elevated animate-slide-up overflow-hidden border border-surface-200 dark:border-surface-800`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-surface-200 dark:border-surface-700">
-          <h2 id="modal-title" className="text-lg font-semibold text-surface-900 dark:text-surface-100">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-surface-200 dark:border-surface-800">
+          <h2 id="modal-title" className="text-base font-semibold text-surface-800 dark:text-surface-100">
             {title}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+            className="p-1.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
             aria-label="Tutup modal"
           >
-            <X className="w-5 h-5 text-surface-500" />
+            <X className="w-4 h-4 text-surface-400" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 max-h-[70vh] overflow-y-auto">
+        <div className="px-5 py-4 max-h-[70vh] overflow-y-auto">
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex items-center justify-end gap-3 p-6 border-t border-surface-200 dark:border-surface-700">
+          <div className="flex items-center justify-end gap-2 px-5 py-3.5 border-t border-surface-200 dark:border-surface-800 bg-surface-50 dark:bg-surface-900">
             {footer}
           </div>
         )}

@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, ArrowLeft, Send, CheckCircle } from 'lucide-react';
+import { Mail, ArrowLeft, Send, CheckCircle, HeartHandshake } from 'lucide-react';
 import authService from '../../services/authService';
 import { FORM_LIMITS, clampText } from '../../utils/formLimits';
 
 /**
  * ForgotPassword - Public page where users enter their email to receive a password reset link.
+ * Uses the same split layout as the Login page — left panel identical, only right form changes.
  */
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -35,164 +36,180 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#4A90D9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      <div style={{
-        backgroundColor: '#fff',
-        borderRadius: '20px',
-        padding: '40px 36px 32px',
-        width: '100%',
-        maxWidth: '420px',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
-      }}>
-        {!sent ? (
-          <>
-            <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1a1a2e', margin: '0 0 4px 0' }}>
-              Lupa Password
-            </h1>
-            <p style={{ fontSize: '14px', color: '#888', margin: '0 0 28px 0' }}>
-              Masukkan email Anda untuk menerima link reset password.
-            </p>
+    <div className="flex min-h-screen w-full bg-white dark:bg-surface-950 font-sans">
+      {/* Left Pane - Branding & Info (IDENTICAL to Login) */}
+      <div className="hidden lg:flex w-1/2 relative bg-surface-900 dark:bg-surface-900 overflow-hidden flex-col justify-between p-12">
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+          <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary-600/15 blur-3xl"></div>
+          <div className="absolute bottom-[10%] -right-[15%] w-[50%] h-[50%] rounded-full bg-primary-400/10 blur-3xl"></div>
+        </div>
 
-            <form onSubmit={handleSubmit}>
-              <div style={{ marginBottom: '18px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#444', marginBottom: '8px' }}>
-                  Email
-                </label>
-                <div style={{ position: 'relative' }}>
-                  <Mail
-                    style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#b0b0b0', width: '18px', height: '18px' }}
-                  />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => { setEmail(clampText(e.target.value, FORM_LIMITS.email)); setError(''); }}
-                    placeholder="nama@email.com"
-                    required
-                    maxLength={FORM_LIMITS.email}
-                    style={{
-                      width: '100%',
-                      padding: '12px 16px 12px 42px',
-                      borderRadius: '10px',
-                      border: error ? '1.5px solid #ef4444' : '1.5px solid #e5e7eb',
-                      backgroundColor: '#f3f6fb',
-                      fontSize: '14px',
-                      color: '#1a1a2e',
-                      outline: 'none',
-                      boxSizing: 'border-box',
-                      transition: 'border-color 0.2s',
-                    }}
-                    onFocus={e => e.target.style.borderColor = '#4A90D9'}
-                    onBlur={e => e.target.style.borderColor = error ? '#ef4444' : '#e5e7eb'}
-                  />
-                </div>
-                {error && <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '6px' }}>{error}</p>}
+        {/* Logo/Brand */}
+        <div className="relative z-10 flex items-center gap-3 text-white">
+          <div className="p-2.5 bg-white/10 backdrop-blur-sm rounded-xl">
+            <HeartHandshake className="w-7 h-7 text-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">BantuTepat</span>
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 max-w-lg">
+          <h1 className="text-4xl lg:text-[2.75rem] font-bold text-white leading-tight mb-5 tracking-tight">
+            Distribusi Bantuan<br />Tepat Sasaran &amp; Transparan.
+          </h1>
+          <p className="text-base text-surface-300 leading-relaxed mb-8">
+            Platform terpadu untuk memfasilitasi pendataan, verifikasi, dan penyaluran bantuan sosial bagi masyarakat yang membutuhkan secara akurat dan terpercaya.
+          </p>
+          
+          <div className="flex items-center gap-3 text-sm text-surface-400">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+              </span>
+              <span className="text-surface-300 font-medium">Sistem Aktif</span>
+            </div>
+            <div className="w-px h-3 bg-surface-700"></div>
+            <span>Verifikasi Real-time</span>
+          </div>
+        </div>
+
+        {/* Footer info */}
+        <div className="relative z-10 text-xs text-surface-500">
+          <p>&copy; {new Date().getFullYear()} BantuTepat &mdash; Hak Cipta Dilindungi</p>
+        </div>
+      </div>
+
+      {/* Right Pane - Forgot Password Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto bg-white dark:bg-surface-950">
+        {/* Mobile Logo */}
+        <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
+          <HeartHandshake className="w-5 h-5 text-primary-600" />
+          <span className="text-lg font-bold">BantuTepat</span>
+        </div>
+
+        <div className="w-full max-w-sm animate-fade-in my-auto pt-10 lg:pt-0">
+          {!sent ? (
+            <>
+              {/* Form Header */}
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">
+                  Lupa Password
+                </h2>
+                <p className="text-surface-500 dark:text-surface-400 mt-1.5 text-sm">
+                  Masukkan email Anda untuk menerima link reset password.
+                </p>
               </div>
 
-              <button
-                type="submit"
-                disabled={loading}
-                style={{
-                  width: '100%',
-                  padding: '14px',
-                  borderRadius: '50px',
-                  border: 'none',
-                  background: loading ? '#a0bfe0' : 'linear-gradient(135deg, #4A90D9, #5B9FE8)',
-                  color: '#fff',
-                  fontSize: '16px',
-                  fontWeight: '700',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  boxShadow: '0 6px 20px rgba(74,144,217,0.45)',
-                  transition: 'all 0.2s',
-                  letterSpacing: '0.5px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                }}
-              >
-                {loading ? (
-                  'Mengirim...'
-                ) : (
-                  <>
-                    <Send style={{ width: '16px', height: '16px' }} />
-                    Kirim Link Reset
-                  </>
-                )}
-              </button>
-            </form>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider">
+                    Email
+                  </label>
+                  <div className="relative group">
+                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-surface-400 group-focus-within:text-primary-500 transition-colors">
+                      <Mail className="h-4 w-4" />
+                    </div>
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(clampText(e.target.value, FORM_LIMITS.email)); setError(''); }}
+                      placeholder="nama@email.com"
+                      required
+                      maxLength={FORM_LIMITS.email}
+                      className={`w-full bg-surface-50 dark:bg-surface-800 border text-surface-900 dark:text-white rounded-xl pl-10 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 focus:bg-white dark:focus:bg-surface-800 transition-all text-sm placeholder:text-surface-400 ${
+                        error ? 'border-red-400 dark:border-red-500' : 'border-surface-200 dark:border-surface-700'
+                      }`}
+                    />
+                  </div>
+                  {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+                </div>
 
-            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all ${
+                    loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]'
+                  }`}
+                >
+                  {loading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-1.5 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Mengirim...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-4 h-4" />
+                      Kirim Link Reset
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <div className="mt-6 text-center">
+                <Link
+                  to="/login"
+                  className="text-sm font-medium text-surface-500 hover:text-primary-600 dark:text-surface-400 dark:hover:text-primary-400 transition-colors inline-flex items-center gap-1.5"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Kembali ke Login
+                </Link>
+              </div>
+            </>
+          ) : (
+            /* Success State */
+            <div className="text-center">
+              <div className="w-14 h-14 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center mx-auto mb-5">
+                <CheckCircle className="w-7 h-7 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <h2 className="text-xl font-bold text-surface-900 dark:text-white mb-2">
+                Email Terkirim!
+              </h2>
+              <p className="text-sm text-surface-500 dark:text-surface-400 mb-1.5">
+                Link reset password telah dikirim ke <strong className="text-surface-800 dark:text-white">{email}</strong>
+              </p>
+              <p className="text-xs text-surface-400 dark:text-surface-500 mb-6">
+                Link berlaku selama 15 menit. Periksa juga folder spam Anda.
+              </p>
+
+              {resetInfo?.resetUrl && (
+                <div className="bg-sky-50 dark:bg-sky-500/5 border border-sky-200/80 dark:border-sky-800/40 rounded-lg p-3.5 mb-6 text-left">
+                  <p className="text-xs font-semibold text-sky-700 dark:text-sky-400 mb-1.5">
+                    Mode development
+                  </p>
+                  <p className="text-xs text-surface-500 dark:text-surface-400 leading-relaxed mb-2">
+                    Email belum dikonfigurasi, jadi link reset ditampilkan di sini untuk testing lokal.
+                  </p>
+                  <a
+                    href={resetInfo.resetUrl}
+                    className="text-xs font-semibold text-primary-600 dark:text-primary-400 hover:underline break-all"
+                  >
+                    Buka link reset password →
+                  </a>
+                </div>
+              )}
+
               <Link
                 to="/login"
-                style={{ fontSize: '13px', color: '#4A90D9', fontWeight: '500', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                className="inline-flex items-center justify-center gap-1.5 py-2.5 px-5 rounded-xl text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 transition-colors"
               >
-                <ArrowLeft style={{ width: '14px', height: '14px' }} />
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Kembali ke Login
               </Link>
             </div>
-          </>
-        ) : (
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              width: '64px', height: '64px', borderRadius: '50%',
-              background: 'linear-gradient(135deg, #10b981, #34d399)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              margin: '0 auto 20px'
-            }}>
-              <CheckCircle style={{ width: '32px', height: '32px', color: '#fff' }} />
-            </div>
-            <h2 style={{ fontSize: '22px', fontWeight: '700', color: '#1a1a2e', margin: '0 0 8px 0' }}>
-              Email Terkirim!
-            </h2>
-            <p style={{ fontSize: '14px', color: '#666', lineHeight: '1.6', margin: '0 0 8px 0' }}>
-              Link reset password telah dikirim ke <strong style={{ color: '#1a1a2e' }}>{email}</strong>
-            </p>
-            <p style={{ fontSize: '12px', color: '#999', margin: '0 0 24px 0' }}>
-              Link berlaku selama 15 menit. Periksa juga folder spam Anda.
-            </p>
-            {resetInfo?.resetUrl && (
-              <div style={{
-                backgroundColor: '#eef6ff',
-                border: '1px solid #bfdbfe',
-                borderRadius: '12px',
-                padding: '12px',
-                marginBottom: '18px',
-                textAlign: 'left'
-              }}>
-                <p style={{ fontSize: '12px', color: '#1d4ed8', fontWeight: '700', margin: '0 0 8px 0' }}>
-                  Mode development
-                </p>
-                <p style={{ fontSize: '12px', color: '#475569', lineHeight: '1.5', margin: '0 0 10px 0' }}>
-                  Email belum dikonfigurasi, jadi link reset ditampilkan di sini untuk testing lokal.
-                </p>
-                <a
-                  href={resetInfo.resetUrl}
-                  style={{ color: '#2563eb', fontSize: '13px', fontWeight: '700', wordBreak: 'break-all' }}
-                >
-                  Buka link reset password
-                </a>
-              </div>
-            )}
-            <Link
-              to="/login"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '6px',
-                padding: '12px 28px', borderRadius: '50px',
-                background: 'linear-gradient(135deg, #4A90D9, #5B9FE8)',
-                color: '#fff', fontSize: '14px', fontWeight: '600',
-                textDecoration: 'none', boxShadow: '0 4px 12px rgba(74,144,217,0.35)'
-              }}
-            >
-              <ArrowLeft style={{ width: '14px', height: '14px' }} />
-              Kembali ke Login
-            </Link>
-          </div>
-        )}
-      </div>
+          )}
 
-      <p style={{ marginTop: '24px', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
-        Copyright &copy; {new Date().getFullYear()} BantuTepat. All rights reserved.
-      </p>
+          <div className="pt-6 text-center lg:hidden">
+            <p className="text-xs text-surface-400">
+              &copy; {new Date().getFullYear()} BantuTepat. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -8,16 +8,16 @@ import api from '../../services/api';
 import { formatDateTime } from '../../utils/formatters';
 
 const StatCard = ({ icon: Icon, label, value, color, onClick }) => (
-  <Card className="hover:shadow-card-hover transition-all cursor-pointer group" onClick={onClick}>
-    <div className="flex items-center gap-4">
-      <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${color}`}>
-        <Icon className="w-6 h-6" />
+  <Card className="hover:shadow-card-hover transition-shadow cursor-pointer group" onClick={onClick}>
+    <div className="flex items-center gap-3">
+      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${color}`}>
+        <Icon className="w-5 h-5" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-surface-500 dark:text-surface-400">{label}</p>
-        <p className="text-2xl font-black text-surface-900 dark:text-white">{value}</p>
+        <p className="text-xs text-surface-500 dark:text-surface-400">{label}</p>
+        <p className="text-xl font-bold text-surface-800 dark:text-white">{value}</p>
       </div>
-      <ArrowRight className="w-4 h-4 text-surface-300 group-hover:text-primary-500 transition-colors" />
+      <ArrowRight className="w-3.5 h-3.5 text-surface-300 group-hover:text-primary-500 transition-colors" />
     </div>
   </Card>
 );
@@ -51,8 +51,8 @@ const StaffDashboard = () => {
     <div className="space-y-8 animate-fade-in">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Dashboard Staff</h1>
-        <p className="text-sm text-surface-500 mt-1">Ringkasan tugas operasional Anda</p>
+        <h1 className="text-xl font-bold text-surface-800 dark:text-white">Dashboard Staff</h1>
+        <p className="text-sm text-surface-500 mt-0.5">Ringkasan tugas operasional Anda</p>
       </div>
 
       {/* Task Notification Cards — Separated fields (Revisi #6) */}
@@ -116,7 +116,7 @@ const StaffDashboard = () => {
       {stats.recentDistributions?.length > 0 && (
         <Card>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold dark:text-white">Distribusi Terbaru</h2>
+            <h2 className="text-base font-semibold dark:text-white">Distribusi Terbaru</h2>
             <button onClick={() => navigate('/distributions')} className="text-sm text-primary-600 hover:text-primary-700 font-medium">
               Lihat Semua →
             </button>

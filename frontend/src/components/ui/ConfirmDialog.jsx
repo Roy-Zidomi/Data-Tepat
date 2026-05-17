@@ -31,11 +31,11 @@ const ConfirmDialog = ({
         </>
       }
     >
-      <div className="flex gap-4 items-start">
-        <div className="p-3 rounded-full bg-red-100 dark:bg-red-900/30">
-          <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+      <div className="flex gap-3.5 items-start">
+        <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-500/10">
+          <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
         </div>
-        <p className="text-sm text-surface-600 dark:text-surface-400 pt-2">
+        <p className="text-sm text-surface-600 dark:text-surface-400 pt-1.5">
           {message}
         </p>
       </div>

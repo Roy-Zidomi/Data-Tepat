@@ -15,22 +15,22 @@ const Select = forwardRef(({
   return (
     <div className={containerClassName}>
       {label && (
-        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1.5">
+        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
           {label}
         </label>
       )}
       <select
         ref={ref}
         className={`
-          w-full rounded-xl border bg-white dark:bg-surface-800
-          text-surface-900 dark:text-surface-100
-          focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500
-          transition-all duration-200
+          w-full rounded-lg border bg-surface-50 dark:bg-surface-800
+          text-surface-800 dark:text-surface-100
+          focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 focus:bg-white dark:focus:bg-surface-800
+          transition-colors duration-150
           disabled:opacity-50 disabled:cursor-not-allowed
-          px-4 py-2.5 text-sm appearance-none
+          px-3.5 py-2 text-sm appearance-none
           ${error
             ? 'border-red-400 dark:border-red-500'
-            : 'border-surface-300 dark:border-surface-600'
+            : 'border-surface-200 dark:border-surface-700'
           }
           ${className}
         `}
@@ -44,7 +44,7 @@ const Select = forwardRef(({
         ))}
       </select>
       {error && (
-        <p className="mt-1.5 text-xs text-red-500 dark:text-red-400">{error}</p>
+        <p className="mt-1 text-xs text-red-500 dark:text-red-400">{error}</p>
       )}
     </div>
   );

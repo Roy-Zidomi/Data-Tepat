@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { User, Mail, Lock, Heart, Phone } from 'lucide-react';
+import { User, Mail, Lock, HeartHandshake, Phone } from 'lucide-react';
 import useAuthStore from '../../store/authStore';
 import authService from '../../services/authService';
 import Button from '../../components/ui/Button';
@@ -72,120 +72,143 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-surface-950 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background decoration */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary-500/10 dark:bg-primary-500/5 rounded-full blur-3xl rounded-t-none -z-10" />
-
-      <div className="sm:mx-auto sm:w-full sm:max-w-md animate-fade-in">
-        <div className="flex justify-center">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-lg shadow-primary-500/30">
-            <Heart className="w-8 h-8 text-white" />
-          </div>
+    <div className="min-h-screen bg-white dark:bg-surface-950 flex font-sans">
+      {/* Left decorative panel */}
+      <div className="hidden lg:flex w-5/12 bg-surface-900 relative overflow-hidden items-end p-12">
+        <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+          <div className="absolute -top-[15%] -left-[5%] w-[50%] h-[50%] rounded-full bg-primary-600/10 blur-3xl"></div>
+          <div className="absolute bottom-[5%] -right-[10%] w-[45%] h-[45%] rounded-full bg-primary-400/8 blur-3xl"></div>
         </div>
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-surface-900 dark:text-white tracking-tight">
-          Daftar BantuTepat
-        </h2>
-        <p className="mt-2 text-center text-sm text-surface-600 dark:text-surface-400">
-          Sistem Informasi Bantuan Sosial Terpadu
-        </p>
+        <div className="relative z-10">
+          <div className="flex items-center gap-2.5 text-white mb-6">
+            <div className="p-2 bg-white/10 rounded-lg">
+              <HeartHandshake className="w-5 h-5" />
+            </div>
+            <span className="text-lg font-bold tracking-tight">BantuTepat</span>
+          </div>
+          <h2 className="text-3xl font-bold text-white leading-tight mb-3">
+            Bergabung dengan Platform Bantuan Sosial Terpadu
+          </h2>
+          <p className="text-surface-400 text-sm max-w-sm">
+            Daftarkan akun Anda untuk mengakses fitur pendataan, verifikasi, dan distribusi bantuan sosial.
+          </p>
+        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-xl animate-slide-up">
-        <div className="bg-white/80 dark:bg-surface-800/80 backdrop-blur-xl py-8 px-4 shadow-xl shadow-surface-200/50 dark:shadow-none sm:rounded-2xl sm:px-10 border border-surface-200 dark:border-surface-700">
-          <form className="space-y-6" onSubmit={onSubmit}>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Nama Lengkap"
-                name="name"
-                type="text"
-                required
-                placeholder="cth. Budi Santoso"
-                icon={User}
-                value={formData.name}
-                onChange={handleChange}
-                maxLength={FORM_LIMITS.name}
-              />
-              <Input
-                label="Username"
-                name="username"
-                type="text"
-                required
-                placeholder="cth. budisantoso"
-                icon={User}
-                value={formData.username}
-                onChange={handleChange}
-                maxLength={FORM_LIMITS.username}
-              />
+      {/* Right form panel */}
+      <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
+        {/* Mobile logo */}
+        <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
+          <HeartHandshake className="w-5 h-5 text-primary-600" />
+          <span className="text-lg font-bold">BantuTepat</span>
+        </div>
+
+        <div className="w-full max-w-lg animate-fade-in pt-10 lg:pt-0">
+          <div className="mb-6">
+            <h2 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">
+              Daftar Akun
+            </h2>
+            <p className="mt-1 text-sm text-surface-500 dark:text-surface-400">
+              Sistem Informasi Bantuan Sosial Terpadu
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-xl p-6">
+            <form className="space-y-5" onSubmit={onSubmit}>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Nama Lengkap"
+                  name="name"
+                  type="text"
+                  required
+                  placeholder="cth. Budi Santoso"
+                  icon={User}
+                  value={formData.name}
+                  onChange={handleChange}
+                  maxLength={FORM_LIMITS.name}
+                />
+                <Input
+                  label="Username"
+                  name="username"
+                  type="text"
+                  required
+                  placeholder="cth. budisantoso"
+                  icon={User}
+                  value={formData.username}
+                  onChange={handleChange}
+                  maxLength={FORM_LIMITS.username}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Email"
+                  name="email"
+                  type="email"
+                  required
+                  placeholder="cth. budi@gmail.com"
+                  icon={Mail}
+                  value={formData.email}
+                  onChange={handleChange}
+                  maxLength={FORM_LIMITS.email}
+                />
+                <Input
+                  label="Nomor Telepon"
+                  name="phone"
+                  type="tel"
+                  placeholder="cth. 08123456789"
+                  icon={Phone}
+                  value={formData.phone}
+                  onChange={handleChange}
+                  inputMode="tel"
+                  maxLength={FORM_LIMITS.phone}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Input
+                  label="Password"
+                  name="password"
+                  type="password"
+                  required
+                  placeholder="Minimal 8 karakter"
+                  icon={Lock}
+                  value={formData.password}
+                  onChange={handleChange}
+                  maxLength={FORM_LIMITS.password}
+                />
+                <Input
+                  label="Konfirmasi Password"
+                  name="confirmPassword"
+                  type="password"
+                  required
+                  placeholder="Ulangi password"
+                  icon={Lock}
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  maxLength={FORM_LIMITS.password}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full"
+                loading={loading}
+                size="lg"
+              >
+                Daftar Sekarang
+              </Button>
+            </form>
+
+            <div className="mt-5 flex items-center justify-center gap-1.5">
+              <span className="text-sm text-surface-500 dark:text-surface-400">
+                Sudah memiliki akun?
+              </span>
+              <Link to="/login" className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition-colors">
+                Masuk di sini
+              </Link>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Email"
-                name="email"
-                type="email"
-                required
-                placeholder="cth. budi@gmail.com"
-                icon={Mail}
-                value={formData.email}
-                onChange={handleChange}
-                maxLength={FORM_LIMITS.email}
-              />
-              <Input
-                label="Nomor Telepon"
-                name="phone"
-                type="tel"
-                placeholder="cth. 08123456789"
-                icon={Phone}
-                value={formData.phone}
-                onChange={handleChange}
-                inputMode="tel"
-                maxLength={FORM_LIMITS.phone}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Input
-                label="Password"
-                name="password"
-                type="password"
-                required
-                placeholder="Minimal 8 karakter"
-                icon={Lock}
-                value={formData.password}
-                onChange={handleChange}
-                maxLength={FORM_LIMITS.password}
-              />
-              <Input
-                label="Konfirmasi Password"
-                name="confirmPassword"
-                type="password"
-                required
-                placeholder="Ulangi password"
-                icon={Lock}
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                maxLength={FORM_LIMITS.password}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full shadow-lg shadow-primary-500/25"
-              loading={loading}
-              size="lg"
-            >
-              Daftar Sekarang
-            </Button>
-          </form>
-
-          <div className="mt-6 flex items-center justify-center space-x-2">
-            <span className="text-sm text-surface-600 dark:text-surface-400">
-              Sudah memiliki akun?
-            </span>
-            <Link to="/login" className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
-              Masuk di sini
-            </Link>
           </div>
         </div>
       </div>

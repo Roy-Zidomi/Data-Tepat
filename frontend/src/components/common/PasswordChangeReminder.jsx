@@ -25,13 +25,13 @@ const PasswordChangeReminder = () => {
   return (
     <>
       <div
-        className="animate-fade-in mx-0 mb-4 rounded-2xl border border-amber-200 dark:border-amber-800/60 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 dark:from-amber-950/40 dark:via-orange-950/30 dark:to-amber-950/40 shadow-sm"
+        className="animate-fade-in mx-0 mb-4 rounded-lg border border-amber-200/80 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-500/5"
         role="alert"
       >
-        <div className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
+        <div className="flex items-center gap-3 px-4 py-3">
           {/* Icon */}
-          <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+          <div className="flex-shrink-0 w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+            <Shield className="w-4 h-4 text-amber-600 dark:text-amber-400" />
           </div>
 
           {/* Text */}
@@ -40,25 +40,25 @@ const PasswordChangeReminder = () => {
               Keamanan Akun
             </p>
             <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5 leading-relaxed">
-              Disarankan ganti password demi keamanan akun Anda. Password sementara sebaiknya segera diganti.
+              Disarankan ganti password demi keamanan akun Anda.
             </p>
           </div>
 
           {/* Actions */}
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
             <button
               onClick={() => setShowModal(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 transition-colors shadow-sm"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-white bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 transition-colors"
             >
-              <KeyRound className="w-3.5 h-3.5" />
+              <KeyRound className="w-3 h-3" />
               Ganti Sekarang
             </button>
             <button
               onClick={handleDismiss}
-              className="p-1.5 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-100 dark:hover:bg-amber-900/40 dark:text-amber-400 dark:hover:text-amber-300 transition-colors"
+              className="p-1 rounded-md text-amber-400 hover:text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
               title="Nanti saja"
             >
-              <X className="w-4 h-4" />
+              <X className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

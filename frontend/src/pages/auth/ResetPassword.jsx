@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { KeyRound, Eye, EyeOff, ArrowLeft, CheckCircle } from 'lucide-react';
+import { KeyRound, Eye, EyeOff, ArrowLeft, CheckCircle, HeartHandshake, AlertCircle } from 'lucide-react';
 import authService from '../../services/authService';
 import toast from 'react-hot-toast';
 import { FORM_LIMITS, clampText } from '../../utils/formLimits';
 
 /**
  * ResetPassword - Public page for resetting password via token from email.
+ * Uses the same split layout as the Login page — left panel identical, only right form changes.
  * URL: /reset-password?token=xxx
  */
 const ResetPassword = () => {
@@ -20,26 +21,69 @@ const ResetPassword = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
+  /* ---------- Left panel (shared with Login & ForgotPassword) ---------- */
+  const LeftPanel = () => (
+    <div className="hidden lg:flex w-1/2 relative bg-surface-900 dark:bg-surface-900 overflow-hidden flex-col justify-between p-12">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-0 pointer-events-none">
+        <div className="absolute -top-[20%] -left-[10%] w-[60%] h-[60%] rounded-full bg-primary-600/15 blur-3xl"></div>
+        <div className="absolute bottom-[10%] -right-[15%] w-[50%] h-[50%] rounded-full bg-primary-400/10 blur-3xl"></div>
+      </div>
+      <div className="relative z-10 flex items-center gap-3 text-white">
+        <div className="p-2.5 bg-white/10 backdrop-blur-sm rounded-xl">
+          <HeartHandshake className="w-7 h-7 text-white" />
+        </div>
+        <span className="text-xl font-bold tracking-tight">BantuTepat</span>
+      </div>
+      <div className="relative z-10 max-w-lg">
+        <h1 className="text-4xl lg:text-[2.75rem] font-bold text-white leading-tight mb-5 tracking-tight">
+          Distribusi Bantuan<br />Tepat Sasaran &amp; Transparan.
+        </h1>
+        <p className="text-base text-surface-300 leading-relaxed mb-8">
+          Platform terpadu untuk memfasilitasi pendataan, verifikasi, dan penyaluran bantuan sosial bagi masyarakat yang membutuhkan secara akurat dan terpercaya.
+        </p>
+        <div className="flex items-center gap-3 text-sm text-surface-400">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
+            </span>
+            <span className="text-surface-300 font-medium">Sistem Aktif</span>
+          </div>
+          <div className="w-px h-3 bg-surface-700"></div>
+          <span>Verifikasi Real-time</span>
+        </div>
+      </div>
+      <div className="relative z-10 text-xs text-surface-500">
+        <p>&copy; {new Date().getFullYear()} BantuTepat &mdash; Hak Cipta Dilindungi</p>
+      </div>
+    </div>
+  );
+
+  /* ---------- Invalid token state ---------- */
   if (!token) {
     return (
-      <div style={{ minHeight: '100vh', backgroundColor: '#4A90D9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-        <div style={{
-          backgroundColor: '#fff', borderRadius: '20px', padding: '40px 36px 32px',
-          width: '100%', maxWidth: '420px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)', textAlign: 'center'
-        }}>
-          <h1 style={{ fontSize: '24px', fontWeight: '700', color: '#ef4444', margin: '0 0 12px 0' }}>Link Tidak Valid</h1>
-          <p style={{ fontSize: '14px', color: '#666', margin: '0 0 24px 0' }}>
-            Token reset password tidak ditemukan. Pastikan Anda menggunakan link yang benar dari email.
-          </p>
-          <Link to="/forgot-password" style={{
-            display: 'inline-flex', alignItems: 'center', gap: '6px',
-            padding: '12px 28px', borderRadius: '50px',
-            background: 'linear-gradient(135deg, #4A90D9, #5B9FE8)',
-            color: '#fff', fontSize: '14px', fontWeight: '600',
-            textDecoration: 'none', boxShadow: '0 4px 12px rgba(74,144,217,0.35)'
-          }}>
-            Minta Link Baru
-          </Link>
+      <div className="flex min-h-screen w-full bg-white dark:bg-surface-950 font-sans">
+        <LeftPanel />
+        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white dark:bg-surface-950">
+          <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
+            <HeartHandshake className="w-5 h-5 text-primary-600" />
+            <span className="text-lg font-bold">BantuTepat</span>
+          </div>
+          <div className="w-full max-w-sm text-center animate-fade-in">
+            <div className="w-14 h-14 rounded-xl bg-red-50 dark:bg-red-500/10 flex items-center justify-center mx-auto mb-5">
+              <AlertCircle className="w-7 h-7 text-red-600 dark:text-red-400" />
+            </div>
+            <h2 className="text-xl font-bold text-surface-900 dark:text-white mb-2">Link Tidak Valid</h2>
+            <p className="text-sm text-surface-500 dark:text-surface-400 mb-6">
+              Token reset password tidak ditemukan. Pastikan Anda menggunakan link yang benar dari email.
+            </p>
+            <Link
+              to="/forgot-password"
+              className="inline-flex items-center justify-center gap-1.5 py-2.5 px-5 rounded-xl text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 transition-colors"
+            >
+              Minta Link Baru
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -71,128 +115,128 @@ const ResetPassword = () => {
     }
   };
 
-  const inputStyle = (field) => ({
-    width: '100%',
-    padding: '12px 42px 12px 16px',
-    borderRadius: '10px',
-    border: errors[field] ? '1.5px solid #ef4444' : '1.5px solid #e5e7eb',
-    backgroundColor: '#f3f6fb',
-    fontSize: '14px',
-    color: '#1a1a2e',
-    outline: 'none',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s',
-  });
-
-  const eyeBtn = { position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#b0b0b0', padding: '0' };
+  const inputClass = (field) =>
+    `w-full bg-surface-50 dark:bg-surface-800 border text-surface-900 dark:text-white rounded-xl pl-4 pr-11 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 focus:bg-white dark:focus:bg-surface-800 transition-all text-sm placeholder:text-surface-400 ${
+      errors[field] ? 'border-red-400 dark:border-red-500' : 'border-surface-200 dark:border-surface-700'
+    }`;
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#4A90D9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      <div style={{
-        backgroundColor: '#fff', borderRadius: '20px', padding: '40px 36px 32px',
-        width: '100%', maxWidth: '420px', boxShadow: '0 20px 60px rgba(0,0,0,0.15)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
-          <div style={{
-            width: '36px', height: '36px', borderRadius: '12px',
-            background: 'linear-gradient(135deg, #4A90D9, #5B9FE8)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center'
-          }}>
-            <KeyRound style={{ width: '20px', height: '20px', color: '#fff' }} />
-          </div>
-          <h1 style={{ fontSize: '28px', fontWeight: '800', color: '#1a1a2e', margin: '0' }}>Reset Password</h1>
+    <div className="flex min-h-screen w-full bg-white dark:bg-surface-950 font-sans">
+      <LeftPanel />
+
+      {/* Right Pane - Reset Password Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto bg-white dark:bg-surface-950">
+        {/* Mobile Logo */}
+        <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
+          <HeartHandshake className="w-5 h-5 text-primary-600" />
+          <span className="text-lg font-bold">BantuTepat</span>
         </div>
-        <p style={{ fontSize: '14px', color: '#888', margin: '0 0 28px 0' }}>
-          Buat password baru untuk akun Anda.
-        </p>
 
-        <form onSubmit={handleSubmit}>
-          {/* New Password */}
-          <div style={{ marginBottom: '18px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#444', marginBottom: '8px' }}>
-              Password Baru
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showNew ? 'text' : 'password'}
-                value={formData.newPassword}
-                onChange={(e) => { setFormData(p => ({ ...p, newPassword: clampText(e.target.value, FORM_LIMITS.password) })); setErrors(p => ({ ...p, newPassword: null })); }}
-                placeholder="Minimal 6 karakter"
-                required
-                maxLength={FORM_LIMITS.password}
-                style={inputStyle('newPassword')}
-                onFocus={e => e.target.style.borderColor = '#4A90D9'}
-                onBlur={e => e.target.style.borderColor = errors.newPassword ? '#ef4444' : '#e5e7eb'}
-              />
-              <button type="button" onClick={() => setShowNew(!showNew)} style={eyeBtn}>
-                {showNew ? <EyeOff style={{ width: '16px', height: '16px' }} /> : <Eye style={{ width: '16px', height: '16px' }} />}
-              </button>
-            </div>
-            {errors.newPassword && <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '6px' }}>{errors.newPassword}</p>}
+        <div className="w-full max-w-sm space-y-8 animate-fade-in my-auto pt-10 lg:pt-0">
+          {/* Form Header */}
+          <div>
+            <h2 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">
+              Reset Password
+            </h2>
+            <p className="text-surface-500 dark:text-surface-400 mt-1.5 text-sm">
+              Buat password baru untuk akun Anda.
+            </p>
           </div>
 
-          {/* Confirm Password */}
-          <div style={{ marginBottom: '24px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: '600', color: '#444', marginBottom: '8px' }}>
-              Konfirmasi Password Baru
-            </label>
-            <div style={{ position: 'relative' }}>
-              <input
-                type={showConfirm ? 'text' : 'password'}
-                value={formData.confirmPassword}
-                onChange={(e) => { setFormData(p => ({ ...p, confirmPassword: clampText(e.target.value, FORM_LIMITS.password) })); setErrors(p => ({ ...p, confirmPassword: null })); }}
-                placeholder="Ulangi password baru"
-                required
-                maxLength={FORM_LIMITS.password}
-                style={inputStyle('confirmPassword')}
-                onFocus={e => e.target.style.borderColor = '#4A90D9'}
-                onBlur={e => e.target.style.borderColor = errors.confirmPassword ? '#ef4444' : '#e5e7eb'}
-              />
-              <button type="button" onClick={() => setShowConfirm(!showConfirm)} style={eyeBtn}>
-                {showConfirm ? <EyeOff style={{ width: '16px', height: '16px' }} /> : <Eye style={{ width: '16px', height: '16px' }} />}
-              </button>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* New Password */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider">
+                Password Baru
+              </label>
+              <div className="relative">
+                <input
+                  type={showNew ? 'text' : 'password'}
+                  value={formData.newPassword}
+                  onChange={(e) => { setFormData(p => ({ ...p, newPassword: clampText(e.target.value, FORM_LIMITS.password) })); setErrors(p => ({ ...p, newPassword: null })); }}
+                  placeholder="Minimal 6 karakter"
+                  required
+                  maxLength={FORM_LIMITS.password}
+                  className={inputClass('newPassword')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNew(!showNew)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 transition-colors"
+                >
+                  {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.newPassword && <p className="text-xs text-red-500">{errors.newPassword}</p>}
             </div>
-            {errors.confirmPassword && <p style={{ fontSize: '12px', color: '#ef4444', marginTop: '6px' }}>{errors.confirmPassword}</p>}
+
+            {/* Confirm Password */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider">
+                Konfirmasi Password Baru
+              </label>
+              <div className="relative">
+                <input
+                  type={showConfirm ? 'text' : 'password'}
+                  value={formData.confirmPassword}
+                  onChange={(e) => { setFormData(p => ({ ...p, confirmPassword: clampText(e.target.value, FORM_LIMITS.password) })); setErrors(p => ({ ...p, confirmPassword: null })); }}
+                  placeholder="Ulangi password baru"
+                  required
+                  maxLength={FORM_LIMITS.password}
+                  className={inputClass('confirmPassword')}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-surface-400 hover:text-surface-600 transition-colors"
+                >
+                  {showConfirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              {errors.confirmPassword && <p className="text-xs text-red-500">{errors.confirmPassword}</p>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl text-sm font-semibold text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all mt-2 ${
+                loading ? 'opacity-70 cursor-not-allowed' : 'active:scale-[0.98]'
+              }`}
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin -ml-1 mr-1.5 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Memproses...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4" />
+                  Reset Password
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="text-center">
+            <Link
+              to="/login"
+              className="text-sm font-medium text-surface-500 hover:text-primary-600 dark:text-surface-400 dark:hover:text-primary-400 transition-colors inline-flex items-center gap-1.5"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              Kembali ke Login
+            </Link>
           </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={{
-              width: '100%', padding: '14px', borderRadius: '50px', border: 'none',
-              background: loading ? '#a0bfe0' : 'linear-gradient(135deg, #4A90D9, #5B9FE8)',
-              color: '#fff', fontSize: '16px', fontWeight: '700',
-              cursor: loading ? 'not-allowed' : 'pointer',
-              boxShadow: '0 6px 20px rgba(74,144,217,0.45)',
-              transition: 'all 0.2s', letterSpacing: '0.5px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-            }}
-          >
-            {loading ? (
-              'Memproses...'
-            ) : (
-              <>
-                <CheckCircle style={{ width: '16px', height: '16px' }} />
-                Reset Password
-              </>
-            )}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '20px', textAlign: 'center' }}>
-          <Link
-            to="/login"
-            style={{ fontSize: '13px', color: '#4A90D9', fontWeight: '500', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-          >
-            <ArrowLeft style={{ width: '14px', height: '14px' }} />
-            Kembali ke Login
-          </Link>
+          <div className="pt-2 text-center lg:hidden">
+            <p className="text-xs text-surface-400">
+              &copy; {new Date().getFullYear()} BantuTepat. All rights reserved.
+            </p>
+          </div>
         </div>
       </div>
-
-      <p style={{ marginTop: '24px', fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
-        Copyright &copy; {new Date().getFullYear()} BantuTepat. All rights reserved.
-      </p>
     </div>
   );
 };

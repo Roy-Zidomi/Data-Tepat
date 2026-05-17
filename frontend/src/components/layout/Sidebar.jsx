@@ -142,37 +142,37 @@ const SidebarGroup = ({ group, isOpen, onToggle, sidebarOpen, onNavClick, userRo
     <div>
       <button
         onClick={onToggle}
-        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
           hasActiveChild
-            ? 'bg-primary-50/50 dark:bg-primary-900/10 text-primary-700 dark:text-primary-400'
-            : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200'
+            ? 'bg-primary-50 dark:bg-primary-900/15 text-primary-700 dark:text-primary-400'
+            : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-800 dark:hover:text-surface-200'
         }`}
       >
-        <group.icon className="w-5 h-5 flex-shrink-0" />
+        <group.icon className="w-[18px] h-[18px] flex-shrink-0" />
         {sidebarOpen && (
           <>
             <span className="whitespace-nowrap flex-1 text-left">{displayLabel}</span>
-            <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
           </>
         )}
       </button>
 
       {sidebarOpen && isOpen && (
-        <div className="ml-4 mt-1 space-y-0.5 border-l-2 border-surface-200 dark:border-surface-700 pl-3 animate-fade-in">
+        <div className="ml-[18px] mt-0.5 space-y-px border-l border-surface-200 dark:border-surface-700/80 pl-3 animate-fade-in">
           {group.children.map((child) => (
             <NavLink
               key={child.path}
               to={child.path}
               onClick={onNavClick}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ${
+                `flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors duration-150 ${
                   isActive
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
-                    : 'text-surface-500 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200'
+                    ? 'bg-primary-50 dark:bg-primary-900/15 text-primary-700 dark:text-primary-400'
+                    : 'text-surface-500 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-700 dark:hover:text-surface-200'
                 }`
               }
             >
-              <child.icon className="w-4 h-4 flex-shrink-0" />
+              <child.icon className="w-3.5 h-3.5 flex-shrink-0" />
               <span className="whitespace-nowrap">{child.label}</span>
             </NavLink>
           ))}
@@ -216,30 +216,30 @@ const Sidebar = () => {
 
   return (
     <>
-      {sidebarOpen && <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && <div className="fixed inset-0 bg-black/30 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
       <aside
-        className={`fixed top-0 left-0 z-50 h-full bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-700 transition-all duration-300 ease-in-out flex flex-col lg:relative lg:z-auto ${
-          sidebarOpen ? 'w-64 translate-x-0' : 'w-0 -translate-x-full lg:w-20 lg:translate-x-0'
+        className={`fixed top-0 left-0 z-50 h-full bg-white dark:bg-surface-900 border-r border-surface-200 dark:border-surface-800 transition-all duration-300 ease-in-out flex flex-col lg:relative lg:z-auto ${
+          sidebarOpen ? 'w-60 translate-x-0' : 'w-0 -translate-x-full lg:w-[60px] lg:translate-x-0'
         }`}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b border-surface-200 dark:border-surface-700 flex-shrink-0">
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center flex-shrink-0">
-              <Heart className="w-5 h-5 text-white" />
+        <div className="flex items-center justify-between h-14 px-3.5 border-b border-surface-200 dark:border-surface-800 flex-shrink-0">
+          <div className="flex items-center gap-2 overflow-hidden">
+            <div className="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center flex-shrink-0">
+              <Heart className="w-4 h-4 text-white" />
             </div>
-            {sidebarOpen && <span className="text-lg font-bold gradient-text whitespace-nowrap">BantuTepat</span>}
+            {sidebarOpen && <span className="text-sm font-bold text-surface-900 dark:text-white whitespace-nowrap">BantuTepat</span>}
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="p-1.5 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 lg:hidden"
+            className="p-1 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 lg:hidden"
             aria-label="Tutup menu"
           >
-            <X className="w-5 h-5 text-surface-500" />
+            <X className="w-4 h-4 text-surface-500" />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <nav className="flex-1 overflow-y-auto py-3 px-2.5 space-y-0.5">
           {filteredNav.map((item) => {
             if (item.type === 'group') {
               return (
@@ -261,33 +261,33 @@ const Sidebar = () => {
                 to={item.path}
                 onClick={handleNavClick}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
+                  `flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150 ${
                     isActive
-                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
-                      : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-900 dark:hover:text-surface-200'
+                      ? 'bg-primary-50 dark:bg-primary-900/15 text-primary-700 dark:text-primary-400'
+                      : 'text-surface-600 dark:text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-800 dark:hover:text-surface-200'
                   }`
                 }
               >
-                <item.icon className="w-5 h-5 flex-shrink-0" />
+                <item.icon className="w-[18px] h-[18px] flex-shrink-0" />
                 {sidebarOpen && <span className="whitespace-nowrap">{item.label}</span>}
               </NavLink>
             );
           })}
         </nav>
 
-        <div className="hidden lg:block p-3 border-t border-surface-200 dark:border-surface-700">
+        <div className="hidden lg:block p-2.5 border-t border-surface-200 dark:border-surface-800">
           <button
             onClick={toggleSidebar}
-            className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm text-surface-500 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-xs text-surface-400 hover:bg-surface-100 dark:hover:bg-surface-800 hover:text-surface-600 transition-colors"
             aria-label={sidebarOpen ? 'Perkecil sidebar' : 'Perbesar sidebar'}
           >
             {sidebarOpen ? (
               <>
-                <ChevronLeft className="w-4 h-4" />
+                <ChevronLeft className="w-3.5 h-3.5" />
                 <span className="whitespace-nowrap">Perkecil</span>
               </>
             ) : (
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             )}
           </button>
         </div>

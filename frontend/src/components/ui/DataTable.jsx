@@ -64,42 +64,42 @@ const DataTable = ({
   };
 
   const SortIcon = ({ column }) => {
-    if (sortKey !== column) return <ChevronsUpDown className="w-3.5 h-3.5 text-surface-400" />;
+    if (sortKey !== column) return <ChevronsUpDown className="w-3 h-3 text-surface-300" />;
     return sortDir === 'asc'
-      ? <ChevronUp className="w-3.5 h-3.5 text-primary-500" />
-      : <ChevronDown className="w-3.5 h-3.5 text-primary-500" />;
+      ? <ChevronUp className="w-3 h-3 text-primary-500" />
+      : <ChevronDown className="w-3 h-3 text-primary-500" />;
   };
 
   return (
-    <div className={`space-y-4 ${className}`}>
+    <div className={`space-y-3 ${className}`}>
       {/* Search bar */}
       {onSearch && (
-        <div className="relative max-w-sm">
+        <div className="relative max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
           <input
             type="text"
             value={searchTerm}
             onChange={handleSearchChange}
             placeholder={searchPlaceholder}
-            className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-surface-300 dark:border-surface-600 bg-white dark:bg-surface-800 text-surface-900 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            className="w-full pl-9 pr-3.5 py-2 text-sm rounded-lg border border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-800 dark:text-surface-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40 focus:border-primary-500 focus:bg-white dark:focus:bg-surface-800 transition-colors"
           />
         </div>
       )}
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-surface-200 dark:border-surface-700">
+      <div className="overflow-x-auto rounded-lg border border-surface-200 dark:border-surface-800">
         <table className="w-full text-sm">
           <thead>
-            <tr className="bg-surface-50 dark:bg-surface-800/50">
+            <tr className="bg-surface-50 dark:bg-surface-800/60 border-b border-surface-200 dark:border-surface-800">
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-3 text-left font-medium text-surface-600 dark:text-surface-400 whitespace-nowrap ${
-                    col.sortable !== false ? 'cursor-pointer select-none hover:text-surface-900 dark:hover:text-surface-200' : ''
+                  className={`px-4 py-2.5 text-left text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider whitespace-nowrap ${
+                    col.sortable !== false ? 'cursor-pointer select-none hover:text-surface-700 dark:hover:text-surface-200' : ''
                   }`}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
                 >
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {col.label}
                     {col.sortable !== false && <SortIcon column={col.key} />}
                   </div>
@@ -107,7 +107,7 @@ const DataTable = ({
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-surface-100 dark:divide-surface-700">
+          <tbody className="divide-y divide-surface-100 dark:divide-surface-800">
             {loading ? (
               <tr>
                 <td colSpan={columns.length} className="py-12">
@@ -116,7 +116,7 @@ const DataTable = ({
               </tr>
             ) : sortedData.length === 0 ? (
               <tr>
-                <td colSpan={columns.length} className="py-12 text-center text-surface-500 dark:text-surface-400">
+                <td colSpan={columns.length} className="py-12 text-center text-surface-400 dark:text-surface-500">
                   {emptyMessage}
                 </td>
               </tr>
@@ -127,7 +127,7 @@ const DataTable = ({
                   className="hover:bg-surface-50 dark:hover:bg-surface-800/30 transition-colors"
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-3 text-surface-700 dark:text-surface-300 whitespace-nowrap">
+                    <td key={col.key} className="px-4 py-2.5 text-surface-700 dark:text-surface-300 whitespace-nowrap">
                       {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '-')}
                     </td>
                   ))}
@@ -140,18 +140,18 @@ const DataTable = ({
 
       {/* Pagination */}
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-surface-500 dark:text-surface-400">
-            Menampilkan {((meta.page - 1) * meta.limit) + 1}–{Math.min(meta.page * meta.limit, meta.total)} dari {meta.total} data
+        <div className="flex items-center justify-between pt-1">
+          <p className="text-xs text-surface-400 dark:text-surface-500">
+            {((meta.page - 1) * meta.limit) + 1}–{Math.min(meta.page * meta.limit, meta.total)} dari {meta.total}
           </p>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
               onClick={() => onPageChange(meta.page - 1)}
               disabled={!meta.hasPrevPage}
-              className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Halaman sebelumnya"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             {Array.from({ length: Math.min(meta.totalPages, 5) }, (_, i) => {
               let pageNum;
@@ -168,10 +168,10 @@ const DataTable = ({
                 <button
                   key={pageNum}
                   onClick={() => onPageChange(pageNum)}
-                  className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
+                  className={`w-8 h-8 rounded-md text-xs font-medium transition-colors ${
                     pageNum === meta.page
                       ? 'bg-primary-600 text-white'
-                      : 'hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-400'
+                      : 'hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-500 dark:text-surface-400'
                   }`}
                 >
                   {pageNum}
@@ -181,10 +181,10 @@ const DataTable = ({
             <button
               onClick={() => onPageChange(meta.page + 1)}
               disabled={!meta.hasNextPage}
-              className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="p-1.5 rounded-md hover:bg-surface-100 dark:hover:bg-surface-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               aria-label="Halaman berikutnya"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>

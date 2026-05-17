@@ -12,7 +12,7 @@ const DashboardLayout = () => {
       <Sidebar />
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
         <Header />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8 scroll-smooth">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-6 scroll-smooth">
           <div className="max-w-7xl mx-auto">
             <PasswordChangeReminder />
             <Outlet />

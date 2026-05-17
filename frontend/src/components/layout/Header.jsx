@@ -11,59 +11,59 @@ const Header = () => {
   const { user, logout } = useAuthStore();
 
   return (
-    <header className="h-16 bg-white/80 dark:bg-surface-900/80 backdrop-blur-xl border-b border-surface-200 dark:border-surface-700 flex items-center justify-between px-4 lg:px-8 z-30 sticky top-0">
-      {/* Left side: Hamburger & Title */}
-      <div className="flex items-center gap-4">
+    <header className="h-14 bg-white dark:bg-surface-900 border-b border-surface-200 dark:border-surface-800 flex items-center justify-between px-4 lg:px-6 z-30 sticky top-0">
+      {/* Left side: Hamburger */}
+      <div className="flex items-center gap-3">
         <button
           onClick={toggleSidebar}
-          className="p-2 -ml-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-600 dark:text-surface-300 transition-colors"
+          className="p-1.5 -ml-1 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 text-surface-500 dark:text-surface-400 transition-colors"
           aria-label="Toggle sidebar"
         >
-          <Menu className="w-5 h-5" />
+          <Menu className="w-[18px] h-[18px]" />
         </button>
       </div>
 
       {/* Right side: Tools & Profile */}
-      <div className="flex items-center gap-3 lg:gap-5">
+      <div className="flex items-center gap-2">
         {/* Dark Mode Toggle */}
         <button
           onClick={toggleDarkMode}
-          className="p-2 rounded-xl text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100 hover:bg-surface-100 dark:hover:bg-surface-800 transition-all"
+          className="p-1.5 rounded-lg text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
           aria-label="Toggle dark mode"
         >
-          {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          {darkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-surface-200 dark:bg-surface-700 hidden sm:block"></div>
+        <div className="w-px h-5 bg-surface-200 dark:bg-surface-700 hidden sm:block mx-1"></div>
 
         {/* User Profile */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           <div className="hidden sm:block text-right">
-            <p className="text-sm font-semibold text-surface-900 dark:text-surface-100 leading-tight">
+            <p className="text-sm font-medium text-surface-800 dark:text-surface-200 leading-tight">
               {truncateText(user?.name, 20) || 'Pengguna'}
             </p>
-            <p className="text-xs text-surface-500 dark:text-surface-400 capitalize">
+            <p className="text-[11px] text-surface-400 dark:text-surface-500 capitalize">
               {user?.role || '-'}
             </p>
           </div>
           <div className="relative group">
-            <button className="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 flex items-center justify-center font-bold outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-surface-900">
-              {user?.name?.charAt(0).toUpperCase() || <User className="w-4 h-4" />}
+            <button className="w-8 h-8 rounded-lg bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 flex items-center justify-center text-sm font-semibold outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 dark:focus:ring-offset-surface-900">
+              {user?.name?.charAt(0).toUpperCase() || <User className="w-3.5 h-3.5" />}
             </button>
             
-            {/* Simple dropdown on hover (for starter) */}
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-surface-800 rounded-xl shadow-lg border border-surface-200 dark:border-surface-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
-              <div className="p-2 space-y-1">
+            {/* Simple dropdown on hover */}
+            <div className="absolute right-0 mt-1.5 w-44 bg-white dark:bg-surface-800 rounded-xl shadow-elevated border border-surface-200 dark:border-surface-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right">
+              <div className="p-1.5">
                 <div className="px-3 py-2 sm:hidden border-b border-surface-100 dark:border-surface-700 mb-1">
-                  <p className="text-sm font-medium text-surface-900 dark:text-surface-100">{user?.name}</p>
-                  <p className="text-xs text-surface-500">{user?.role}</p>
+                  <p className="text-sm font-medium text-surface-800 dark:text-surface-200">{user?.name}</p>
+                  <p className="text-[11px] text-surface-400">{user?.role}</p>
                 </div>
                 <button
                   onClick={logout}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/15 rounded-lg transition-colors"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
                   Keluar
                 </button>
               </div>
