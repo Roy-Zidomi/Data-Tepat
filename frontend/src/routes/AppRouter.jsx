@@ -71,8 +71,9 @@ const AppRouter = () => {
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
-      <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} />
-      <Route path="/reset-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ResetPassword />} />
+      {/* Forgot & reset password harus selalu bisa diakses, meski ada sesi aktif */}
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route path="/public-dashboard" element={<PublicDashboard />} />
       <Route path="/donasi" element={<DonationForm />} />
