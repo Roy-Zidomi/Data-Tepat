@@ -6,6 +6,7 @@ const { requirePermission } = require('../middlewares/rbac.middleware');
 const { successResponse } = require('../utils/response');
 const { logAudit } = require('../utils/auditLogger');
 const { buildPaginationMeta } = require('../utils/helpers');
+const { assertHouseholdAccess, scopeHouseholdRelationWhere } = require('../utils/householdAccess');
 
 router.use(authenticate);
 
@@ -31,7 +32,7 @@ router.get('/economic-conditions', requirePermission('HOUSEHOLD_LIST'), async (r
     const { page = 1, limit = 20, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const where = {};
+    let where = {};
     if (search) {
       where.household = {
         OR: [
@@ -40,6 +41,7 @@ router.get('/economic-conditions', requirePermission('HOUSEHOLD_LIST'), async (r
         ],
       };
     }
+    where = scopeHouseholdRelationWhere(where, req.user);
 
     const [total, records] = await Promise.all([
       prisma.economicCondition.count({ where }),
@@ -64,6 +66,7 @@ router.get('/economic-conditions', requirePermission('HOUSEHOLD_LIST'), async (r
  */
 router.get('/economic-conditions/:householdId', requirePermission('HOUSEHOLD_LIST'), async (req, res, next) => {
   try {
+    await assertHouseholdAccess(req.user, req.params.householdId);
     const data = await prisma.economicCondition.findUnique({
       where: { household_id: BigInt(req.params.householdId) },
       include: {
@@ -81,7 +84,8 @@ router.get('/economic-conditions/:householdId', requirePermission('HOUSEHOLD_LIS
  */
 router.put('/economic-conditions/:householdId', requirePermission('HOUSEHOLD_UPDATE'), async (req, res, next) => {
   try {
-    const householdId = BigInt(req.params.householdId);
+    const household = await assertHouseholdAccess(req.user, req.params.householdId);
+    const householdId = household.id;
     const { monthly_income_total, income_source, head_job_status, monthly_basic_expense, dependents_count, has_other_income_source, debt_estimation, notes } = req.body;
     
     const data = await prisma.economicCondition.upsert({
@@ -104,13 +108,14 @@ router.get('/housing-conditions', requirePermission('HOUSEHOLD_LIST'), async (re
     const { page = 1, limit = 20, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const where = {};
+    let where = {};
     if (search) {
       where.household = { OR: [
         { nama_kepala_keluarga: { contains: search, mode: 'insensitive' } },
         { nomor_kk: { contains: search, mode: 'insensitive' } },
       ]};
     }
+    where = scopeHouseholdRelationWhere(where, req.user);
 
     const [total, records] = await Promise.all([
       prisma.housingCondition.count({ where }),
@@ -129,6 +134,7 @@ router.get('/housing-conditions', requirePermission('HOUSEHOLD_LIST'), async (re
 
 router.get('/housing-conditions/:householdId', requirePermission('HOUSEHOLD_LIST'), async (req, res, next) => {
   try {
+    await assertHouseholdAccess(req.user, req.params.householdId);
     const data = await prisma.housingCondition.findUnique({
       where: { household_id: BigInt(req.params.householdId) },
       include: {
@@ -143,7 +149,8 @@ router.get('/housing-conditions/:householdId', requirePermission('HOUSEHOLD_LIST
 
 router.put('/housing-conditions/:householdId', requirePermission('HOUSEHOLD_UPDATE'), async (req, res, next) => {
   try {
-    const householdId = BigInt(req.params.householdId);
+    const household = await assertHouseholdAccess(req.user, req.params.householdId);
+    const householdId = household.id;
     const { home_ownership_status, house_condition, floor_type, roof_type, wall_type, clean_water_access, electricity_access, sanitation_type, bedroom_count, notes } = req.body;
     
     const data = await prisma.housingCondition.upsert({
@@ -166,13 +173,14 @@ router.get('/assets', requirePermission('HOUSEHOLD_LIST'), async (req, res, next
     const { page = 1, limit = 20, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const where = {};
+    let where = {};
     if (search) {
       where.household = { OR: [
         { nama_kepala_keluarga: { contains: search, mode: 'insensitive' } },
         { nomor_kk: { contains: search, mode: 'insensitive' } },
       ]};
     }
+    where = scopeHouseholdRelationWhere(where, req.user);
 
     const [total, records] = await Promise.all([
       prisma.householdAsset.count({ where }),
@@ -191,6 +199,7 @@ router.get('/assets', requirePermission('HOUSEHOLD_LIST'), async (req, res, next
 
 router.get('/assets/:householdId', requirePermission('HOUSEHOLD_LIST'), async (req, res, next) => {
   try {
+    await assertHouseholdAccess(req.user, req.params.householdId);
     const data = await prisma.householdAsset.findUnique({
       where: { household_id: BigInt(req.params.householdId) },
       include: {
@@ -205,7 +214,8 @@ router.get('/assets/:householdId', requirePermission('HOUSEHOLD_LIST'), async (r
 
 router.put('/assets/:householdId', requirePermission('HOUSEHOLD_UPDATE'), async (req, res, next) => {
   try {
-    const householdId = BigInt(req.params.householdId);
+    const household = await assertHouseholdAccess(req.user, req.params.householdId);
+    const householdId = household.id;
     const { owns_house, has_bicycle, has_motorcycle, has_car, has_other_land, productive_assets, savings_range, other_assets } = req.body;
     
     const data = await prisma.householdAsset.upsert({
@@ -228,13 +238,14 @@ router.get('/vulnerabilities', requirePermission('HOUSEHOLD_LIST'), async (req, 
     const { page = 1, limit = 20, search } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
     
-    const where = {};
+    let where = {};
     if (search) {
       where.household = { OR: [
         { nama_kepala_keluarga: { contains: search, mode: 'insensitive' } },
         { nomor_kk: { contains: search, mode: 'insensitive' } },
       ]};
     }
+    where = scopeHouseholdRelationWhere(where, req.user);
 
     const [total, records] = await Promise.all([
       prisma.householdVulnerability.count({ where }),
@@ -253,6 +264,7 @@ router.get('/vulnerabilities', requirePermission('HOUSEHOLD_LIST'), async (req, 
 
 router.get('/vulnerabilities/:householdId', requirePermission('HOUSEHOLD_LIST'), async (req, res, next) => {
   try {
+    await assertHouseholdAccess(req.user, req.params.householdId);
     const data = await prisma.householdVulnerability.findUnique({
       where: { household_id: BigInt(req.params.householdId) },
       include: {
@@ -267,7 +279,8 @@ router.get('/vulnerabilities/:householdId', requirePermission('HOUSEHOLD_LIST'),
 
 router.put('/vulnerabilities/:householdId', requirePermission('HOUSEHOLD_UPDATE'), async (req, res, next) => {
   try {
-    const householdId = BigInt(req.params.householdId);
+    const household = await assertHouseholdAccess(req.user, req.params.householdId);
+    const householdId = household.id;
     const { is_disaster_victim, lost_job_recently, has_severe_ill_member, has_disabled_member, has_elderly_member, has_pregnant_member, has_school_children, ever_received_aid_before, special_condition_notes } = req.body;
     
     const data = await prisma.householdVulnerability.upsert({
