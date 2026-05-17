@@ -8,12 +8,23 @@ const escapeHtml = (value = '') =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
+const maskEmail = (email = '') => {
+  const [name, domain] = String(email).split('@');
+  if (!name || !domain) {
+    return 'unknown';
+  }
+
+  return `${name.slice(0, 2)}***@${domain}`;
+};
+
 const isBrevoConfigured = () =>
   Boolean(process.env.BREVO_API_KEY && process.env.BREVO_FROM_EMAIL);
 
 const sendWithBrevo = async ({ toEmail, toName, subject, html, text }) => {
   if (!isBrevoConfigured()) {
-    console.warn('[Email] Brevo is not configured. Skipping email send.');
+    console.warn(
+      `[Email] Brevo is not configured. Skipping email send. hasApiKey=${Boolean(process.env.BREVO_API_KEY)} hasFromEmail=${Boolean(process.env.BREVO_FROM_EMAIL)}`
+    );
     return { skipped: true };
   }
 
@@ -53,6 +64,8 @@ const sendWithBrevo = async ({ toEmail, toName, subject, html, text }) => {
       `Brevo email failed with ${response.status}: ${JSON.stringify(responseBody).slice(0, 500)}`
     );
   }
+
+  console.log(`[Email] Brevo accepted email to ${maskEmail(toEmail)} with messageId=${responseBody?.messageId || 'unknown'}`);
 
   return responseBody || { success: true };
 };
