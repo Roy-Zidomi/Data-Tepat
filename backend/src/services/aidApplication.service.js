@@ -3,16 +3,17 @@ const { logAudit } = require('../utils/auditLogger');
 const scoringService = require('./scoring.service');
 const { APPLICATION_TRANSITIONS } = require('../config/permissions');
 const { buildPaginationMeta } = require('../utils/helpers');
+const { assertHouseholdAccess, toBigIntId } = require('../utils/householdAccess');
 
 class AidApplicationService {
-  async createApplication(data, userId) {
+  async createApplication(data, user) {
     const { household_id, aid_type_id, description } = data;
+    const userId = user.id;
 
-    // Check household
-    const household = await prisma.household.findUnique({
-      where: { id: BigInt(household_id) }
+    const household = await assertHouseholdAccess(user, household_id, {
+      allowedWideRoles: ['admin_main', 'admin_staff'],
+      forbiddenMessage: 'Forbidden: You can only create applications for your own household',
     });
-    if (!household) throw { statusCode: 404, message: 'Household not found' };
 
     // Check Aid Type
     const aidType = await prisma.aidType.findUnique({
@@ -26,7 +27,7 @@ class AidApplicationService {
     return prisma.$transaction(async (tx) => {
       const application = await tx.aidApplication.create({
         data: {
-          household_id: BigInt(household_id),
+          household_id: household.id,
           aid_type_id: BigInt(aid_type_id),
           application_no: applicationNo,
           submitted_by_user_id: BigInt(userId),
@@ -56,19 +57,26 @@ class AidApplicationService {
     });
   }
 
-  async submitApplication(applicationId, userId) {
+  async submitApplication(applicationId, user) {
+    const userId = user.id;
+    const appId = toBigIntId(applicationId, 'Application ID');
     const application = await prisma.aidApplication.findUnique({
-      where: { id: BigInt(applicationId) }
+      where: { id: appId }
     });
 
     if (!application) throw { statusCode: 404, message: 'Application not found' };
+    await assertHouseholdAccess(user, application.household_id, {
+      allowedWideRoles: ['admin_main', 'admin_staff'],
+      forbiddenMessage: 'Forbidden: You can only submit applications for your own household',
+    });
+
     if (application.status !== 'draft') {
       throw { statusCode: 400, message: 'Only draft applications can be submitted' };
     }
 
     return prisma.$transaction(async (tx) => {
       const updatedApp = await tx.aidApplication.update({
-        where: { id: BigInt(applicationId) },
+        where: { id: appId },
         data: { 
           status: 'submitted',
           submission_date: new Date(),
@@ -168,13 +176,9 @@ class AidApplicationService {
   }
 
   async getApplicationById(id, user) {
-    const where = { id: BigInt(id) };
-    if (user.role === 'warga') {
-      where.submitted_by_user_id = BigInt(user.id);
-    }
-
-    const application = await prisma.aidApplication.findFirst({
-      where,
+    const applicationId = toBigIntId(id, 'Application ID');
+    const application = await prisma.aidApplication.findUnique({
+      where: { id: applicationId },
       include: {
         statusHistories: { orderBy: { changed_at: 'desc' } },
         aidType: true,
@@ -195,7 +199,12 @@ class AidApplicationService {
       }
     });
 
-    if (!application) throw { statusCode: 404, message: 'Application not found or unauthorized' };
+    if (!application) throw { statusCode: 404, message: 'Application not found' };
+    await assertHouseholdAccess(user, application.household_id, {
+      allowedWideRoles: ['admin_main', 'admin_staff', 'pengawas'],
+      forbiddenMessage: 'Forbidden: You can only view applications for your own household',
+    });
+
     return application;
   }
 
@@ -204,8 +213,9 @@ class AidApplicationService {
    * Validates state transitions using APPLICATION_TRANSITIONS.
    */
   async updateStatus(applicationId, newStatus, reason, user) {
+    const appId = toBigIntId(applicationId, 'Application ID');
     const application = await prisma.aidApplication.findUnique({
-      where: { id: BigInt(applicationId) },
+      where: { id: appId },
     });
 
     if (!application) {
@@ -231,7 +241,7 @@ class AidApplicationService {
 
     return prisma.$transaction(async (tx) => {
       const updated = await tx.aidApplication.update({
-        where: { id: BigInt(applicationId) },
+        where: { id: appId },
         data: {
           status: newStatus,
           current_step_note: reason || `Status changed to ${newStatus}`,
@@ -240,7 +250,7 @@ class AidApplicationService {
 
       await tx.applicationStatusHistory.create({
         data: {
-          application_id: BigInt(applicationId),
+          application_id: appId,
           old_status: application.status,
           new_status: newStatus,
           changed_by_user_id: BigInt(user.id),

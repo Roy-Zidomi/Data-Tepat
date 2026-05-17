@@ -4,7 +4,7 @@ const { successResponse } = require('../utils/response');
 class AidApplicationController {
   async createApplication(req, res, next) {
     try {
-      const application = await aidApplicationService.createApplication(req.body, req.user.id);
+      const application = await aidApplicationService.createApplication(req.body, req.user);
 
       const appStr = JSON.parse(JSON.stringify(application, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value
@@ -18,7 +18,7 @@ class AidApplicationController {
 
   async submitApplication(req, res, next) {
     try {
-      const application = await aidApplicationService.submitApplication(req.params.id, req.user.id);
+      const application = await aidApplicationService.submitApplication(req.params.id, req.user);
 
       const appStr = JSON.parse(JSON.stringify(application, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value
