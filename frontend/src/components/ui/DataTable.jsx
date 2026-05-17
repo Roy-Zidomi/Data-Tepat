@@ -74,7 +74,7 @@ const DataTable = ({
     <div className={`space-y-3 ${className}`}>
       {/* Search bar */}
       {onSearch && (
-        <div className="relative max-w-xs">
+        <div className="relative w-full sm:max-w-xs">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-400" />
           <input
             type="text"
@@ -94,7 +94,7 @@ const DataTable = ({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className={`px-4 py-2.5 text-left text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider whitespace-nowrap ${
+                  className={`px-3 sm:px-4 py-2.5 text-left text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider whitespace-nowrap ${
                     col.sortable !== false ? 'cursor-pointer select-none hover:text-surface-700 dark:hover:text-surface-200' : ''
                   }`}
                   onClick={() => col.sortable !== false && handleSort(col.key)}
@@ -127,7 +127,7 @@ const DataTable = ({
                   className="hover:bg-surface-50 dark:hover:bg-surface-800/30 transition-colors"
                 >
                   {columns.map((col) => (
-                    <td key={col.key} className="px-4 py-2.5 text-surface-700 dark:text-surface-300 whitespace-nowrap">
+                    <td key={col.key} className="px-3 sm:px-4 py-2.5 text-surface-700 dark:text-surface-300">
                       {col.render ? col.render(row[col.key], row) : (row[col.key] ?? '-')}
                     </td>
                   ))}
@@ -140,7 +140,7 @@ const DataTable = ({
 
       {/* Pagination */}
       {meta && meta.totalPages > 1 && (
-        <div className="flex items-center justify-between pt-1">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-1">
           <p className="text-xs text-surface-400 dark:text-surface-500">
             {((meta.page - 1) * meta.limit) + 1}–{Math.min(meta.page * meta.limit, meta.total)} dari {meta.total}
           </p>

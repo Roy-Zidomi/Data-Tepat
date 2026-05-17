@@ -44,7 +44,7 @@ api.interceptors.response.use(
       const isLogoutEndpoint = error.config?.url?.includes('/auth/logout');
       const isLoginPage = window.location.pathname === '/login';
       // Public auth pages that should never trigger logout/redirect on 401
-      const publicAuthPages = ['/reset-password', '/forgot-password'];
+      const publicAuthPages = ['/', '/reset-password', '/forgot-password', '/public-dashboard', '/donasi'];
       const isPublicAuthPage = publicAuthPages.includes(window.location.pathname);
 
       // Only trigger logout logic if NOT on a public auth page and NOT a logout attempt

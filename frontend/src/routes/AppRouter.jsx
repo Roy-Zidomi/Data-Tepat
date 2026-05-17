@@ -26,6 +26,7 @@ import DistributionList from '../pages/Distributions/DistributionList';
 import DistributionAction from '../pages/Distributions/DistributionAction';
 import ComplaintReview from '../pages/Complaints/ComplaintReview';
 import PublicDashboard from '../pages/Public/PublicDashboard';
+import LandingPage from '../pages/Public/LandingPage';
 import RegionList from '../pages/Regions/RegionList';
 import AidTypeList from '../pages/AidTypes/AidTypeList';
 import DonationForm from '../pages/Public/DonationForm';
@@ -70,6 +71,8 @@ const AppRouter = () => {
 
   return (
     <Routes>
+      {/* Landing page — unauthenticated root */}
+      <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <LandingPage />} />
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
       {/* Forgot & reset password harus selalu bisa diakses, meski ada sesi aktif */}
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -80,7 +83,6 @@ const AppRouter = () => {
 
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
           <Route path="/dashboard" element={<ProtectedRoute allowedRoles={['admin_main', 'admin_staff', 'pengawas', 'relawan', 'warga']} />}>
             <Route index element={<Dashboard />} />

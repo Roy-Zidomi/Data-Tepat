@@ -96,16 +96,16 @@ const Register = () => {
       </div>
 
       {/* Right form panel */}
-      <div className="w-full lg:w-7/12 flex items-center justify-center p-6 sm:p-12 overflow-y-auto">
+      <div className="w-full lg:w-7/12 flex items-center justify-center px-4 py-10 sm:p-12 overflow-y-auto">
         {/* Mobile logo */}
-        <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
+        <div className="absolute top-6 left-4 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
           <HeartHandshake className="w-5 h-5 text-primary-600" />
           <span className="text-lg font-bold">BantuTepat</span>
         </div>
 
         <div className="w-full max-w-lg animate-fade-in pt-10 lg:pt-0">
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">
+          <div className="mb-5 sm:mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-surface-900 dark:text-white tracking-tight">
               Daftar Akun
             </h2>
             <p className="mt-1 text-sm text-surface-500 dark:text-surface-400">
@@ -113,7 +113,7 @@ const Register = () => {
             </p>
           </div>
 
-          <div className="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-xl p-6">
+          <div className="bg-white dark:bg-surface-900 border border-surface-200 dark:border-surface-800 rounded-xl p-4 sm:p-6">
             <form className="space-y-5" onSubmit={onSubmit}>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

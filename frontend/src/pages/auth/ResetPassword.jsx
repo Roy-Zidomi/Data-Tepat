@@ -41,17 +41,7 @@ const ResetPassword = () => {
         <p className="text-base text-surface-300 leading-relaxed mb-8">
           Platform terpadu untuk memfasilitasi pendataan, verifikasi, dan penyaluran bantuan sosial bagi masyarakat yang membutuhkan secara akurat dan terpercaya.
         </p>
-        <div className="flex items-center gap-3 text-sm text-surface-400">
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400"></span>
-            </span>
-            <span className="text-surface-300 font-medium">Sistem Aktif</span>
-          </div>
-          <div className="w-px h-3 bg-surface-700"></div>
-          <span>Verifikasi Real-time</span>
-        </div>
+
       </div>
       <div className="relative z-10 text-xs text-surface-500">
         <p>&copy; {new Date().getFullYear()} BantuTepat &mdash; Hak Cipta Dilindungi</p>
@@ -64,8 +54,8 @@ const ResetPassword = () => {
     return (
       <div className="flex min-h-screen w-full bg-white dark:bg-surface-950 font-sans">
         <LeftPanel />
-        <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative bg-white dark:bg-surface-950">
-          <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
+        <div className="w-full lg:w-1/2 flex items-center justify-center px-5 py-10 sm:p-12 relative bg-white dark:bg-surface-950">
+          <div className="absolute top-6 left-5 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
             <HeartHandshake className="w-5 h-5 text-primary-600" />
             <span className="text-lg font-bold">BantuTepat</span>
           </div>
@@ -125,14 +115,14 @@ const ResetPassword = () => {
       <LeftPanel />
 
       {/* Right Pane - Reset Password Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto bg-white dark:bg-surface-950">
+      <div className="w-full lg:w-1/2 flex items-center justify-center px-5 py-10 sm:p-12 relative overflow-y-auto bg-white dark:bg-surface-950">
         {/* Mobile Logo */}
-        <div className="absolute top-8 left-8 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
+        <div className="absolute top-6 left-5 lg:hidden flex items-center gap-2 text-surface-900 dark:text-white">
           <HeartHandshake className="w-5 h-5 text-primary-600" />
           <span className="text-lg font-bold">BantuTepat</span>
         </div>
 
-        <div className="w-full max-w-sm space-y-8 animate-fade-in my-auto pt-10 lg:pt-0">
+        <div className="w-full max-w-sm space-y-8 animate-fade-in my-auto pt-12 lg:pt-0">
           {/* Form Header */}
           <div>
             <h2 className="text-2xl font-bold text-surface-900 dark:text-white tracking-tight">
