@@ -4,6 +4,8 @@ import DashboardLayout from '../components/layout/DashboardLayout';
 import useAuthStore from '../store/authStore';
 
 import Login from '../pages/Login/Login';
+import ForgotPassword from '../pages/auth/ForgotPassword';
+import ResetPassword from '../pages/auth/ResetPassword';
 import Dashboard from '../pages/dashboard/Dashboard';
 import WargaAccountCreate from '../pages/Admin/WargaAccountCreate';
 
@@ -69,6 +71,8 @@ const AppRouter = () => {
   return (
     <Routes>
       <Route path="/login" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />} />
+      <Route path="/forgot-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ForgotPassword />} />
+      <Route path="/reset-password" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <ResetPassword />} />
 
       <Route path="/public-dashboard" element={<PublicDashboard />} />
       <Route path="/donasi" element={<DonationForm />} />
