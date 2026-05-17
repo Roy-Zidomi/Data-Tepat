@@ -12,7 +12,10 @@ import {
   MessageSquare,
   MapPin,
   ChevronRight,
+  Sun,
+  Moon,
 } from 'lucide-react';
+import useUIStore from '../../store/uiStore';
 
 const features = [
   {
@@ -69,6 +72,8 @@ const stats = [
 ];
 
 const LandingPage = () => {
+  const { darkMode, toggleDarkMode } = useUIStore();
+
   return (
     <div className="min-h-screen bg-white dark:bg-surface-950 font-sans text-surface-800 dark:text-surface-200">
 
@@ -81,8 +86,16 @@ const LandingPage = () => {
             </div>
             <span className="text-base font-bold text-surface-900 dark:text-white">BantuTepat</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link
+          <div className="flex items-center gap-2 sm:gap-4">
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-xl text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+              aria-label="Toggle dark mode"
+            >
+              {darkMode ? <Sun className="w-4 h-4 sm:w-5 sm:h-5" /> : <Moon className="w-4 h-4 sm:w-5 sm:h-5" />}
+            </button>
+            <div className="flex items-center gap-2">
+              <Link
               to="/public-dashboard"
               className="hidden sm:inline-flex text-sm font-medium text-surface-500 hover:text-surface-800 dark:text-surface-400 dark:hover:text-white transition-colors px-3 py-1.5"
             >
@@ -95,6 +108,7 @@ const LandingPage = () => {
               Masuk
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
+            </div>
           </div>
         </div>
       </nav>

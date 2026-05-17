@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import useAuthStore from '../../store/authStore';
+import useUIStore from '../../store/uiStore';
 import authService from '../../services/authService';
 import toast from 'react-hot-toast';
 import { FORM_LIMITS, clampText } from '../../utils/formLimits';
-import { HeartHandshake, Mail, Lock, LogIn, ChevronDown } from 'lucide-react';
+import { HeartHandshake, Mail, Lock, LogIn, ChevronDown, Sun, Moon } from 'lucide-react';
 
 const Login = () => {
+  const { darkMode, toggleDarkMode } = useUIStore();
   const [loading, setLoading] = useState(false);
   const [selectedRole, setSelectedRole] = useState('warga');
   const { login } = useAuthStore();
@@ -96,6 +98,15 @@ const Login = () => {
           <HeartHandshake className="w-5 h-5 text-primary-600" />
           <span className="text-lg font-bold">BantuTepat</span>
         </div>
+
+        {/* Dark Mode Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="absolute top-6 right-5 lg:top-8 lg:right-8 p-2 rounded-xl text-surface-400 hover:text-surface-600 dark:text-surface-500 dark:hover:text-surface-300 hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+          aria-label="Toggle dark mode"
+        >
+          {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+        </button>
 
         <div className="w-full max-w-sm space-y-8 animate-fade-in my-auto pt-12 lg:pt-0">
           {/* Form Header */}
