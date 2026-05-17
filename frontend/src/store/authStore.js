@@ -66,7 +66,8 @@ const useAuthStore = create((set, get) => ({
       localStorage.removeItem('bt_token');
       localStorage.removeItem('bt_csrf_token');
       set({ user: null, token: null, csrfToken: null, isAuthenticated: false });
-      if (window.location.pathname !== '/login') {
+      const publicAuthPages = ['/login', '/reset-password', '/forgot-password'];
+      if (!publicAuthPages.includes(window.location.pathname)) {
         window.location.href = '/login';
       }
     }

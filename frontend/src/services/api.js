@@ -43,14 +43,16 @@ api.interceptors.response.use(
       const isMeEndpoint = error.config?.url?.includes('/auth/me');
       const isLogoutEndpoint = error.config?.url?.includes('/auth/logout');
       const isLoginPage = window.location.pathname === '/login';
+      // Public auth pages that should never trigger logout/redirect on 401
+      const publicAuthPages = ['/reset-password', '/forgot-password'];
+      const isPublicAuthPage = publicAuthPages.includes(window.location.pathname);
 
-      // Only trigger logout logic if the request wasn't already a logout attempt
-      // This prevents an infinite loop where logout fails with 401 and calls logout again
-      if (!isLogoutEndpoint) {
+      // Only trigger logout logic if NOT on a public auth page and NOT a logout attempt
+      if (!isLogoutEndpoint && !isPublicAuthPage) {
         useAuthStore.getState().logout();
       }
       
-      if (!isMeEndpoint && !isLogoutEndpoint && !isLoginPage) {
+      if (!isMeEndpoint && !isLogoutEndpoint && !isLoginPage && !isPublicAuthPage) {
         window.location.href = '/login';
         toast.error('Sesi habis. Silakan login kembali.');
       }
