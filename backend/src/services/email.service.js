@@ -1,4 +1,4 @@
-const SENDER_API_URL = process.env.SENDER_API_URL || 'https://api.sender.net/v2/message/send';
+const BREVO_API_URL = process.env.BREVO_API_URL || 'https://api.brevo.com/v3/smtp/email';
 
 const escapeHtml = (value = '') =>
   String(value)
@@ -8,34 +8,34 @@ const escapeHtml = (value = '') =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const isSenderConfigured = () =>
-  Boolean(process.env.SENDER_API_TOKEN && process.env.SENDER_FROM_EMAIL);
+const isBrevoConfigured = () =>
+  Boolean(process.env.BREVO_API_KEY && process.env.BREVO_FROM_EMAIL);
 
-const sendWithSender = async ({ toEmail, toName, subject, html, text }) => {
-  if (!isSenderConfigured()) {
-    console.warn('[Email] Sender.net is not configured. Skipping email send.');
+const sendWithBrevo = async ({ toEmail, toName, subject, html, text }) => {
+  if (!isBrevoConfigured()) {
+    console.warn('[Email] Brevo is not configured. Skipping email send.');
     return { skipped: true };
   }
 
-  const response = await fetch(SENDER_API_URL, {
+  const response = await fetch(BREVO_API_URL, {
     method: 'POST',
     headers: {
       Accept: 'application/json',
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${process.env.SENDER_API_TOKEN}`,
+      'api-key': process.env.BREVO_API_KEY,
     },
     body: JSON.stringify({
-      from: {
-        email: process.env.SENDER_FROM_EMAIL,
-        name: process.env.SENDER_FROM_NAME || 'BantuTepat',
+      sender: {
+        email: process.env.BREVO_FROM_EMAIL,
+        name: process.env.BREVO_FROM_NAME || 'BantuTepat',
       },
-      to: {
+      to: [{
         email: toEmail,
         name: toName || toEmail,
-      },
+      }],
       subject,
-      html,
-      text,
+      htmlContent: html,
+      textContent: text,
     }),
   });
 
@@ -50,7 +50,7 @@ const sendWithSender = async ({ toEmail, toName, subject, html, text }) => {
 
   if (!response.ok) {
     throw new Error(
-      `Sender.net email failed with ${response.status}: ${JSON.stringify(responseBody).slice(0, 500)}`
+      `Brevo email failed with ${response.status}: ${JSON.stringify(responseBody).slice(0, 500)}`
     );
   }
 
@@ -62,7 +62,7 @@ const sendPasswordResetEmail = async ({ toEmail, toName, resetUrl, expiresInMinu
   const safeResetUrl = escapeHtml(resetUrl);
   const safeExpiresInMinutes = escapeHtml(expiresInMinutes);
 
-  return sendWithSender({
+  return sendWithBrevo({
     toEmail,
     toName,
     subject: 'Reset Password BantuTepat',
