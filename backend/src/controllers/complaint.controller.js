@@ -4,7 +4,7 @@ const { successResponse } = require('../utils/response');
 class ComplaintController {
   async submitComplaint(req, res, next) {
     try {
-      const complaint = await complaintService.submitComplaint(req.body, req.user.id);
+      const complaint = await complaintService.submitComplaint(req.body, req.user);
 
       const compStr = JSON.parse(JSON.stringify(complaint, (key, value) =>
         typeof value === 'bigint' ? value.toString() : value

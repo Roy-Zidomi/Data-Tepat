@@ -1,17 +1,64 @@
 const prisma = require('../config/database');
 const { logAudit } = require('../utils/auditLogger');
 const { buildPaginationMeta } = require('../utils/helpers');
+const { assertHouseholdAccess, toBigIntId } = require('../utils/householdAccess');
 
 class ComplaintService {
-  async submitComplaint(data, userId) {
+  async submitComplaint(data, user) {
     const { household_id, application_id, distribution_id, complaint_type, description } = data;
+    const userId = user.id;
+    const applicationId = application_id ? toBigIntId(application_id, 'Application ID') : null;
+    const distributionId = distribution_id ? toBigIntId(distribution_id, 'Distribution ID') : null;
+    const household = await assertHouseholdAccess(user, household_id, {
+      allowedWideRoles: ['pengawas'],
+      forbiddenMessage: 'Forbidden: You can only submit complaints for your own household',
+    });
+
+    if (applicationId) {
+      const application = await prisma.aidApplication.findUnique({
+        where: { id: applicationId },
+        select: { household_id: true },
+      });
+
+      if (!application) {
+        throw { statusCode: 404, message: 'Application not found' };
+      }
+
+      if (application.household_id.toString() !== household.id.toString()) {
+        throw { statusCode: 400, message: 'Application does not belong to the selected household' };
+      }
+    }
+
+    if (distributionId) {
+      const distribution = await prisma.aidDistribution.findUnique({
+        where: { id: distributionId },
+        select: {
+          decision: {
+            select: {
+              application: {
+                select: { household_id: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (!distribution) {
+        throw { statusCode: 404, message: 'Distribution not found' };
+      }
+
+      const distributionHouseholdId = distribution.decision?.application?.household_id;
+      if (!distributionHouseholdId || distributionHouseholdId.toString() !== household.id.toString()) {
+        throw { statusCode: 400, message: 'Distribution does not belong to the selected household' };
+      }
+    }
 
     return prisma.$transaction(async (tx) => {
       const complaint = await tx.complaint.create({
         data: {
-          household_id: BigInt(household_id),
-          application_id: application_id ? BigInt(application_id) : null,
-          distribution_id: distribution_id ? BigInt(distribution_id) : null,
+          household_id: household.id,
+          application_id: applicationId,
+          distribution_id: distributionId,
           submitted_by_user_id: BigInt(userId),
           complaint_type,
           description,
