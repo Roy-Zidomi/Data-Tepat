@@ -240,6 +240,9 @@ class BeneficiaryDecisionService {
         latest_revision_no: 1,
         reported_to_main: false,
       };
+    }, {
+      maxWait: 5000, // 5s max wait to connect to prisma
+      timeout: 20000, // 20s timeout
     });
   }
 
@@ -308,6 +311,9 @@ class BeneficiaryDecisionService {
       });
 
       return result;
+    }, {
+      maxWait: 5000,
+      timeout: 20000,
     });
 
     await logAudit({
