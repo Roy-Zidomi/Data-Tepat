@@ -4,6 +4,7 @@ const fs = require('fs');
 const { successResponse, errorResponse } = require('../utils/response');
 const { buildPaginationMeta, generateApplicationNo } = require('../utils/helpers');
 const { calculateTotalScore, determinePriorityLevel } = require('../utils/scoring');
+const { assertHouseholdAccess, toBigIntId } = require('../utils/householdAccess');
 
 class SurveyController {
   constructor() {
@@ -183,9 +184,35 @@ class SurveyController {
     return toStatus;
   }
 
+  async assertSurveyAccess(user, surveyId) {
+    const survey = await prisma.survey.findUnique({
+      where: { id: surveyId },
+      include: {
+        application: {
+          select: { household_id: true },
+        },
+      },
+    });
+
+    if (!survey) {
+      throw { statusCode: 404, message: 'Survei tidak ditemukan' };
+    }
+
+    await assertHouseholdAccess(user, survey.application.household_id, {
+      allowedWideRoles: ['admin_main', 'admin_staff', 'relawan'],
+      forbiddenMessage: 'Forbidden: You cannot access this survey household',
+    });
+
+    if (user.role === 'relawan' && survey.surveyor_user_id.toString() !== user.id.toString()) {
+      throw { statusCode: 403, message: 'Forbidden: You can only manage your own survey photos' };
+    }
+
+    return survey;
+  }
+
   async submitFromHousehold(req, res, next) {
     try {
-      const householdId = BigInt(req.params.householdId);
+      const householdId = toBigIntId(req.params.householdId, 'Household ID');
       const userId = BigInt(req.user.id);
       const {
         summary = null,
@@ -199,6 +226,11 @@ class SurveyController {
       if (recommendation && !allowedRecommendation.includes(recommendation)) {
         return errorResponse(res, 'Recommendation tidak valid', 400);
       }
+
+      await assertHouseholdAccess(req.user, householdId, {
+        allowedWideRoles: ['admin_main', 'admin_staff', 'relawan'],
+        forbiddenMessage: 'Forbidden: You cannot submit surveys for this household',
+      });
 
       const submission = await prisma.$transaction(async (tx) => {
         const household = await tx.household.findUnique({
@@ -417,20 +449,14 @@ class SurveyController {
    */
   async uploadPhotos(req, res, next) {
     try {
-      const surveyId = BigInt(req.params.surveyId);
+      const surveyId = toBigIntId(req.params.surveyId, 'Survey ID');
       const userId = BigInt(req.user.id);
       
       // Ambil metadata opsional dari body (caption bisa array jika upload banyak, disinkronkan dgn index)
       // karena formData append caption[]
       const captions = req.body.captions || []; 
       
-      // Cek apakah survey ada
-      const survey = await prisma.survey.findUnique({ where: { id: surveyId } });
-      if (!survey) {
-        // bersihkan file
-        if (req.files) req.files.forEach(f => fs.unlinkSync(f.path));
-        return errorResponse(res, 'Survei tidak ditemukan', 404);
-      }
+      await this.assertSurveyAccess(req.user, surveyId);
 
       if (!req.files || req.files.length === 0) {
         return errorResponse(res, 'Tidak ada file foto yang terlampir', 400);
@@ -491,7 +517,8 @@ class SurveyController {
    */
   async listPhotos(req, res, next) {
     try {
-      const surveyId = BigInt(req.params.surveyId);
+      const surveyId = toBigIntId(req.params.surveyId, 'Survey ID');
+      await this.assertSurveyAccess(req.user, surveyId);
       
       const photos = await prisma.surveyPhoto.findMany({
         where: { survey_id: surveyId },
@@ -516,8 +543,9 @@ class SurveyController {
    */
   async deletePhoto(req, res, next) {
     try {
-      const surveyId = BigInt(req.params.surveyId);
-      const photoId = BigInt(req.params.photoId);
+      const surveyId = toBigIntId(req.params.surveyId, 'Survey ID');
+      const photoId = toBigIntId(req.params.photoId, 'Photo ID');
+      await this.assertSurveyAccess(req.user, surveyId);
 
       const targetPhoto = await prisma.surveyPhoto.findUnique({
         where: { id: photoId }
