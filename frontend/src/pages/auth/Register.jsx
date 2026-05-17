@@ -59,9 +59,9 @@ const Register = () => {
         phone: formData.phone
       });
       
-      const { user } = res.data.data;
+      const { user, token, csrfToken } = res.data.data;
       
-      login(user);
+      login(user, token, csrfToken);
       toast.success('Pendaftaran berhasil! Anda otomatis login.');
       navigate(from, { replace: true });
     } catch (error) {

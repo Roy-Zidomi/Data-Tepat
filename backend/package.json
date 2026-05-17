@@ -5,6 +5,7 @@
   "main": "src/index.js",
   "scripts": {
     "postinstall": "prisma generate",
+    "build": "prisma generate",
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
     "prisma:pull": "npx prisma db pull",
@@ -13,8 +14,8 @@
     "seed": "node prisma/seed.js"
   },
   "dependencies": {
-    "@prisma/client": "^6.5.0",
-    "bcrypt": "^5.1.1",
+    "@prisma/client": "^6.19.3",
+    "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -29,7 +30,7 @@
   },
   "devDependencies": {
     "nodemon": "^3.1.9",
-    "prisma": "^6.5.0"
+    "prisma": "^6.19.3"
   },
   "prisma": {
     "seed": "node prisma/seed.js"

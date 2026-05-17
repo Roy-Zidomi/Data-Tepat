@@ -41,8 +41,8 @@ const Login = () => {
         formData.password,
         selectedRole
       );
-      const { user } = res.data.data;
-      login(user);
+      const { user, token, csrfToken } = res.data.data;
+      login(user, token, csrfToken);
       toast.success(`Selamat datang, ${user.name}!`);
       navigate(from, { replace: true });
     } catch (error) {
